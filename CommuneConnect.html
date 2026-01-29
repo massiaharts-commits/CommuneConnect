@@ -2120,11 +2120,16 @@
           <div id="userEmailDisplay" style="font-size:0.8rem;color:var(--success);"></div>
         </div>
       </div>
-      <p style="font-size:0.75rem;color:var(--text-3);margin-bottom:0.75rem;">Your data syncs automatically across all devices</p>
+      <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:rgba(0,0,0,0.2);border-radius:var(--radius-sm);margin-bottom:0.75rem;">
+        <span style="color:var(--success);font-size:0.9rem;">●</span>
+        <span style="font-size:0.75rem;color:var(--text-2);">Cloud sync active</span>
+        <span id="lastSyncDisplay" style="font-size:0.7rem;color:var(--text-3);margin-left:auto;"></span>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-3);margin-bottom:0.75rem;">Your public cards sync automatically across all devices</p>
       <button class="btn btn-danger" style="width:100%" onclick="signOut()">🚪 Sign Out</button>
     </div>
     
-    <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="usernameInput" placeholder="Anonymous"><p style="font-size:0.7rem;color:var(--text-3);margin-top:0.5rem">Shown on votes and comments</p></div>
+    <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="usernameInput" placeholder="Anonymous"><p style="font-size:0.7rem;color:var(--text-3);margin-top:0.5rem">Shown on your cards, votes, and comments</p></div>
     
     <div class="form-group">
       <label class="form-label">🔒 Privacy</label>
@@ -2145,13 +2150,15 @@
     
     <div class="form-group"><label class="form-label">Top Contributors</label><div class="contributor-list" id="contributorList"><p style="color:var(--text-3);text-align:center;padding:1rem">No contributors yet</p></div></div>
     
-    <div class="form-group"><label class="form-label">Share Collection</label><button class="btn btn-primary" style="width:100%;margin-bottom:0.5rem" onclick="shareCollectionURL(this,false)">📎 Share (with photos)</button><button class="btn btn-secondary" style="width:100%;margin-bottom:0.5rem" onclick="shareCollectionURL(this,true)">⚡ Share (no photos)</button><button class="btn btn-secondary" style="width:100%" onclick="exportCollection()">📤 Export File</button></div>
+    <div class="form-group"><label class="form-label">Share Collection</label><button class="btn btn-primary" style="width:100%;margin-bottom:0.5rem" onclick="shareCollectionURL(this,false)">🔗 Share (with photos)</button><button class="btn btn-secondary" style="width:100%;margin-bottom:0.5rem" onclick="shareCollectionURL(this,true)">⚡ Share (no photos)</button><button class="btn btn-secondary" style="width:100%" onclick="exportCollection()">📤 Export File</button></div>
+    
     <div class="form-group">
       <label class="form-label">🗑️ Data Management</label>
       <button class="btn btn-secondary" style="width:100%;margin-bottom:0.5rem" onclick="clearAllData()">🧹 Clear All Data</button>
       <button class="btn btn-secondary" style="width:100%" onclick="removeDuplicates()">🔄 Remove Duplicates</button>
       <p style="font-size:0.7rem;color:var(--text-3);margin-top:0.5rem">Clear all data will reset the app. Remove duplicates will clean up repeated cards.</p>
     </div>
+    
     <button class="btn btn-primary" style="width:100%;margin-top:1rem" onclick="saveSettings()">Save Settings</button>
   </div>
 </div>
@@ -2320,7 +2327,17 @@ function showToast(msg, type = 'default') {
   t.textContent = msg; t.className = 'toast show ' + type;
   setTimeout(() => t.classList.remove('show'), 3000);
 }
-
+// ============== SECURITY ==============
+// Sanitize HTML to prevent XSS attacks
+function sanitizeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 // ============== DISCOVER BUBBLE VIEW ==============
 let bubbles = [];
 let bubbleConnections = [];
@@ -2698,11 +2715,11 @@ function renderBubbles() {
         </div>
         
         <div class="bubble-card-content">
-          <h3 class="bubble-card-title">${b.title}</h3>
-          <p class="bubble-card-url">${formatUrl(b.url)}</p>
-          ${tags.length ? `<div class="bubble-card-tags">${tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
+          <h3 class="bubble-card-title">${sanitizeHTML(b.title)}</h3>
+          <p class="bubble-card-url">${sanitizeHTML(formatUrl(b.url))}</p>
+          ${tags.length ? `<div class="bubble-card-tags">${tags.map(t => `<span class="tag">${sanitizeHTML(t)}</span>`).join('')}</div>` : ''}
           <span class="bubble-card-author">
-            ${b.isCommunity ? '🌐' : '👤'} ${b.addedBy || 'Anonymous'}
+            ${b.isCommunity ? '🌐' : '👤'} ${sanitizeHTML(b.addedBy || 'Anonymous')}
             ${b.isOwnCard === false && b.cloudUserId ? ' · Community' : ''}
           </span>
         </div>
@@ -2842,10 +2859,10 @@ function updateInfoPanel(bubble) {
   const color = TOPIC_COLORS[bubble.topic] || TOPIC_COLORS.other;
   document.getElementById('infoTopic').style.background = color;
   document.getElementById('infoTopic').style.color = color;
-  document.getElementById('infoTitle').textContent = bubble.title;
-  document.getElementById('infoUrl').textContent = bubble.url;
-  document.getElementById('infoTags').innerHTML = (bubble.tags || []).map(t => `<span class="tag">#${t}</span>`).join('');
-  document.getElementById('infoNotes').textContent = bubble.notes || 'No notes added yet.';
+  document.getElementById('infoTitle').textContent = sanitizeHTML(bubble.title);
+  document.getElementById('infoUrl').textContent = sanitizeHTML(bubble.url);
+  document.getElementById('infoTags').innerHTML = (bubble.tags || []).map(t => `<span class="tag">#${sanitizeHTML(t)}</span>`).join('');
+  document.getElementById('infoNotes').textContent = sanitizeHTML(bubble.notes) || 'No notes added yet.';
   document.getElementById('discoverInfo').style.display = 'block';
 }
 
@@ -4024,7 +4041,7 @@ async function addLink() {
     fetchMetadata(url)
   ]);
   
-const newCard = {
+  const newCard = {
     id: Date.now(),
     url: url,
     screenshot: screenshotResult.url,
@@ -4038,7 +4055,7 @@ const newCard = {
     photos: [],
     comments: [],
     starred: false,
-    isPrivate: localStorage.getItem('linkgrid-default-card-private') === 'true',
+    isPrivate: localStorage.getItem('linkgrid-default-card-private') === 'true',  // Respect default
     metadata: metadata,
     createdAt: new Date().toISOString(),
     lastEdited: new Date().toISOString(),
@@ -4158,7 +4175,7 @@ function renderTags() {
   const container = document.getElementById('tagsContainer');
   if (!card || !container) return;
   container.innerHTML = card.tags.map(tag => `
-    <span class="tag" onclick="removeTag('${tag}')" title="Click to remove">${tag} ×</span>
+    <span class="tag" onclick="removeTag('${sanitizeHTML(tag)}')" title="Click to remove">${sanitizeHTML(tag)} ×</span>
   `).join('');
 }
 
@@ -4243,16 +4260,15 @@ function renderEditComments() {
   container.innerHTML = card.comments.map(c => `
     <div class="edit-comment">
       <div class="edit-comment-header">
-        <span class="edit-comment-author">${c.author}</span>
+        <span class="edit-comment-author">${sanitizeHTML(c.author)}</span>
         <span>
           <span class="edit-comment-time">${getRelativeTime(c.timestamp)}</span>
           <button class="edit-comment-delete" onclick="deleteComment(${c.id})">×</button>
         </span>
       </div>
-      <div class="edit-comment-text">${c.text}</div>
+      <div class="edit-comment-text">${sanitizeHTML(c.text)}</div>
     </div>
   `).join('');
-}
 
 // Add comment from input field
 async function addCommentFromInput() {
@@ -4454,12 +4470,12 @@ function renderGrid() {
 		  </div>
         </div>
         <div class="card-content">
-          <h3 class="card-title">${card.title}</h3>
-          <p class="card-url">${card.url}</p>
-          ${card.location ? `<div class="card-location">📍 ${card.location}</div>` : ''}
-          ${card.notes ? `<p class="card-notes">${card.notes}</p>` : ''}
-          ${card.tags?.length ? `<div class="card-tags">${card.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>` : ''}
-          <div class="card-meta"><span>👤 ${showContributors ? (card.addedBy||'Unknown') : 'Anonymous'}</span></div>
+          <h3 class="card-title">${sanitizeHTML(card.title)}</h3>
+          <p class="card-url">${sanitizeHTML(card.url)}</p>
+          ${card.location ? `<div class="card-location">📍 ${sanitizeHTML(card.location)}</div>` : ''}
+          ${card.notes ? `<p class="card-notes">${sanitizeHTML(card.notes)}</p>` : ''}
+          ${card.tags?.length ? `<div class="card-tags">${card.tags.map(t=>`<span class="tag">${sanitizeHTML(t)}</span>`).join('')}</div>` : ''}
+          <div class="card-meta"><span>👤 ${showContributors ? sanitizeHTML(card.addedBy||'Unknown') : 'Anonymous'}</span></div>
         </div>
         ${!compact ? `<div class="card-footer">
           <button class="btn btn-ghost" onclick="event.stopPropagation();toggleCard(${card.id})">▲</button>
@@ -4595,7 +4611,7 @@ function renderCollectionsList() {
   el.innerHTML = collections.map(c => `
     <div style="background:var(--bg-elevated);padding:1rem;border-radius:var(--radius-md);margin-bottom:0.75rem;border-left:4px solid ${c.color||'var(--accent)'}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-        <strong>${c.emoji||'📁'} ${c.name}</strong>
+        <strong>${c.emoji||'📁'} ${sanitizeHTML(c.name)}</strong>
         <button onclick="deleteCollection('${c.id}')" style="background:transparent;border:none;color:var(--danger);cursor:pointer">🗑</button>
       </div>
       <div style="font-size:0.8rem;color:var(--text-2)">${c.cardIds?.length||0} links</div>
@@ -5009,10 +5025,22 @@ function openSettings() {
   // Show appropriate auth section
   const cloudSection = document.getElementById('cloudSyncSection');
   const signInSection = document.getElementById('settingsSignInSection');
+  
   if (currentUser) {
-    if (cloudSection) { cloudSection.style.display = 'block'; document.getElementById('userEmailDisplay').textContent = currentUser.email; }
+    // User is logged in
+    if (cloudSection) {
+      cloudSection.style.display = 'block';
+      document.getElementById('userEmailDisplay').textContent = currentUser.email;
+      
+      // Show last sync time
+      const lastSyncEl = document.getElementById('lastSyncDisplay');
+      if (lastSyncEl && lastSyncTime) {
+        lastSyncEl.textContent = `Last sync: ${getRelativeTime(lastSyncTime.toISOString())}`;
+      }
+    }
     if (signInSection) signInSection.style.display = 'none';
   } else {
+    // User is not logged in
     if (cloudSection) cloudSection.style.display = 'none';
     if (signInSection) signInSection.style.display = 'block';
   }
@@ -5075,7 +5103,7 @@ function updateContributorList() {
   if (!el) return;
   if (!showContributors) { el.innerHTML = '<div style="opacity:0.6">Privacy mode enabled</div>'; return; }
   if (!sorted.length) { el.innerHTML = '<div style="opacity:0.6">No contributors yet</div>'; return; }
-  el.innerHTML = sorted.map(([name, s], i) => `<div style="display:flex;justify-content:space-between;padding:0.5rem 0;${i > 0 ? 'border-top:1px solid var(--border-subtle);' : ''}"><span>#${i + 1} <strong>${name}</strong></span><span style="opacity:0.7;font-size:0.75rem;">${s.links} links</span></div>`).join('');
+  el.innerHTML = sorted.map(([name, s], i) => `<div style="display:flex;justify-content:space-between;padding:0.5rem 0;${i > 0 ? 'border-top:1px solid var(--border-subtle);' : ''}"><span>#${i + 1} <strong>${sanitizeHTML(name)}</strong></span><span style="opacity:0.7;font-size:0.75rem;">${s.links} links</span></div>`).join('');
 }
 
 function openCommunity() { document.getElementById('communityModal').classList.add('active'); updateCommunityData(); }
@@ -5093,55 +5121,208 @@ function updateCommunityData() {
   const el4 = document.getElementById('statsComments'); if (el4) el4.textContent = totalComments;
 }
 
+
+// Privacy settings
+let profilePublic = false;
+let defaultCardPrivate = false;
+
+function toggleProfilePublic() {
+  profilePublic = document.getElementById('profilePublicToggle').checked;
+  localStorage.setItem('linkgrid-profile-public', profilePublic);
+  showToast(profilePublic ? '🌐 Profile is now public' : '🔒 Profile is now private', 'success');
+}
+
+function toggleDefaultCardPrivate() {
+  defaultCardPrivate = document.getElementById('defaultCardPrivateToggle').checked;
+  localStorage.setItem('linkgrid-default-card-private', defaultCardPrivate);
+  showToast(defaultCardPrivate ? '🔒 New cards will be private' : '🌐 New cards will be public', 'success');
+}
+
+function toggleCardPrivacy(cardId) {
+  const card = cards.find(c => c.id === cardId);
+  if (!card) return;
+  card.isPrivate = !card.isPrivate;
+  saveCards();
+  renderGrid();
+  showToast(card.isPrivate ? '🔒 Card is now private' : '🌐 Card is now public', 'success');
+}
+
+function toggleCollectionPrivacy(collectionId) {
+  const col = collections.find(c => c.id === collectionId);
+  if (!col) return;
+  col.isPrivate = !col.isPrivate;
+  saveCollections();
+  renderCollectionsList();
+  showToast(col.isPrivate ? '🔒 Collection is now private' : '🌐 Collection is now public', 'success');
+}
+
 // ============== SUPABASE AUTH ==============
 async function initSupabase() {
   if (typeof supabase === 'undefined' || !SUPABASE_URL || !SUPABASE_ANON_KEY) return false;
+  
   try {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Check for auth callback in URL (magic link redirect)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token');
+    
+    if (accessToken && refreshToken) {
+      // Set the session from the URL tokens
+      const { data, error } = await supabaseClient.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      });
+      
+      if (error) {
+        console.error('Auth callback error:', error);
+        showToast('Sign in failed: ' + error.message, 'error');
+      } else if (data.session) {
+        currentUser = data.session.user;
+        // Clear the hash from URL
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        onUserLoggedIn();
+        return true;
+      }
+    }
+    
+    // Check for error in URL (expired link, etc.)
+    const errorCode = hashParams.get('error_code');
+    const errorDesc = hashParams.get('error_description');
+    if (errorCode) {
+      console.error('Auth error:', errorCode, errorDesc);
+      showToast('Sign in failed: ' + (errorDesc?.replace(/\+/g, ' ') || errorCode), 'error');
+      // Clear the hash
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    
+    // Check for existing session
     const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) { currentUser = session.user; onUserLoggedIn(); }
-    else { setTimeout(() => document.getElementById('authModal')?.classList.add('active'), 500); }
+    if (session) { 
+      currentUser = session.user; 
+      onUserLoggedIn(); 
+    } else { 
+      // Show auth modal after a brief delay
+      setTimeout(() => document.getElementById('authModal')?.classList.add('active'), 500); 
+    }
+    
+    // Listen for auth state changes
     supabaseClient.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) { currentUser = session.user; onUserLoggedIn(); }
-      else if (event === 'SIGNED_OUT') { currentUser = null; }
+      console.log('Auth state changed:', event);
+      if (event === 'SIGNED_IN' && session) { 
+        currentUser = session.user; 
+        onUserLoggedIn(); 
+      } else if (event === 'SIGNED_OUT') { 
+        currentUser = null;
+        cloudSyncEnabled = false;
+      }
     });
+    
     return true;
-  } catch (e) { console.error('Supabase error:', e); return false; }
+  } catch (e) { 
+    console.error('Supabase init error:', e); 
+    return false; 
+  }
 }
 
 async function sendMagicLink() {
   const email = document.getElementById('authEmail').value.trim();
   const status = document.getElementById('authStatus');
   const btn = document.getElementById('sendMagicLinkBtn');
-  if (!email || !email.includes('@')) { if (status) { status.textContent = '❌ Enter valid email'; status.style.color = 'var(--danger)'; } return; }
-  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
-  if (status) { status.textContent = '📧 Sending...'; status.style.color = 'var(--accent)'; }
+  
+  if (!email || !email.includes('@')) { 
+    if (status) { 
+      status.textContent = '❌ Enter valid email'; 
+      status.style.color = 'var(--danger)'; 
+    } 
+    return; 
+  }
+  
+  if (btn) { 
+    btn.disabled = true; 
+    btn.textContent = 'Sending...'; 
+  }
+  if (status) { 
+    status.textContent = '📧 Sending...'; 
+    status.style.color = 'var(--accent)'; 
+  }
+  
   try {
-    const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+    // Use current page URL as redirect
+    const redirectUrl = window.location.href.split('#')[0].split('?')[0];
+    
+    const { error } = await supabaseClient.auth.signInWithOtp({ 
+      email, 
+      options: { 
+        emailRedirectTo: redirectUrl
+      } 
+    });
+    
     if (error) throw error;
-    if (status) { status.textContent = '✅ Check your email!'; status.style.color = 'var(--success)'; }
+    
+    if (status) { 
+      status.textContent = '✅ Check your email!'; 
+      status.style.color = 'var(--success)'; 
+    }
+    if (btn) {
+      btn.textContent = '✅ Email Sent!';
+    }
     document.getElementById('authEmail').value = '';
+    
   } catch (e) {
-    if (status) { status.textContent = '❌ ' + e.message; status.style.color = 'var(--danger)'; }
-    if (btn) { btn.disabled = false; btn.textContent = '📧 Send Magic Link'; }
+    console.error('Magic link error:', e);
+    if (status) { 
+      status.textContent = '❌ ' + e.message; 
+      status.style.color = 'var(--danger)'; 
+    }
+    if (btn) { 
+      btn.disabled = false; 
+      btn.textContent = '📧 Send Magic Link'; 
+    }
   }
 }
 
 async function sendMagicLinkFromSettings() {
   const email = document.getElementById('settingsAuthEmail')?.value.trim();
   const status = document.getElementById('settingsAuthStatus');
+  
   if (!email || !email.includes('@')) { 
-    if (status) { status.textContent = '❌ Enter valid email'; status.style.color = 'var(--danger)'; } 
+    if (status) { 
+      status.textContent = '❌ Enter valid email'; 
+      status.style.color = 'var(--danger)'; 
+    } 
     return; 
   }
-  if (status) { status.textContent = '📧 Sending...'; status.style.color = 'var(--accent)'; }
+  
+  if (status) { 
+    status.textContent = '📧 Sending...'; 
+    status.style.color = 'var(--accent)'; 
+  }
+  
   try {
-    const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+    const redirectUrl = window.location.href.split('#')[0].split('?')[0];
+    
+    const { error } = await supabaseClient.auth.signInWithOtp({ 
+      email, 
+      options: { 
+        emailRedirectTo: redirectUrl
+      } 
+    });
+    
     if (error) throw error;
-    if (status) { status.textContent = '✅ Check your email!'; status.style.color = 'var(--success)'; }
+    
+    if (status) { 
+      status.textContent = '✅ Check your email!'; 
+      status.style.color = 'var(--success)'; 
+    }
     document.getElementById('settingsAuthEmail').value = '';
+    
   } catch (e) { 
-    if (status) { status.textContent = '❌ ' + e.message; status.style.color = 'var(--danger)'; } 
+    if (status) { 
+      status.textContent = '❌ ' + e.message; 
+      status.style.color = 'var(--danger)'; 
+    } 
   }
 }
 
