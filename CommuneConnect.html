@@ -1,0 +1,5243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CommuneCollab</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-primary: #0d0d0f;
+      --bg-secondary: #141418;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --bg-card-hover: rgba(255, 255, 255, 0.06);
+      --bg-elevated: rgba(255, 255, 255, 0.05);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-medium: rgba(255, 255, 255, 0.12);
+      --accent: #6366f1;
+      --accent-2: #8b5cf6;
+      --accent-glow: rgba(99, 102, 241, 0.3);
+      --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-1: #f4f4f5;
+      --text-2: #a1a1aa;
+      --text-3: #71717a;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-1);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 13, 15, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .header-main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .logo h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logo-sub { font-size: 0.7rem; color: var(--text-3); margin-top: 2px; }
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .btn-icon {
+      width: 40px; height: 40px; padding: 0;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-2);
+      border-radius: var(--radius-md);
+    }
+    .btn-icon:hover { background: var(--bg-card-hover); color: var(--text-1); }
+    .btn-primary {
+      background: var(--gradient);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
+    .btn-secondary {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-1);
+    }
+    .btn-secondary:hover { background: var(--bg-card-hover); border-color: var(--border-medium); }
+    .btn-ghost { background: transparent; color: var(--text-2); }
+    .btn-ghost:hover { background: var(--bg-elevated); color: var(--text-1); }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
+    .btn-add { width: 44px; height: 44px; font-size: 1.5rem; padding: 0; }
+    .header-expand {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+      max-height: 500px;
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+    .header-expand.collapsed { max-height: 0; }
+    .header-expand-inner { padding: 1rem 0; display: flex; flex-direction: column; gap: 1rem; }
+    .search-box { position: relative; }
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.75rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-1);
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+    .search-input::placeholder { color: var(--text-3); }
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-3);
+    }
+    .filter-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .filter-select {
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-1);
+      font-size: 0.8rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .chips { display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.25rem 0; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip {
+      padding: 0.5rem 1rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      font-size: 0.8rem;
+      color: var(--text-2);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .chip:hover { background: var(--bg-card-hover); color: var(--text-1); }
+    .chip.active { background: var(--gradient); border-color: transparent; color: white; font-weight: 500; }
+    .sort-tabs {
+      display: flex;
+      gap: 0.25rem;
+      background: var(--bg-elevated);
+      padding: 0.25rem;
+      border-radius: var(--radius-md);
+      width: fit-content;
+    }
+    .sort-tab {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-2);
+      font-size: 0.8rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .sort-tab:hover { color: var(--text-1); }
+    .sort-tab.active { background: var(--bg-card-hover); color: var(--text-1); font-weight: 500; }
+    .action-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .action-bar .btn { flex: 1; min-width: 100px; font-size: 0.75rem; padding: 0.5rem 0.75rem; }
+    .collapse-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      background: transparent;
+      border: none;
+      border-top: 1px solid var(--border-subtle);
+      color: var(--text-3);
+      font-size: 0.75rem;
+      font-family: inherit;
+      cursor: pointer;
+      width: 100%;
+    }
+    .grid {
+	  max-width: 1400px;
+	  margin: 0 auto;
+	  padding: 1.5rem 1.25rem;
+	  display: grid;
+	  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	  gap: 1.25rem;
+	  position: relative;
+	  z-index: 1;
+	  align-items: start;
+	}
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; padding: 1rem; } }
+    .card {
+	  background: var(--bg-card);
+	  border: 1px solid var(--border-subtle);
+	  border-radius: var(--radius-lg);
+	  overflow: hidden;
+	  cursor: pointer;
+	  transition: all 0.25s ease;
+	  position: relative;
+	  display: flex;
+	  flex-direction: column;
+	}
+    .card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-medium);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .card-image {
+      width: 100%;
+      height: 180px;
+      overflow: hidden;
+      background: var(--bg-secondary);
+      position: relative;
+    }
+    .card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.25s ease;
+    }
+    .card:hover .card-image img { transform: scale(1.02); }
+    .card-badges {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      right: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .badge {
+      padding: 0.25rem 0.5rem;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: white;
+    }
+    .badge-vote { background: rgba(16, 185, 129, 0.9); }
+    .badge-vote.negative { background: rgba(239, 68, 68, 0.9); }
+    .card-star {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      width: 32px; height: 32px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-2);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+    }
+    .card-star:hover { background: rgba(0, 0, 0, 0.8); color: var(--warning); }
+    .card-star.active { color: var(--warning); }
+    .card-content { padding: 1rem; flex: 1; display: flex; flex-direction: column; }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.375rem;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-url {
+      font-size: 0.75rem;
+      color: var(--text-3);
+      margin-bottom: 0.5rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-notes {
+      font-size: 0.8rem;
+      color: var(--text-2);
+      margin-bottom: 0.75rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.75rem; }
+    .tag {
+      padding: 0.2rem 0.5rem;
+      background: rgba(99, 102, 241, 0.15);
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .card-meta {
+	  display: flex;
+	  align-items: center;
+	  justify-content: space-between;
+	  font-size: 0.7rem;
+	  color: var(--text-3);
+	  margin-top: auto;
+	}
+    .card-location {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(16, 185, 129, 0.1);
+      border-radius: var(--radius-sm);
+      color: var(--success);
+      font-size: 0.7rem;
+      margin-bottom: 0.5rem;
+    }
+    .card-footer {
+	  display: flex;
+	  gap: 0.5rem;
+	  padding: 0.75rem 1rem;
+	  background: rgba(0, 0, 0, 0.2);
+	  border-top: 1px solid var(--border-subtle);
+	  margin-top: auto;
+	}
+    .card-footer .btn { flex: 1; padding: 0.5rem; font-size: 0.7rem; }
+    .card.compact { display: flex; align-items: center; padding: 0.75rem 1rem; }
+    .card.compact .card-image,
+    .card.compact .card-footer,
+    .card.compact .card-notes,
+    .card.compact .card-tags,
+    .card.compact .card-location,
+    .card.compact .card-url { display: none; }
+    .card.compact .card-content { flex: 1; padding: 0; display: flex; align-items: center; gap: 0.75rem; }
+    .card.compact .card-title { flex: 1; margin: 0; }
+    .collection-badges { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem; }
+    .collection-badge { padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.6rem; font-weight: 500; }
+    .empty-state { grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; }
+    .empty-icon { font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5; }
+    .empty-state h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .empty-state p { color: var(--text-2); margin-bottom: 1.5rem; }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    .modal.active { display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 1.5rem;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .modal-title { font-size: 1.25rem; font-weight: 600; }
+    .modal-close {
+      width: 36px; height: 36px;
+      background: var(--bg-elevated);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-2);
+      font-size: 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* ========== TWO-COLUMN EDIT MODAL ========== */
+    .modal-content.edit-modal {
+      max-width: 1100px;
+      max-height: 92vh;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .edit-modal .modal-header {
+      padding: 1.25rem 1.75rem;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+    
+    .edit-modal-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+    
+    .edit-modal-left {
+      width: 38%;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      border-right: 1px solid var(--border-subtle);
+      overflow-y: auto;
+    }
+    
+    .edit-modal-right {
+      width: 62%;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+    }
+    
+    .edit-modal-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(0, 0, 0, 0.2);
+      flex-shrink: 0;
+    }
+    
+    .edit-modal-footer .info-text {
+      font-size: 0.75rem;
+      color: var(--text-3);
+    }
+
+    /* Image Section - Larger */
+    .edit-image-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+    }
+    
+    /* Notes - Much larger */
+    .edit-modal .form-textarea {
+      min-height: 140px;
+      max-height: 200px;
+      resize: vertical;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    
+    /* Collapsible sections - More space when expanded */
+    .edit-collapsible-content {
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 1rem;
+      border-top: 1px solid var(--border-subtle);
+      transition: max-height 0.25s ease, padding 0.25s ease;
+    }
+    
+    .edit-collapsible-content.collapsed {
+      max-height: 0;
+      padding: 0 1rem;
+      border-top: none;
+      overflow: hidden;
+    }
+    
+    /* Comments - Better spacing */
+    .edit-comment {
+      padding: 0.75rem;
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      margin-bottom: 0.75rem;
+    }
+    
+    .edit-comment-text {
+      font-size: 0.85rem;
+      color: var(--text-2);
+      line-height: 1.5;
+    }
+    
+    .edit-comment-input-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+    
+    .edit-comment-input-row input {
+      flex: 1;
+      padding: 0.6rem 0.85rem;
+      font-size: 0.85rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-1);
+    }
+    
+    .edit-comment-input-row .btn {
+      padding: 0.6rem 1rem;
+      font-size: 0.8rem;
+    }
+
+    /* Photo grid - Larger thumbnails */
+    .edit-photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 0.75rem;
+    }
+    
+    /* Vote row - More prominent */
+    .edit-vote-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+    }
+    
+    .edit-vote-row .vote-btn {
+      width: 50px;
+      height: 50px;
+      font-size: 1.25rem;
+    }
+    
+    .edit-vote-row .vote-score {
+      font-size: 1.75rem;
+      font-weight: 700;
+      min-width: 70px;
+      text-align: center;
+    }
+    
+    /* Tags section - Better layout */
+    .edit-tags-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    
+    .edit-tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    
+    .edit-tags-row .tag {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.8rem;
+    }
+    
+    .edit-tags-input {
+      flex: 1;
+      min-width: 120px;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.8rem;
+    }
+    
+    /* URL link - More visible */
+    .edit-url-link {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-all;
+      padding: 0.5rem 0;
+    }
+    
+    /* Share buttons - Slightly larger */
+    .share-buttons .btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      font-size: 1rem;
+    }
+    
+    /* Collapsible headers - Better touch targets */
+    .edit-collapsible-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1rem;
+      background: var(--bg-elevated);
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* Mobile Responsive - Updated breakpoint */
+    @media (max-width: 800px) {
+      .edit-modal-body {
+        flex-direction: column;
+      }
+      
+      .edit-modal-left,
+      .edit-modal-right {
+        width: 100%;
+        border-right: none;
+      }
+      
+      .edit-modal-left {
+        border-bottom: 1px solid var(--border-subtle);
+        max-height: 40vh;
+      }
+      
+      .edit-image-container {
+        aspect-ratio: 16/9;
+      }
+      
+      .modal-content.edit-modal {
+        max-height: 95vh;
+      }
+      
+      .edit-modal .form-textarea {
+        min-height: 100px;
+      }
+    }
+    
+    /* Location with inline button */
+    .location-input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .location-input-row .form-input {
+      flex: 1;
+    }
+    
+    .location-input-row .btn {
+      padding: 0.6rem 0.75rem;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    
+    /* Compact Vote Row */
+    .edit-vote-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+    }
+    
+    .edit-vote-row .vote-btn {
+      width: 44px;
+      height: 44px;
+      font-size: 1.1rem;
+    }
+    
+    .edit-vote-row .vote-score {
+      font-size: 1.5rem;
+      font-weight: 700;
+      min-width: 60px;
+      text-align: center;
+    }
+    
+    /* Tags Section */
+    .edit-tags-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .edit-tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      align-items: center;
+    }
+    
+    .edit-tags-row .tag {
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    
+    .edit-tags-row .tag:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+    }
+    
+    .edit-tags-input {
+      flex: 1;
+      min-width: 100px;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-1);
+    }
+    
+    .edit-tags-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    /* Privacy & Share Row */
+    .edit-actions-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      flex-wrap: wrap;
+    }
+    
+    .privacy-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-2);
+      cursor: pointer;
+    }
+    
+    .privacy-toggle input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+    
+    .share-buttons {
+      display: flex;
+      gap: 0.25rem;
+      margin-left: auto;
+    }
+    
+    .share-buttons .btn {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      font-size: 0.9rem;
+    }
+    
+    /* Compact Collapsible Sections */
+    .edit-collapsible {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    
+    .edit-collapsible-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg-elevated);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: background 0.15s ease;
+    }
+    
+    .edit-collapsible-header:hover {
+      background: var(--bg-card-hover);
+    }
+    
+    .edit-collapsible-header .count {
+      color: var(--text-3);
+      font-weight: 400;
+    }
+    
+    .edit-collapsible-header .toggle-icon {
+      color: var(--text-3);
+      font-size: 0.7rem;
+      transition: transform 0.2s ease;
+    }
+    
+    .edit-collapsible-header.collapsed .toggle-icon {
+      transform: rotate(-90deg);
+    }
+    
+    .edit-collapsible-content {
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 0.75rem;
+      border-top: 1px solid var(--border-subtle);
+      transition: max-height 0.25s ease, padding 0.25s ease;
+    }
+    
+    .edit-collapsible-content.collapsed {
+      max-height: 0;
+      padding: 0 0.75rem;
+      border-top: none;
+      overflow: hidden;
+    }
+    
+    /* Photo Grid in Collapsible */
+    .edit-photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: 0.5rem;
+    }
+    
+    .edit-photo-item {
+      aspect-ratio: 1;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--border-subtle);
+    }
+    
+    .edit-photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .edit-photo-item .delete-btn {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 18px;
+      height: 18px;
+      background: var(--danger);
+      border: none;
+      border-radius: 3px;
+      color: white;
+      font-size: 0.65rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    
+    .edit-photo-item:hover .delete-btn {
+      opacity: 1;
+    }
+    
+    .edit-photo-add {
+      aspect-ratio: 1;
+      border: 2px dashed var(--border-medium);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-3);
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    
+    .edit-photo-add:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(99, 102, 241, 0.05);
+    }
+    
+    /* Comments in Collapsible */
+    .edit-comment {
+      padding: 0.5rem;
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.5rem;
+    }
+    
+    .edit-comment:last-of-type {
+      margin-bottom: 0;
+    }
+    
+    .edit-comment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.25rem;
+    }
+    
+    .edit-comment-author {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    
+    .edit-comment-time {
+      font-size: 0.6rem;
+      color: var(--text-3);
+    }
+    
+    .edit-comment-text {
+      font-size: 0.75rem;
+      color: var(--text-2);
+      line-height: 1.4;
+    }
+    
+    .edit-comment-delete {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      font-size: 0.65rem;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 0.5rem;
+    }
+    
+    .edit-comment-input-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+    
+    .edit-comment-input-row input {
+      flex: 1;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.75rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-1);
+    }
+    
+    .edit-comment-input-row .btn {
+      padding: 0.4rem 0.75rem;
+      font-size: 0.7rem;
+    }
+    
+    /* URL Link Style */
+    .edit-url-link {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-all;
+      padding: 0.4rem 0;
+    }
+    
+    .edit-url-link:hover {
+      text-decoration: underline;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 700px) {
+      .edit-modal-body {
+        flex-direction: column;
+      }
+      
+      .edit-modal-left,
+      .edit-modal-right {
+        width: 100%;
+        border-right: none;
+      }
+      
+      .edit-modal-left {
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      
+      .edit-image-container {
+        aspect-ratio: 16/9;
+      }
+      
+      .modal-content.edit-modal {
+        max-height: 95vh;
+      }
+    }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { display: block; font-size: 0.75rem; font-weight: 500; color: var(--text-2); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-1);
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+    .form-textarea { resize: vertical; min-height: 100px; }
+    .section { margin-bottom: 1rem; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+    }
+    .section-title { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; }
+    .section-toggle { color: var(--text-3); font-size: 0.75rem; transition: transform 0.15s ease; }
+    .section-toggle.collapsed { transform: rotate(-90deg); }
+    .section-content { padding: 1rem 0; max-height: 500px; overflow: hidden; transition: all 0.25s ease; }
+    .section-content.collapsed { max-height: 0; padding: 0; }
+    .vote-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-elevated); border-radius: var(--radius-md); margin-bottom: 1rem; }
+    .vote-btn {
+      width: 40px; height: 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-2);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .vote-btn.upvoted { background: rgba(16, 185, 129, 0.2); border-color: var(--success); color: var(--success); }
+    .vote-btn.downvoted { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: var(--danger); }
+    .vote-score { font-size: 1.25rem; font-weight: 600; min-width: 50px; text-align: center; }
+    .vote-score.positive { color: var(--success); }
+    .vote-score.negative { color: var(--danger); }
+    .tabs { display: flex; gap: 0.25rem; padding: 0.25rem; background: var(--bg-elevated); border-radius: var(--radius-md); margin-bottom: 1.5rem; }
+    .tab { flex: 1; padding: 0.75rem; background: transparent; border: none; border-radius: var(--radius-sm); color: var(--text-2); font-size: 0.8rem; font-weight: 500; font-family: inherit; cursor: pointer; }
+    .tab.active { background: var(--gradient); color: white; }
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-medium);
+      color: var(--text-1);
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      z-index: 10000;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { background: var(--success); border-color: var(--success); }
+    .toast.error { background: var(--danger); border-color: var(--danger); }
+    .upload-zone {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      border: 2px dashed var(--border-medium);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+      background: var(--bg-elevated);
+      overflow: hidden;
+    }
+    .upload-zone:hover { border-color: var(--accent); background: rgba(99, 102, 241, 0.05); }
+    .upload-zone.has-image { border-style: solid; }
+    .upload-zone img { width: 100%; height: 100%; object-fit: cover; }
+    .upload-prompt { text-align: center; color: var(--text-3); }
+    .upload-prompt-icon { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.5rem; margin-bottom: 1rem; }
+    .gallery-item { position: relative; aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-subtle); }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+    .gallery-delete { position: absolute; top: 0.25rem; right: 0.25rem; width: 20px; height: 20px; background: var(--danger); border: none; border-radius: 4px; color: white; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .comment { padding: 0.75rem; background: var(--bg-elevated); border-radius: var(--radius-md); margin-bottom: 0.5rem; }
+    .comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.375rem; }
+    .comment-author { font-size: 0.75rem; font-weight: 600; color: var(--accent); }
+    .comment-time { font-size: 0.65rem; color: var(--text-3); }
+    .comment-text { font-size: 0.8rem; color: var(--text-2); line-height: 1.5; }
+    .share-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .share-btn { padding: 0.75rem; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-1); font-size: 0.75rem; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+    .url-link { display: block; padding: 0.75rem 1rem; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--accent); text-decoration: none; font-size: 0.8rem; word-break: break-all; }
+    .info-box { padding: 0.75rem 1rem; background: var(--bg-elevated); border-radius: var(--radius-md); font-size: 0.75rem; color: var(--text-3); margin-bottom: 1rem; line-height: 1.6; }
+    .promo-banner { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem; }
+    .promo-banner strong { color: var(--text-1); }
+    .promo-banner p { color: var(--text-2); font-size: 0.8rem; margin-top: 0.25rem; }
+    .thought-preview { padding: 2rem 1.5rem; border-radius: var(--radius-lg); min-height: 150px; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3); margin-bottom: 1rem; }
+    .thought-preview-title { font-size: 1.1rem; font-weight: 600; color: white; margin-bottom: 0.75rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+    .thought-preview-content { color: rgba(255,255,255,0.95); font-size: 0.875rem; white-space: pre-wrap; line-height: 1.6; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+    .bulk-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--gradient); padding: 1rem; z-index: 1000; box-shadow: 0 -4px 20px rgba(0,0,0,0.3); display: none; }
+    .bulk-bar.active { display: block; }
+    .bulk-bar-inner { max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.5rem; }
+    .bulk-bar-row { display: flex; gap: 0.5rem; }
+    .bulk-bar .btn { flex: 1; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .stat-item { background: var(--bg-elevated); padding: 1rem; border-radius: var(--radius-md); }
+    .stat-label { font-size: 0.7rem; color: var(--text-3); margin-bottom: 0.25rem; }
+    .stat-value { font-size: 1.5rem; font-weight: 700; }
+    .contributor-list { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 0.75rem; max-height: 250px; overflow-y: auto; }
+    .contributor-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-subtle); }
+    .contributor-item:last-child { border-bottom: none; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-elevated); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 3px; }
+    /* Discover Bubble View Styles */
+    /* ========== DISCOVER BUBBLE VIEW STYLES ========== */
+    .discover-view {
+      position: fixed;
+      inset: 0;
+      background: #050508;
+      z-index: 900;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .discover-view.active {
+      display: flex;
+    }
+
+    .discover-header {
+      padding: 1rem 1.25rem;
+      background: rgba(5, 5, 8, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      position: relative;
+    }
+
+    .discover-canvas {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      background: #050508;
+    }
+
+    /* Cosmic background layers */
+    .discover-canvas::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 80% 50% at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 30% 30%, rgba(139, 92, 246, 0.06) 0%, transparent 40%),
+        radial-gradient(ellipse 50% 50% at 70% 70%, rgba(236, 72, 153, 0.04) 0%, transparent 40%);
+      pointer-events: none;
+      animation: cosmicPulse 15s ease-in-out infinite;
+    }
+
+    @keyframes cosmicPulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    /* Star field background */
+    .star-field {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
+      border-radius: 50%;
+      animation: starTwinkle var(--duration) ease-in-out infinite;
+      opacity: var(--opacity);
+    }
+
+    @keyframes starTwinkle {
+      0%, 100% { opacity: var(--opacity); transform: scale(1); }
+      50% { opacity: calc(var(--opacity) * 0.3); transform: scale(0.8); }
+    }
+
+    /* Ambient particles */
+    .ambient-particles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: particleFloat var(--duration) ease-in-out infinite;
+      opacity: 0.4;
+    }
+
+    @keyframes particleFloat {
+      0%, 100% { 
+        transform: translate(0, 0) scale(1); 
+        opacity: 0.4;
+      }
+      25% { 
+        transform: translate(var(--dx), var(--dy)) scale(1.2); 
+        opacity: 0.6;
+      }
+      50% { 
+        transform: translate(calc(var(--dx) * -0.5), calc(var(--dy) * 1.5)) scale(0.8); 
+        opacity: 0.3;
+      }
+      75% { 
+        transform: translate(calc(var(--dx) * 0.8), calc(var(--dy) * -0.5)) scale(1.1); 
+        opacity: 0.5;
+      }
+    }
+
+    .bubble-container {
+      position: absolute;
+      inset: 0;
+      overflow: visible;
+    }
+
+    /* ========== BUBBLE CARD STYLES ========== */
+    .bubble-card {
+      position: absolute;
+      background: rgba(15, 15, 20, 0.9);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      width: 240px;
+      overflow: hidden;
+      box-shadow: 
+        0 4px 24px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+      transition: 
+        transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.4s ease,
+        border-color 0.3s ease,
+        opacity 0.4s ease;
+      will-change: transform;
+      transform-origin: center center;
+    }
+
+    /* Glow effect layer */
+    .bubble-card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, 
+        rgba(99, 102, 241, 0.2) 0%, 
+        transparent 50%,
+        rgba(139, 92, 246, 0.1) 100%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .bubble-card:hover::before {
+      opacity: 1;
+    }
+
+    /* Breathing animation */
+    .bubble-card.breathing {
+      animation: cardBreathe 4s ease-in-out infinite;
+      animation-delay: var(--breath-delay, 0s);
+    }
+
+    @keyframes cardBreathe {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-3px) scale(1.005); }
+    }
+
+    /* Hover state */
+    .bubble-card:hover {
+      transform: translateY(-8px) scale(1.03) !important;
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(99, 102, 241, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+      z-index: 100 !important;
+      animation: none !important;
+    }
+
+    /* Magnetic push effect on nearby cards */
+    .bubble-card.pushed {
+      transition: transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
+    }
+
+    /* Selected state */
+    .bubble-card.selected {
+      border-color: var(--accent);
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 2px rgba(99, 102, 241, 0.5),
+        0 0 50px rgba(99, 102, 241, 0.2);
+      z-index: 200 !important;
+      animation: none !important;
+    }
+
+    .bubble-card.selected::before {
+      opacity: 1;
+      background: linear-gradient(135deg, 
+        rgba(99, 102, 241, 0.3) 0%, 
+        rgba(139, 92, 246, 0.2) 100%);
+    }
+
+    /* Related cards */
+    .bubble-card.related {
+      border-color: rgba(139, 92, 246, 0.5);
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 25px rgba(139, 92, 246, 0.15);
+      animation: relatedPulse 2s ease-in-out infinite !important;
+    }
+
+    @keyframes relatedPulse {
+      0%, 100% { box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 25px rgba(139,92,246,0.15); }
+      50% { box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 40px rgba(139,92,246,0.25); }
+    }
+
+    /* Center card special styling */
+    .bubble-card.center-card {
+      width: 280px;
+      border: 2px solid rgba(99, 102, 241, 0.5);
+      box-shadow: 
+        0 8px 40px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(99, 102, 241, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      z-index: 50;
+    }
+
+    .bubble-card.center-card::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(139, 92, 246, 0.4));
+      z-index: -2;
+      opacity: 0.5;
+      filter: blur(8px);
+      animation: centerGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes centerGlow {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.02); }
+    }
+
+    /* Depth-based styling */
+    .bubble-card[data-depth="1"] {
+      opacity: 0.95;
+    }
+
+    .bubble-card[data-depth="2"] {
+      opacity: 0.8;
+      filter: blur(0.3px);
+    }
+
+    .bubble-card[data-depth="3"] {
+      opacity: 0.65;
+      filter: blur(0.6px);
+    }
+
+    .bubble-card[data-depth="4"] {
+      opacity: 0.5;
+      filter: blur(1px);
+    }
+
+    /* Guide card styling */
+    .bubble-card.guide-card {
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .bubble-card.guide-card .guide-badge {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+      font-weight: 600;
+    }
+
+    /* Card internal elements */
+    .bubble-card-image {
+      width: 100%;
+      height: 120px;
+      overflow: hidden;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%);
+      position: relative;
+    }
+
+    .bubble-card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .bubble-card:hover .bubble-card-image img {
+      transform: scale(1.08);
+    }
+
+    .bubble-card-image-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 0.5rem;
+      background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 60%);
+    }
+
+    .bubble-badge {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.65rem;
+      color: white;
+      font-weight: 500;
+    }
+
+    .bubble-star-btn {
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      border: none;
+      padding: 0.3rem 0.45rem;
+      border-radius: 6px;
+      color: var(--text-2);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+
+    .bubble-star-btn:hover {
+      background: rgba(0, 0, 0, 0.8);
+      color: var(--warning);
+      transform: scale(1.1);
+    }
+
+    .bubble-star-btn.active {
+      color: var(--warning);
+    }
+
+    .bubble-card-content {
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      flex: 1;
+    }
+
+    .bubble-card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-1);
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin: 0;
+    }
+
+    .bubble-card-url {
+      font-size: 0.65rem;
+      color: var(--text-3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bubble-card-tags {
+      display: flex;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+      margin-top: 0.25rem;
+    }
+
+    .bubble-card-tags .tag {
+      font-size: 0.6rem;
+      padding: 0.12rem 0.35rem;
+      background: rgba(99, 102, 241, 0.2);
+      border-radius: 4px;
+      color: var(--accent);
+    }
+
+    .bubble-card-author {
+      font-size: 0.65rem;
+      color: var(--text-3);
+      margin-top: auto;
+    }
+
+    .bubble-card-footer {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.5rem 0.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .bubble-card-footer button {
+      flex: 1;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--text-3);
+      cursor: pointer;
+      padding: 0.4rem;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+    }
+
+    .bubble-card-footer button:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.3);
+      color: var(--text-1);
+      transform: scale(1.05);
+    }
+
+    .bubble-card-footer button:active {
+      transform: scale(0.95);
+    }
+
+    .bubble-card-footer .vote-count {
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+
+    /* ========== CONNECTION LINES ========== */
+    .connection-line {
+      pointer-events: none;
+      stroke-linecap: round;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .connection-line.visible {
+      opacity: 1;
+    }
+
+    .connection-line.active {
+      animation: connectionFlow 2s linear infinite;
+    }
+
+    @keyframes connectionFlow {
+      0% { stroke-dashoffset: 20; }
+      100% { stroke-dashoffset: 0; }
+    }
+
+    /* ========== INFO PANEL ========== */
+    .discover-info {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      background: rgba(15, 15, 20, 0.95);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 20px;
+      padding: 1.25rem;
+      max-width: 360px;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 40px rgba(99, 102, 241, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      z-index: 200;
+      animation: infoPanelSlide 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes infoPanelSlide {
+      from { opacity: 0; transform: translateY(30px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .discover-info-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      gap: 0.75rem;
+    }
+
+    .discover-info-topic {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 0.2rem;
+      box-shadow: 0 0 15px currentColor;
+      animation: topicPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes topicPulse {
+      0%, 100% { box-shadow: 0 0 10px currentColor; }
+      50% { box-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
+    }
+
+    .discover-info-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      flex: 1;
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .discover-info-url {
+      font-size: 0.75rem;
+      color: var(--text-3);
+      margin-bottom: 0.75rem;
+      word-break: break-all;
+    }
+
+    .discover-info-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .discover-info-notes {
+      font-size: 0.85rem;
+      color: var(--text-2);
+      margin-bottom: 1rem;
+      line-height: 1.5;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    .discover-info-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .discover-info-actions .btn {
+      flex: 1;
+      padding: 0.65rem;
+    }
+
+    /* ========== CONTROLS ========== */
+    .discover-controls {
+      position: absolute;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 200;
+    }
+
+    .discover-controls .btn {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      font-size: 1.1rem;
+      background: rgba(15, 15, 20, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .discover-controls .btn:hover {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: scale(1.1);
+    }
+
+    /* ========== STATS ========== */
+    .discover-stats {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 0.75rem;
+      z-index: 200;
+    }
+
+    .discover-stat {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
+      padding: 0.5rem 0.75rem;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      color: var(--text-2);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .discover-stat strong {
+      color: var(--text-1);
+      margin-right: 0.25rem;
+    }
+
+    /* ========== LOADING STATE ========== */
+    .discover-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      z-index: 300;
+      background: rgba(5, 5, 8, 0.9);
+    }
+
+    .discover-loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(99, 102, 241, 0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ========== EMPTY STATE ========== */
+    .discover-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .discover-empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .discover-empty h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .discover-empty p {
+      color: var(--text-2);
+      margin-bottom: 1.5rem;
+    }
+     /* Community card indicator */
+    .bubble-card.community-card {
+      border-color: rgba(6, 182, 212, 0.3);
+    }
+    
+    .bubble-card.community-card::before {
+      background: linear-gradient(135deg, 
+        rgba(6, 182, 212, 0.2) 0%, 
+        transparent 50%);
+    }
+    
+    .community-badge {
+      background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+    }
+    
+    /* Sync status indicator */
+    .sync-indicator {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: var(--radius-md);
+      font-size: 0.75rem;
+      color: var(--text-2);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .sync-indicator.syncing {
+      color: var(--accent);
+    }
+    
+    .sync-indicator.synced {
+      color: var(--success);
+    }
+    /* ========== ENTRY ANIMATIONS ========== */
+    .bubble-card.entering {
+      opacity: 0;
+      animation: bubbleEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes bubbleEnter {
+      from {
+        opacity: 0;
+        transform: scale(0.5) translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    /* Staggered delays */
+    .bubble-card.entering-delay-1 { animation-delay: 0.05s; }
+    .bubble-card.entering-delay-2 { animation-delay: 0.1s; }
+    .bubble-card.entering-delay-3 { animation-delay: 0.15s; }
+    .bubble-card.entering-delay-4 { animation-delay: 0.2s; }
+    .bubble-card.entering-delay-5 { animation-delay: 0.25s; }
+    .bubble-card.entering-delay-6 { animation-delay: 0.3s; }
+    .bubble-card.entering-delay-7 { animation-delay: 0.35s; }
+    .bubble-card.entering-delay-8 { animation-delay: 0.4s; }
+    .bubble-card.entering-delay-9 { animation-delay: 0.45s; }
+    .bubble-card.entering-delay-10 { animation-delay: 0.5s; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="header">
+  <div class="header-main">
+    <div class="logo">
+      <h1>CommuneCollab</h1>
+      <span class="logo-sub"><span id="link-count">0</span> links · <span id="contributor-count">1</span> contributors</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-icon" onclick="openDiscover()" title="Discover">🧭</button>
+      <button class="btn btn-icon" onclick="openCollections()" title="Collections">📂</button>
+      <button class="btn btn-icon" onclick="openCommunity()" title="Community">👥</button>
+      <button class="btn btn-icon" onclick="openSettings()" title="Settings">⚙️</button>
+      <button class="btn btn-primary btn-add" onclick="openAddModal()">+</button>
+    </div>
+  </div>
+  <div class="header-expand" id="headerExpand">
+    <div class="header-expand-inner">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="searchBar" placeholder="Search links, notes, tags..." oninput="handleSearch()">
+      </div>
+      <div class="filter-row">
+        <select class="filter-select" id="collectionFilter" onchange="filterByCollection()">
+          <option value="">All Collections</option>
+        </select>
+        <div class="sort-tabs">
+          <button class="sort-tab active" onclick="setSortMode('date',this)">Recent</button>
+          <button class="sort-tab" onclick="setSortMode('votes',this)">Top</button>
+          <button class="sort-tab" onclick="setSortMode('title',this)">A-Z</button>
+        </div>
+      </div>
+      <div class="chips" id="topicChips">
+        <button class="chip active" onclick="switchTopic('all',this)">All</button>
+        <button class="chip" onclick="switchTopic('tech',this)">💻 Tech</button>
+        <button class="chip" onclick="switchTopic('news',this)">📰 News</button>
+        <button class="chip" onclick="switchTopic('food',this)">🍔 Food</button>
+        <button class="chip" onclick="switchTopic('travel',this)">✈️ Travel</button>
+        <button class="chip" onclick="switchTopic('entertainment',this)">🎬 Entertainment</button>
+        <button class="chip" onclick="switchTopic('other',this)">📌 Other</button>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-secondary" onclick="exportCollection()">📤 Export</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 Import</button>
+        <button class="btn btn-secondary" onclick="toggleStarred()" id="starFilterBtn">⭐ Starred</button>
+        <button class="btn btn-secondary" onclick="toggleBulkMode()" id="bulkModeBtn">☑️ Select</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" onchange="importCollection(event)">
+    </div>
+  </div>
+  <button class="collapse-toggle" onclick="toggleHeaderCollapse()">
+    <span id="collapseIcon">▲</span>
+    <span id="collapseText">Hide filters</span>
+  </button>
+</header>
+
+<main class="grid" id="grid">
+  <div class="empty-state">
+    <div class="empty-icon">🌐</div>
+    <h2>Start your collection</h2>
+    <p>Add links, organize, and share with your community</p>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Add Link</button>
+  </div>
+</main>
+
+<div class="bulk-bar" id="bulkBar">
+  <div class="bulk-bar-inner">
+    <div class="bulk-bar-row">
+      <button class="btn" onclick="bulkAddToCollection()">📁 Add to Collection</button>
+      <button class="btn" onclick="bulkDelete()">🗑 Delete (<span id="bulkCount">0</span>)</button>
+    </div>
+    <button class="btn" onclick="toggleBulkMode()">✕ Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<!-- ADD MODAL -->
+<div class="modal" id="addModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Add New</h2>
+      <button class="modal-close" onclick="closeAddModal()">×</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="linkTabBtn" onclick="switchAddTab('link')">🔗 Link</button>
+      <button class="tab" id="mediaTabBtn" onclick="switchAddTab('media')">📁 Media</button>
+      <button class="tab" id="thoughtTabBtn" onclick="switchAddTab('thought')">💭 Thought</button>
+    </div>
+    <div id="linkTab">
+      <div class="form-group">
+        <label class="form-label">Topic</label>
+        <select class="form-select" id="newLinkTopic">
+          <option value="tech">💻 Tech</option>
+          <option value="news">📰 News</option>
+          <option value="food">🍔 Food</option>
+          <option value="travel">✈️ Travel</option>
+          <option value="entertainment">🎬 Entertainment</option>
+          <option value="other">📌 Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL</label>
+        <input type="url" class="form-input" id="newUrl" placeholder="https://example.com" oninput="checkRestrictedSite()" onkeypress="if(event.key==='Enter')addLink()">
+      </div>
+      <div id="restrictedSitePrompt" style="display:none">
+        <div class="upload-screenshot-prompt" id="uploadScreenshotPrompt" onclick="document.getElementById('linkScreenshotInput').click()">
+          <input type="file" id="linkScreenshotInput" accept="image/*" onchange="handleLinkScreenshot(event)">
+          <div style="font-size:2rem;margin-bottom:0.5rem">📸</div>
+          <div style="font-weight:500;color:var(--text-1)">This site blocks previews</div>
+          <div style="font-size:0.8rem;color:var(--text-2);margin-top:0.25rem">Tap to upload a screenshot</div>
+        </div>
+        <div id="linkScreenshotPreview" class="screenshot-preview" style="display:none">
+          <img id="linkScreenshotImg" src="">
+          <button class="remove-btn" onclick="removeLinkScreenshot(event)">×</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.75rem;margin-top:1.5rem">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeAddModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1" onclick="addLink()">Add Link</button>
+      </div>
+    </div>
+    <div id="mediaTab" style="display:none">
+      <div class="promo-banner"><strong>📤 Share files</strong><p>Upload images, videos, PDFs, documents</p></div>
+      <input type="file" id="newMediaFileInput" multiple accept="*/*" onchange="handleNewMediaUpload(event)">
+      <div id="newMediaPreviewArea" style="margin-bottom:1rem;display:none">
+        <label class="form-label">Selected Files</label>
+        <div id="newMediaPreviewList" style="display:flex;flex-direction:column;gap:0.5rem;max-height:200px;overflow-y:auto"></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:1rem" onclick="document.getElementById('newMediaFileInput').click()">📂 Choose Files</button>
+      <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="newMediaTitle" placeholder="My file"></div>
+      <div class="form-group"><label class="form-label">Topic</label><select class="form-select" id="newMediaTopic"><option value="tech">💻 Tech</option><option value="news">📰 News</option><option value="food">🍔 Food</option><option value="travel">✈️ Travel</option><option value="entertainment">🎬 Entertainment</option><option value="other">📌 Other</option></select></div>
+      <div style="display:flex;gap:0.75rem"><button class="btn btn-secondary" style="flex:1" onclick="closeAddModal()">Cancel</button><button class="btn btn-primary" style="flex:1;opacity:0.5" id="createMediaCardBtn" onclick="createMediaCard()" disabled>Create</button></div>
+    </div>
+    <div id="thoughtTab" style="display:none">
+      <div class="promo-banner"><strong>💭 Share thoughts</strong><p>Post ideas, notes, quotes</p></div>
+      <div class="form-group"><label class="form-label">Title (Optional)</label><input type="text" class="form-input" id="thoughtTitle" placeholder="Title..." oninput="updateThoughtPreview()"></div>
+      <div class="form-group"><label class="form-label">Your Thought</label><textarea class="form-textarea" id="thoughtContent" placeholder="What's on your mind?" style="min-height:150px" oninput="updateThoughtPreview()"></textarea><div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.7rem;color:var(--text-3)"><span id="thoughtCharCount">0 chars</span><span id="thoughtLineCount">0 lines</span></div></div>
+      <div class="thought-preview" id="thoughtPreview" style="background:var(--gradient)"><div class="thought-preview-title" id="previewTitle"></div><div class="thought-preview-content" id="previewContent">Your thought here...</div></div>
+      <div class="form-group"><label class="form-label">Topic</label><select class="form-select" id="thoughtTopic"><option value="tech">💻 Tech</option><option value="news">📰 News</option><option value="food">🍔 Food</option><option value="travel">✈️ Travel</option><option value="entertainment">🎬 Entertainment</option><option value="other">📌 Other</option></select></div>
+      <div style="display:flex;gap:0.75rem"><button class="btn btn-secondary" style="flex:1" onclick="closeAddModal()">Cancel</button><button class="btn btn-primary" style="flex:1;opacity:0.5" id="createThoughtBtn" onclick="createThoughtCard()" disabled>Post</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal" id="editModal">
+  <div class="modal-content edit-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Edit Link</h2>
+      <button class="modal-close" onclick="closeEditModal()">×</button>
+    </div>
+    
+    <div class="edit-modal-body">
+      <!-- LEFT COLUMN -->
+      <div class="edit-modal-left">
+        <div class="edit-image-container" onclick="document.getElementById('screenshotUpload').click()">
+          <input type="file" id="screenshotUpload" accept="image/*" onchange="handleScreenshotUpload(event)" style="display:none">
+          <img id="detailImage" style="display:none">
+          <div class="upload-prompt" id="uploadPrompt">
+            <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.5">📸</div>
+            <div style="font-size:0.8rem">Click to upload image</div>
+          </div>
+        </div>
+        <div class="edit-image-actions">
+          <button class="btn btn-secondary" onclick="document.getElementById('screenshotUpload').click()">📸 Change</button>
+          <button class="btn btn-ghost" id="removeImageBtn" onclick="removeUploadedImage(event)" style="display:none">× Remove</button>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📍 Location</label>
+          <div class="location-input-row">
+            <input type="text" class="form-input" id="editLocation" placeholder="e.g., New York">
+            <button class="btn btn-secondary" onclick="getMyLocation()">📍</button>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📝 Notes</label>
+          <textarea class="form-textarea" id="editNotes" placeholder="Add notes..."></textarea>
+        </div>
+      </div>
+      
+      <!-- RIGHT COLUMN -->
+      <div class="edit-modal-right">
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input type="text" class="form-input" id="editTitle">
+        </div>
+        
+        <a class="edit-url-link" id="editUrlLink" href="" target="_blank"></a>
+        
+        <div class="edit-vote-row">
+          <button class="vote-btn" id="upvoteBtn" onclick="vote(currentCardId,1)">👍</button>
+          <div class="vote-score" id="voteScore">0</div>
+          <button class="vote-btn" id="downvoteBtn" onclick="vote(currentCardId,-1)">👎</button>
+        </div>
+        
+        <div class="edit-tags-section">
+          <label class="form-label">🏷️ Tags</label>
+          <div class="edit-tags-row">
+            <div id="tagsContainer"></div>
+            <input type="text" class="edit-tags-input" id="newTag" placeholder="+ Add tag" onkeypress="if(event.key==='Enter'){addTag();event.preventDefault()}">
+          </div>
+        </div>
+        
+        <div class="edit-actions-row">
+          <label class="privacy-toggle">
+            <input type="checkbox" id="editPrivate" onchange="toggleCardPrivacy(currentCardId)">
+            <span>🔒 Private</span>
+          </label>
+          <div class="share-buttons">
+            <button class="btn btn-ghost" onclick="shareToX()" title="Share to X">𝕏</button>
+            <button class="btn btn-ghost" onclick="navigator.clipboard.writeText(cards.find(c=>c.id===currentCardId)?.url);showToast('Copied!','success')" title="Copy Link">📋</button>
+            <button class="btn btn-ghost" onclick="shareLink()" title="Share">↗</button>
+            <button class="btn btn-ghost" onclick="shareToEmail()" title="Email">✉️</button>
+          </div>
+        </div>
+        
+        <!-- Photos Collapsible -->
+        <div class="edit-collapsible">
+          <div class="edit-collapsible-header collapsed" onclick="toggleEditSection('photos')">
+            <span>📸 Photos <span class="count" id="editPhotoCount"></span></span>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="edit-collapsible-content collapsed" id="editPhotosContent">
+            <div class="edit-photo-grid" id="editPhotoGrid"></div>
+            <input type="file" id="addPhoto" accept="image/*" multiple onchange="addPhotos(event)" style="display:none">
+          </div>
+        </div>
+        
+        <!-- Comments Collapsible -->
+        <div class="edit-collapsible">
+          <div class="edit-collapsible-header collapsed" onclick="toggleEditSection('comments')">
+            <span>💬 Comments <span class="count" id="editCommentCount"></span></span>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="edit-collapsible-content collapsed" id="editCommentsContent">
+            <div id="editCommentsContainer"></div>
+            <div class="edit-comment-input-row">
+              <input type="text" id="newCommentInput" placeholder="Write a comment..." onkeypress="if(event.key==='Enter'){addCommentFromInput();event.preventDefault()}">
+              <button class="btn btn-primary" onclick="addCommentFromInput()">Post</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="edit-modal-footer">
+      <span class="info-text" id="editInfo"></span>
+      <button class="btn btn-danger" onclick="deleteCard()">🗑️ Delete</button>
+    </div>
+  </div>
+</div>
+<!-- SETTINGS MODAL -->
+<div class="modal" id="settingsModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 class="modal-title">⚙️ Settings</h2><button class="modal-close" onclick="closeSettings()">×</button></div>
+    
+    <!-- Sign In Section (shows when NOT logged in) -->
+    <div id="settingsSignInSection" class="form-group" style="background:linear-gradient(135deg,rgba(99,102,241,0.1) 0%,rgba(139,92,246,0.1) 100%);padding:1rem;border-radius:var(--radius-md);border:1px solid rgba(99,102,241,0.2);margin-bottom:1.5rem;">
+      <div style="text-align:center;margin-bottom:1rem;">
+        <span style="font-size:2rem;">☁️</span>
+        <h3 style="margin:0.5rem 0 0.25rem;font-size:1rem;">Sync Your Data</h3>
+        <p style="color:var(--text-3);font-size:0.8rem;margin:0;">Access your links from any device</p>
+      </div>
+      <input type="email" class="form-input" id="settingsAuthEmail" placeholder="your@email.com" style="margin-bottom:0.5rem;">
+      <button class="btn btn-primary" style="width:100%" onclick="sendMagicLinkFromSettings()">📧 Send Magic Link</button>
+      <div id="settingsAuthStatus" style="margin-top:0.5rem;text-align:center;font-size:0.8rem;min-height:1.25rem;"></div>
+    </div>
+    
+    <!-- Cloud Sync Section (shows when logged in) -->
+    <div id="cloudSyncSection" class="form-group" style="display:none;background:rgba(16,185,129,0.1);padding:1rem;border-radius:var(--radius-md);border:1px solid rgba(16,185,129,0.3);margin-bottom:1.5rem;">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+        <span style="font-size:1.5rem;">✅</span>
+        <div>
+          <div style="font-weight:600;font-size:0.9rem;">Signed in</div>
+          <div id="userEmailDisplay" style="font-size:0.8rem;color:var(--success);"></div>
+        </div>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-3);margin-bottom:0.75rem;">Your data syncs automatically across all devices</p>
+      <button class="btn btn-danger" style="width:100%" onclick="signOut()">🚪 Sign Out</button>
+    </div>
+    
+    <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="usernameInput" placeholder="Anonymous"><p style="font-size:0.7rem;color:var(--text-3);margin-top:0.5rem">Shown on votes and comments</p></div>
+    
+    <div class="form-group">
+      <label class="form-label">🔒 Privacy</label>
+      <label style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:var(--bg-elevated);border-radius:var(--radius-md);cursor:pointer;margin-bottom:0.5rem;">
+        <input type="checkbox" id="showContributorsToggle" onchange="toggleShowContributors()" style="width:18px;height:18px;accent-color:var(--accent)">
+        <span style="font-size:0.85rem">Show contributor names</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:var(--bg-elevated);border-radius:var(--radius-md);cursor:pointer;margin-bottom:0.5rem;">
+        <input type="checkbox" id="profilePublicToggle" onchange="toggleProfilePublic()" style="width:18px;height:18px;accent-color:var(--accent)">
+        <span style="font-size:0.85rem">Make my profile public</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:var(--bg-elevated);border-radius:var(--radius-md);cursor:pointer;">
+        <input type="checkbox" id="defaultCardPrivateToggle" onchange="toggleDefaultCardPrivate()" style="width:18px;height:18px;accent-color:var(--accent)">
+        <span style="font-size:0.85rem">New cards are private by default</span>
+      </label>
+      <p style="font-size:0.7rem;color:var(--text-3);margin-top:0.5rem">Private cards are only visible to you</p>
+    </div>
+    
+    <div class="form-group"><label class="form-label">Top Contributors</label><div class="contributor-list" id="contributorList"><p style="color:var(--text-3);text-align:center;padding:1rem">No contributors yet</p></div></div>
+    
+    <div class="form-group"><label class="form-label">Share Collection</label><button class="btn btn-primary" style="width:100%;margin-bottom:0.5rem" onclick="shareCollectionURL(this,false)">📎 Share (with photos)</button><button class="btn btn-secondary" style="width:100%;margin-bottom:0.5rem" onclick="shareCollectionURL(this,true)">⚡ Share (no photos)</button><button class="btn btn-secondary" style="width:100%" onclick="exportCollection()">📤 Export File</button></div>
+    <div class="form-group">
+      <label class="form-label">🗑️ Data Management</label>
+      <button class="btn btn-secondary" style="width:100%;margin-bottom:0.5rem" onclick="clearAllData()">🧹 Clear All Data</button>
+      <button class="btn btn-secondary" style="width:100%" onclick="removeDuplicates()">🔄 Remove Duplicates</button>
+      <p style="font-size:0.7rem;color:var(--text-3);margin-top:0.5rem">Clear all data will reset the app. Remove duplicates will clean up repeated cards.</p>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:1rem" onclick="saveSettings()">Save Settings</button>
+  </div>
+</div>
+
+<!-- COMMUNITY MODAL -->
+<div class="modal" id="communityModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 class="modal-title">👥 Community</h2><button class="modal-close" onclick="closeCommunity()">×</button></div>
+    <div class="form-group"><label class="form-label">🏆 Top Contributors</label><div class="contributor-list" id="communityContributorList"></div></div>
+    <div class="form-group"><label class="form-label">🔥 Hot Cards</label><div class="contributor-list" id="hotCardsList" style="max-height:200px"></div></div>
+    <div class="form-group"><label class="form-label">✨ Recent Activity</label><div class="contributor-list" id="recentActivityList" style="max-height:150px"></div></div>
+    <label class="form-label">📊 Stats</label>
+    <div class="stats-grid"><div class="stat-item"><div class="stat-label">Total Links</div><div class="stat-value" id="statsTotal">0</div></div><div class="stat-item"><div class="stat-label">Contributors</div><div class="stat-value" id="statsContributors">0</div></div><div class="stat-item"><div class="stat-label">Total Votes</div><div class="stat-value" id="statsVotes">0</div></div><div class="stat-item"><div class="stat-label">Comments</div><div class="stat-value" id="statsComments">0</div></div></div>
+  </div>
+</div>
+
+<!-- COLLECTIONS MODAL -->
+<div class="modal" id="collectionsModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 class="modal-title">📁 Collections</h2><button class="modal-close" onclick="closeCollections()">×</button></div>
+    <div class="promo-banner"><strong>💡 Organize your way</strong><p>Create collections for different projects</p></div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:1rem" onclick="createNewCollection()">+ Create Collection</button>
+    <div id="collectionsList"></div>
+  </div>
+</div>
+
+<!-- ADD TO COLLECTION MODAL -->
+<div class="modal" id="addToCollectionModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 class="modal-title">📁 Save to Collection</h2><button class="modal-close" onclick="closeAddToCollection()">×</button></div>
+    <div style="padding:0.75rem;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:1rem"><div style="font-weight:600" id="addToCollectionCardTitle"></div><div style="font-size:0.75rem;color:var(--text-3)" id="addToCollectionCardUrl"></div></div>
+    <div id="collectionsCheckboxList" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;max-height:300px;overflow-y:auto"></div>
+    <button class="btn btn-secondary" style="width:100%;margin-bottom:0.5rem" onclick="createCollectionFromModal()">+ New Collection</button>
+    <button class="btn btn-primary" style="width:100%" onclick="saveToCollections()">✔ Save</button>
+  </div>
+</div>
+
+<!-- QUICK ACTIONS MODAL -->
+<div class="modal" id="quickActionsModal">
+  <div class="modal-content">
+    <div class="modal-header"><h2 class="modal-title">⚡ Quick Actions</h2><button class="modal-close" onclick="closeQuickActions()">×</button></div>
+    <div id="quickActionsCardTitle" style="padding:0.75rem;background:var(--bg-elevated);border-radius:var(--radius-md);margin-bottom:1rem;font-size:0.9rem"></div>
+    <div style="display:flex;flex-direction:column;gap:0.5rem">
+      <button class="btn btn-secondary" onclick="quickActionAddToCollection()">📁 Add to Collection</button>
+      <button class="btn btn-secondary" onclick="quickActionStar()"><span id="quickActionStarText">⭐ Star</span></button>
+      <button class="btn btn-secondary" onclick="quickActionCopyLink()">🔗 Copy Link</button>
+      <button class="btn btn-secondary" onclick="quickActionEdit()">✏️ Edit</button>
+      <button class="btn btn-danger" onclick="quickActionDelete()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal" id="authModal" style="z-index:9999">
+  <div class="modal-content" style="max-width:450px">
+    <div style="text-align:center;margin-bottom:2rem"><h1 style="font-size:2rem;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent">CommuneCollab</h1><p style="color:var(--text-3)">Community link sharing</p></div>
+    <div class="promo-banner"><strong>☁️ Sign in to sync</strong><p>Access links from any device</p></div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="authEmail" placeholder="your@email.com" onkeypress="if(event.key==='Enter')sendMagicLink()"></div>
+    <button class="btn btn-primary" style="width:100%" id="sendMagicLinkBtn" onclick="sendMagicLink()">📧 Send Magic Link</button>
+    <div id="authStatus" style="margin-top:1rem;text-align:center;font-size:0.85rem;min-height:1.5rem"></div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:1.5rem" onclick="document.getElementById('authModal').classList.remove('active')">Continue without sync</button>
+  </div>
+</div>
+<!-- DISCOVER VIEW -->
+<div class="discover-view" id="discoverView">
+  <div class="discover-header">
+  <div>
+    <h2 style="font-size:1.25rem;font-weight:700;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🧭 Discover</h2>
+    <span style="font-size:0.75rem;color:var(--text-3)">Community feed</span>
+  </div>
+  <div style="display:flex;gap:0.5rem;align-items:center">
+    <button class="btn btn-secondary" onclick="closeDiscover()" style="font-size:0.8rem;padding:0.5rem 1rem;">
+      📁 My Cards
+    </button>
+    <select class="filter-select" id="discoverFilter" onchange="filterDiscoverByTag()">
+      <option value="">All tags</option>
+    </select>
+    <button class="btn btn-icon" onclick="closeDiscover()">✕</button>
+  </div>
+</div>
+  <div class="discover-canvas" id="discoverCanvas">
+    <svg id="connectionsSvg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1"></svg>
+    <div class="bubble-container" id="bubbleContainer"></div>
+    <div class="discover-stats">
+      <div class="discover-stat"><strong id="statNodes">0</strong> cards</div>
+      <div class="discover-stat"><strong id="statConnections">0</strong> connections</div>
+    </div>
+    <div class="discover-controls">
+      <button class="btn btn-secondary" onclick="zoomBubbles(1.2)" title="Zoom in">+</button>
+      <button class="btn btn-secondary" onclick="zoomBubbles(0.8)" title="Zoom out">−</button>
+      <button class="btn btn-secondary" onclick="resetBubbleView()" title="Reset">⟲</button>
+      <button class="btn btn-secondary" onclick="shuffleBubbles()" title="Shuffle">🎲</button>
+    </div>
+    <div class="discover-info" id="discoverInfo" style="display:none">
+      <div class="discover-info-header">
+        <div style="display:flex;align-items:flex-start;gap:0.75rem;flex:1;">
+          <div class="discover-info-topic" id="infoTopic"></div>
+          <h3 class="discover-info-title" id="infoTitle"></h3>
+        </div>
+        <button class="btn btn-ghost" onclick="closeDiscoverInfo()" style="padding:0.25rem;margin:-0.25rem;">✕</button>
+      </div>
+      <p class="discover-info-url" id="infoUrl"></p>
+      <div class="discover-info-tags" id="infoTags"></div>
+      <p class="discover-info-notes" id="infoNotes"></p>
+      <div class="discover-info-actions">
+        <button class="btn btn-primary" onclick="openCardFromDiscover()">Open Card</button>
+        <button class="btn btn-secondary" onclick="focusOnBubble(selectedBubbleId)">Focus</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============== CONFIGURATION ==============
+const SUPABASE_URL = 'https://pehkbinywnrrfhcsadqf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlaGtiaW55d25ycmZoY3NhZHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNjUxOTgsImV4cCI6MjA4NDk0MTE5OH0.VXu_F-YDtaQxU92XFUlqv1_qQi5DrJeQiGbcvGkrBew';
+
+// ============== GLOBAL VARIABLES ==============
+let supabaseClient = null, currentUser = null, db;
+let cards = [], collections = [], userVotes = {};
+let currentCardId = null, currentTopic = 'all', sortMode = 'date';
+let searchQuery = '', showOnlyStarred = false, currentCollectionFilter = '';
+let username = 'You', headerCollapsed = false, showContributors = true;
+let compactCards = new Set(), bulkSelectMode = false, selectedCards = new Set();
+let selectedNewMediaFiles = [], currentCardForCollection = null;
+let pendingLinkScreenshot = null;
+let currentQuickActionCardId = null;
+
+
+// ============== INDEXEDDB ==============
+const DB_NAME = 'CommuneCollabDB', DB_VERSION = 1, IMAGE_STORE = 'images';
+
+async function initDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onupgradeneeded = (e) => {
+      const database = e.target.result;
+      if (!database.objectStoreNames.contains(IMAGE_STORE)) database.createObjectStore(IMAGE_STORE);
+    };
+  });
+}
+
+async function storeImage(key, data) {
+  if (!db) await initDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction([IMAGE_STORE], 'readwrite');
+    const req = tx.objectStore(IMAGE_STORE).put(data, key);
+    req.onsuccess = () => res(); req.onerror = () => rej(req.error);
+  });
+}
+
+async function getImage(key) {
+  if (!db) await initDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction([IMAGE_STORE], 'readonly');
+    const req = tx.objectStore(IMAGE_STORE).get(key);
+    req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+  });
+}
+
+// ============== TOAST ==============
+function showToast(msg, type = 'default') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ============== DISCOVER BUBBLE VIEW ==============
+let bubbles = [];
+let bubbleConnections = [];
+let selectedBubbleId = null;
+let bubbleZoom = 1;
+let bubblePanX = 0, bubblePanY = 0;
+let isDraggingCanvas = false, dragStartX = 0, dragStartY = 0;
+let ambientFrame = null;
+let isAnyCardHovered = false;
+let centerCardId = null;
+let lastClickTime = 0;
+let lastClickId = null;
+let hoveredBubbleId = null;
+
+const TOPIC_COLORS = {
+  tech: '#6366f1',
+  news: '#f59e0b',
+  food: '#10b981',
+  travel: '#06b6d4',
+  entertainment: '#ec4899',
+  other: '#8b5cf6'
+};
+
+// Golden angle for Fibonacci spiral (in radians)
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+
+// Guide cards for new users
+const GUIDE_CARDS = [
+  { id: 'guide_1', title: 'Welcome to CommuneCollab', url: 'thought://welcome-guide', tags: ['guide', 'welcome', 'start', 'community'], topic: 'other', notes: 'Your community hub for sharing links, ideas, and discoveries. Tap any card to explore, or use the controls to navigate this constellation of shared knowledge.', votes: 42, addedBy: 'CommuneCollab', isGuide: true },
+  { id: 'guide_2', title: 'How Tags Work', url: 'thought://tags-guide', tags: ['guide', 'tags', 'organize', 'connections'], topic: 'tech', notes: 'Tags are the threads that weave ideas together. Add tags to your cards and watch connections form automatically. The more tags overlap, the stronger the connection.', votes: 38, addedBy: 'CommuneCollab', isGuide: true },
+  { id: 'guide_3', title: 'Create Collections', url: 'thought://collections-guide', tags: ['guide', 'collections', 'organize'], topic: 'other', notes: 'Group related links into collections for easy access and sharing. Perfect for research projects, trip planning, or curating resources.', votes: 35, addedBy: 'CommuneCollab', isGuide: true },
+  { id: 'guide_4', title: 'Share & Collaborate', url: 'thought://share-guide', tags: ['guide', 'share', 'community'], topic: 'travel', notes: 'Share your collection with friends or the world. Collaboration makes knowledge grow.', votes: 28, addedBy: 'CommuneCollab', isGuide: true },
+  { id: 'guide_5', title: 'Vote on What Matters', url: 'thought://voting-guide', tags: ['guide', 'community', 'voting'], topic: 'news', notes: 'Upvote links you find valuable, downvote what misses the mark. Your votes help surface the best content.', votes: 30, addedBy: 'CommuneCollab', isGuide: true },
+  { id: 'guide_6', title: 'Thought Cards', url: 'thought://thoughts-guide', tags: ['guide', 'thoughts', 'create'], topic: 'entertainment', notes: 'No link? No problem. Create Thought Cards to share ideas, quotes, or insights directly.', votes: 25, addedBy: 'CommuneCollab', isGuide: true },
+  { id: 'guide_7', title: 'Discover Connections', url: 'thought://discover-guide', tags: ['guide', 'discover', 'connections', 'explore'], topic: 'tech', notes: 'You are here! This view shows how ideas connect through shared tags. Click cards to see their connections light up.', votes: 22, addedBy: 'CommuneCollab', isGuide: true }
+];
+
+function openDiscover() {
+  document.getElementById('discoverView').classList.add('active');
+  bubbleZoom = 1;
+  bubblePanX = 0;
+  bubblePanY = 0;
+  isAnyCardHovered = false;
+  hoveredBubbleId = null;
+  initBubbleView();
+}
+
+function closeDiscover() {
+  document.getElementById('discoverView').classList.remove('active');
+  if (ambientFrame) { 
+    cancelAnimationFrame(ambientFrame); 
+    ambientFrame = null; 
+  }
+  selectedBubbleId = null;
+  hoveredBubbleId = null;
+}
+
+function closeDiscoverInfo() {
+  document.getElementById('discoverInfo').style.display = 'none';
+  selectedBubbleId = null;
+  document.querySelectorAll('.bubble-card').forEach(b => {
+    b.classList.remove('selected', 'related');
+  });
+  hideConnections();
+}
+
+async function initBubbleView() {
+  // Show loading state
+  const container = document.getElementById('bubbleContainer');
+  container.innerHTML = `
+    <div class="discover-loading">
+      <div class="discover-loading-spinner"></div>
+      <span style="color: var(--text-2);">Loading community feed...</span>
+    </div>
+  `;
+  
+  await buildBubbleData();
+  populateTagFilter();
+  createBackgroundEffects();
+  layoutFibonacciSpiral();
+  renderBubbles();
+  setupCanvasDrag();
+  startAmbientAnimation();
+}
+
+// Create star field and ambient particles
+function createBackgroundEffects() {
+  const canvas = document.getElementById('discoverCanvas');
+  
+  // Remove existing effects
+  canvas.querySelectorAll('.star-field, .ambient-particles').forEach(el => el.remove());
+  
+  // Create star field
+  const starField = document.createElement('div');
+  starField.className = 'star-field';
+  
+  for (let i = 0; i < 100; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = `${Math.random() * 100}%`;
+    star.style.top = `${Math.random() * 100}%`;
+    star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+    star.style.setProperty('--opacity', `${0.3 + Math.random() * 0.5}`);
+    starField.appendChild(star);
+  }
+  
+  canvas.insertBefore(starField, canvas.firstChild);
+  
+  // Create ambient particles
+  const particles = document.createElement('div');
+  particles.className = 'ambient-particles';
+  
+  const particleColors = ['#6366f1', '#8b5cf6', '#ec4899', '#06b6d4', '#10b981'];
+  
+  for (let i = 0; i < 20; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = `${Math.random() * 100}%`;
+    particle.style.top = `${Math.random() * 100}%`;
+    particle.style.width = `${4 + Math.random() * 8}px`;
+    particle.style.height = particle.style.width;
+    particle.style.background = particleColors[Math.floor(Math.random() * particleColors.length)];
+    particle.style.setProperty('--duration', `${10 + Math.random() * 20}s`);
+    particle.style.setProperty('--dx', `${(Math.random() - 0.5) * 100}px`);
+    particle.style.setProperty('--dy', `${(Math.random() - 0.5) * 100}px`);
+    particles.appendChild(particle);
+  }
+  
+  canvas.insertBefore(particles, canvas.firstChild);
+}
+
+async function buildBubbleData() {
+  // Fetch community cards from cloud if enabled
+  let communityCards = [];
+  if (cloudSyncEnabled) {
+    communityCards = await fetchCommunityCards();
+  }
+  
+  // Get URLs of guide cards that have been promoted
+  const promotedGuideUrls = new Set(
+    cards.filter(c => c.url?.startsWith('thought://') && c.url?.includes('-guide'))
+         .map(c => c.url)
+  );
+  
+  // Only include guide cards that haven't been promoted
+  const activeGuides = GUIDE_CARDS.filter(g => !promotedGuideUrls.has(g.url));
+  
+  const guidesWithImages = activeGuides.map(g => ({
+    ...g,
+    screenshot: generatePlaceholderThumbnail(g),
+    photos: [],
+    comments: [],
+    starred: false,
+    isPrivate: false
+  }));
+  
+  // Merge local cards with community cards (dedupe by URL)
+  const seenUrls = new Set();
+  const allUserCards = [];
+  
+  // Add local cards first (priority)
+  cards.forEach(c => {
+    if (!seenUrls.has(c.url)) {
+      seenUrls.add(c.url);
+      allUserCards.push({ ...c, isGuide: false });
+    }
+  });
+  
+  // Add community cards that we don't have locally
+  communityCards.forEach(c => {
+    if (!seenUrls.has(c.url)) {
+      seenUrls.add(c.url);
+      allUserCards.push({ ...c, isGuide: false, isCommunity: true });
+    }
+  });
+  
+  const allCards = [
+    ...guidesWithImages,
+    ...allUserCards
+  ];
+  
+  bubbles = allCards.map((c, index) => ({
+    ...c,
+    bubbleId: String(c.id),
+    x: 0, y: 0,
+    baseX: 0, baseY: 0,
+    index: index,
+    depth: 1,
+    breathDelay: Math.random() * 4,
+    noisePhase: Math.random() * Math.PI * 2
+  }));
+  
+  
+  
+  // Build connections
+  bubbleConnections = [];
+  for (let i = 0; i < bubbles.length; i++) {
+    for (let j = i + 1; j < bubbles.length; j++) {
+      const shared = (bubbles[i].tags || []).filter(t => (bubbles[j].tags || []).includes(t));
+      if (shared.length > 0) {
+        bubbleConnections.push({
+          source: bubbles[i].bubbleId,
+          target: bubbles[j].bubbleId,
+          sharedTags: shared,
+          strength: shared.length
+        });
+      }
+    }
+  }
+  
+  // Calculate connection counts and sort
+  bubbles.forEach(b => {
+    b.connectionCount = bubbleConnections
+      .filter(c => c.source === b.bubbleId || c.target === b.bubbleId)
+      .reduce((sum, c) => sum + c.strength, 0);
+  });
+  
+  // Sort by connection count (most connected first)
+  bubbles.sort((a, b) => b.connectionCount - a.connectionCount);
+  centerCardId = bubbles.length > 0 ? bubbles[0].bubbleId : null;
+  
+  // Assign depth based on position
+  bubbles.forEach((b, i) => {
+    if (i === 0) b.depth = 0;
+    else if (i < 5) b.depth = 1;
+    else if (i < 15) b.depth = 2;
+    else if (i < 30) b.depth = 3;
+    else b.depth = 4;
+  });
+  
+  document.getElementById('statNodes').textContent = bubbles.length;
+  document.getElementById('statConnections').textContent = bubbleConnections.length;
+}
+
+// Fibonacci spiral layout
+function layoutFibonacciSpiral() {
+  const container = document.getElementById('bubbleContainer');
+  const width = container.offsetWidth || window.innerWidth;
+  const height = (container.offsetHeight || window.innerHeight) - 80;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  
+  if (bubbles.length === 0) return;
+  
+  const cardWidth = 240;
+  const cardHeight = 280;
+  const baseSpacing = 60;
+  
+  // Position cards in Fibonacci spiral
+  bubbles.forEach((bubble, i) => {
+    if (i === 0) {
+      // Center card
+      bubble.x = centerX;
+      bubble.y = centerY;
+    } else {
+      // Fibonacci spiral positioning
+      const angle = i * GOLDEN_ANGLE;
+      const radius = baseSpacing + Math.sqrt(i) * (cardWidth * 0.55);
+      
+      bubble.x = centerX + Math.cos(angle) * radius;
+      bubble.y = centerY + Math.sin(angle) * radius;
+    }
+    
+    bubble.baseX = bubble.x;
+    bubble.baseY = bubble.y;
+  });
+  
+  // Collision resolution - push overlapping cards apart
+  for (let iteration = 0; iteration < 100; iteration++) {
+    let hadCollision = false;
+    
+    for (let i = 0; i < bubbles.length; i++) {
+      for (let j = i + 1; j < bubbles.length; j++) {
+        const a = bubbles[i];
+        const b = bubbles[j];
+        
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        
+        const minDist = cardWidth + baseSpacing;
+        
+        if (dist < minDist) {
+          hadCollision = true;
+          const overlap = (minDist - dist) / 2;
+          const pushX = (dx / dist) * overlap * 1.1;
+          const pushY = (dy / dist) * overlap * 1.1;
+          
+          // Don't move center card
+          if (i !== 0) {
+            a.x -= pushX;
+            a.y -= pushY;
+          }
+          if (j !== 0) {
+            b.x += pushX;
+            b.y += pushY;
+          }
+        }
+      }
+    }
+    
+    if (!hadCollision && iteration > 30) break;
+  }
+  
+  // Update base positions after collision resolution
+  bubbles.forEach(b => {
+    b.baseX = b.x;
+    b.baseY = b.y;
+  });
+  
+  // Calculate required canvas bounds
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  bubbles.forEach(b => {
+    minX = Math.min(minX, b.x - cardWidth / 2);
+    maxX = Math.max(maxX, b.x + cardWidth / 2);
+    minY = Math.min(minY, b.y - cardHeight / 2);
+    maxY = Math.max(maxY, b.y + cardHeight / 2);
+  });
+  
+  // If content overflows, adjust initial pan to center it
+  const contentWidth = maxX - minX;
+  const contentHeight = maxY - minY;
+  
+  if (contentWidth > width || contentHeight > height) {
+    // Start slightly zoomed out for large collections
+    bubbleZoom = Math.min(0.9, Math.min(width / contentWidth, height / contentHeight) * 0.85);
+  }
+}
+
+function populateTagFilter() {
+  const allTags = new Set();
+  bubbles.forEach(b => (b.tags || []).forEach(t => allTags.add(t)));
+  const select = document.getElementById('discoverFilter');
+  select.innerHTML = '<option value="">All tags</option>' + 
+    [...allTags].sort().map(t => `<option value="${t}">#${t}</option>`).join('');
+}
+
+function renderBubbles() {
+  const container = document.getElementById('bubbleContainer');
+  const topicEmojis = { tech: '💻', news: '📰', food: '🍔', travel: '✈️', entertainment: '🎬', other: '📌' };
+  
+  container.innerHTML = bubbles.map((b, index) => {
+    const emoji = topicEmojis[b.topic] || '📌';
+    const tags = (b.tags || []).slice(0, 3);
+    const v = b.votes || 0;
+    const img = getCardThumbnail(b);
+    const isStarred = b.starred;
+    const isCenter = b.bubbleId === centerCardId;
+    const width = isCenter ? 280 : 240;
+    const delayClass = index < 10 ? `entering-delay-${index}` : '';
+    
+    return `
+      <div class="bubble-card ${isCenter ? 'center-card' : ''} ${b.isGuide ? 'guide-card' : ''} entering ${delayClass} breathing"
+           id="bubble-${b.bubbleId}"
+           data-id="${b.bubbleId}"
+           data-depth="${b.depth}"
+           data-is-guide="${b.isGuide}"
+           style="left:${b.x - width / 2}px; top:${b.y - 140}px; width:${width}px; --breath-delay:${b.breathDelay}s;"
+           onclick="handleBubbleClick('${b.bubbleId}', event)"
+           onmouseenter="handleBubbleHover('${b.bubbleId}', true)"
+           onmouseleave="handleBubbleHover('${b.bubbleId}', false)">
+        
+        <div class="bubble-card-image">
+          <img src="${img}" alt="${b.title}" onerror="this.src='${generatePlaceholderThumbnail(b)}'">
+          <div class="bubble-card-image-overlay">
+            <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+              <span class="bubble-badge">${emoji}</span>
+              ${v ? `<span class="bubble-badge" style="color:${v > 0 ? 'var(--success)' : 'var(--danger)'}">${v > 0 ? '+' : ''}${v}</span>` : ''}
+              ${b.isGuide ? `<span class="bubble-badge guide-badge">Guide</span>` : ''}
+            </div>
+            <button class="bubble-star-btn ${isStarred ? 'active' : ''}" onclick="handleBubbleStar('${b.bubbleId}', event)">
+              ${isStarred ? '⭐' : '☆'}
+            </button>
+          </div>
+        </div>
+        
+        <div class="bubble-card-content">
+          <h3 class="bubble-card-title">${b.title}</h3>
+          <p class="bubble-card-url">${formatUrl(b.url)}</p>
+          ${tags.length ? `<div class="bubble-card-tags">${tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
+          <span class="bubble-card-author">
+            ${b.isCommunity ? '🌐' : '👤'} ${b.addedBy || 'Anonymous'}
+            ${b.isOwnCard === false && b.cloudUserId ? ' · Community' : ''}
+          </span>
+        </div>
+        
+        <div class="bubble-card-footer">
+          <button onclick="handleBubbleVote('${b.bubbleId}', event)" title="Upvote">👍 ${v > 0 ? `<span class="vote-count">${v}</span>` : ''}</button>
+          <button onclick="handleBubbleCollection('${b.bubbleId}', event)" title="Save">📁</button>
+          <button onclick="handleBubbleOpen('${b.bubbleId}', event)" title="Open">↗</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  applyTransform();
+  
+  // Remove entering class after animation
+  setTimeout(() => {
+    document.querySelectorAll('.bubble-card.entering').forEach(el => {
+      el.classList.remove('entering');
+    });
+  }, 1000);
+}
+
+function formatUrl(url) {
+  try {
+    if (url.startsWith('thought://')) return url;
+    return new URL(url).hostname.replace('www.', '');
+  } catch (e) {
+    return url.substring(0, 30);
+  }
+}
+
+function applyTransform() {
+  const container = document.getElementById('bubbleContainer');
+  const svg = document.getElementById('connectionsSvg');
+  const transform = `translate(${bubblePanX}px, ${bubblePanY}px) scale(${bubbleZoom})`;
+  container.style.transform = transform;
+  container.style.transformOrigin = 'center center';
+  svg.style.transform = transform;
+  svg.style.transformOrigin = 'center center';
+}
+
+// Handle hover with magnetic push effect
+function handleBubbleHover(id, isEntering) {
+  isAnyCardHovered = isEntering;
+  hoveredBubbleId = isEntering ? id : null;
+  
+  const hoveredBubble = bubbles.find(b => b.bubbleId === id);
+  if (!hoveredBubble) return;
+  
+  // Reset all cards first
+  document.querySelectorAll('.bubble-card').forEach(el => {
+    el.classList.remove('pushed');
+  });
+  
+  if (isEntering) {
+    // Push nearby cards away slightly
+    bubbles.forEach(b => {
+      if (b.bubbleId === id) return;
+      
+      const dx = b.x - hoveredBubble.x;
+      const dy = b.y - hoveredBubble.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist < 350 && dist > 0) {
+        const card = document.getElementById(`bubble-${b.bubbleId}`);
+        if (card) {
+          const pushStrength = Math.max(0, (350 - dist) / 350) * 15;
+          const pushX = (dx / dist) * pushStrength;
+          const pushY = (dy / dist) * pushStrength;
+          
+          card.classList.add('pushed');
+          card.style.transform = `translate(${pushX}px, ${pushY}px)`;
+        }
+      }
+    });
+  } else {
+    // Reset positions
+    bubbles.forEach(b => {
+      const card = document.getElementById(`bubble-${b.bubbleId}`);
+      if (card && !card.classList.contains('selected')) {
+        card.style.transform = '';
+      }
+    });
+  }
+}
+
+// Double-click detection for opening cards
+function handleBubbleClick(id, event) {
+  event.stopPropagation();
+  const now = Date.now();
+  
+  if (lastClickId === id && now - lastClickTime < 300) {
+    handleBubbleOpen(id, event);
+    lastClickTime = 0;
+    lastClickId = null;
+    return;
+  }
+  
+  lastClickTime = now;
+  lastClickId = id;
+  selectBubble(id);
+}
+
+function selectBubble(id) {
+  selectedBubbleId = id;
+  const bubble = bubbles.find(b => b.bubbleId === id);
+  if (!bubble) return;
+  
+  // Reset all cards
+  document.querySelectorAll('.bubble-card').forEach(el => {
+    el.classList.remove('selected', 'related');
+    el.style.transform = '';
+  });
+  
+  // Mark selected
+  const selectedEl = document.getElementById(`bubble-${id}`);
+  if (selectedEl) selectedEl.classList.add('selected');
+  
+  // Find and highlight related cards
+  const relatedIds = new Set();
+  bubbleConnections.forEach(conn => {
+    if (conn.source === id) relatedIds.add(conn.target);
+    if (conn.target === id) relatedIds.add(conn.source);
+  });
+  
+  relatedIds.forEach(relId => {
+    const relEl = document.getElementById(`bubble-${relId}`);
+    if (relEl) relEl.classList.add('related');
+  });
+  
+  showConnections(id);
+  updateInfoPanel(bubble);
+}
+
+function updateInfoPanel(bubble) {
+  const color = TOPIC_COLORS[bubble.topic] || TOPIC_COLORS.other;
+  document.getElementById('infoTopic').style.background = color;
+  document.getElementById('infoTopic').style.color = color;
+  document.getElementById('infoTitle').textContent = bubble.title;
+  document.getElementById('infoUrl').textContent = bubble.url;
+  document.getElementById('infoTags').innerHTML = (bubble.tags || []).map(t => `<span class="tag">#${t}</span>`).join('');
+  document.getElementById('infoNotes').textContent = bubble.notes || 'No notes added yet.';
+  document.getElementById('discoverInfo').style.display = 'block';
+}
+
+function showConnections(id) {
+  const svg = document.getElementById('connectionsSvg');
+  const related = bubbleConnections.filter(c => c.source === id || c.target === id);
+  
+  const lines = related.map(conn => {
+    const a = bubbles.find(b => b.bubbleId === conn.source);
+    const b = bubbles.find(b => b.bubbleId === conn.target);
+    if (!a || !b) return '';
+    
+    const strokeWidth = 1.5 + conn.strength * 0.8;
+    const opacity = 0.4 + conn.strength * 0.15;
+    
+    return `
+      <line 
+        x1="${a.x}" y1="${a.y}" 
+        x2="${b.x}" y2="${b.y}" 
+        stroke="url(#connectionGradient)" 
+        stroke-width="${strokeWidth}" 
+        opacity="${opacity}" 
+        stroke-dasharray="8 4"
+        class="connection-line visible active"
+      />
+    `;
+  }).join('');
+  
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="connectionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#6366f1"/>
+        <stop offset="50%" stop-color="#8b5cf6"/>
+        <stop offset="100%" stop-color="#6366f1"/>
+      </linearGradient>
+    </defs>
+    ${lines}
+  `;
+}
+
+function hideConnections() {
+  document.getElementById('connectionsSvg').innerHTML = '';
+}
+
+// Ambient floating animation
+function startAmbientAnimation() {
+  let time = 0;
+  const fps = 30;
+  const frameInterval = 1000 / fps;
+  let lastFrameTime = 0;
+  
+  function animate(currentTime) {
+    ambientFrame = requestAnimationFrame(animate);
+    
+    if (currentTime - lastFrameTime < frameInterval) return;
+    lastFrameTime = currentTime;
+    
+    if (isAnyCardHovered || selectedBubbleId) return;
+    
+    time += 0.012;
+    
+    bubbles.forEach(bubble => {
+      if (bubble.bubbleId === centerCardId) return;
+      
+      const card = document.getElementById(`bubble-${bubble.bubbleId}`);
+      if (!card || card.classList.contains('selected') || card.classList.contains('related')) return;
+      
+      // Gentle floating motion
+      const floatX = Math.sin(time + bubble.noisePhase) * 3;
+      const floatY = Math.cos(time * 0.8 + bubble.noisePhase) * 3;
+      
+      const width = bubble.bubbleId === centerCardId ? 280 : 240;
+      card.style.left = `${bubble.baseX + floatX - width / 2}px`;
+      card.style.top = `${bubble.baseY + floatY - 140}px`;
+    });
+  }
+  
+  ambientFrame = requestAnimationFrame(animate);
+}
+
+// Guide card promotion
+function promoteGuideCard(guideId) {
+  const guide = GUIDE_CARDS.find(g => g.id === guideId);
+  if (!guide) return null;
+  
+  const existing = cards.find(c => c.url === guide.url);
+  if (existing) return existing;
+  
+  const newCard = {
+    id: Date.now(),
+    title: guide.title,
+    url: guide.url,
+    tags: [...guide.tags],
+    topic: guide.topic,
+    notes: guide.notes,
+    votes: guide.votes,
+    addedBy: username,
+    screenshot: generatePlaceholderThumbnail(guide),
+    screenshotReal: false,
+    photos: [],
+    comments: [],
+    starred: true,
+    isPrivate: false,
+    createdAt: new Date().toISOString(),
+    lastEdited: new Date().toISOString(),
+    editedBy: username
+  };
+  
+  cards.unshift(newCard);
+  saveCards();
+  renderGrid();
+  return newCard;
+}
+
+// Bubble actions
+function handleBubbleStar(id, event) {
+  event.stopPropagation();
+  const bubble = bubbles.find(b => b.bubbleId === id);
+  if (!bubble) return;
+  
+  if (bubble.isGuide) {
+    const promoted = promoteGuideCard(id);
+    if (promoted) {
+      showToast('⭐ Added to your collection!', 'success');
+      buildBubbleData();
+      renderBubbles();
+    }
+  } else {
+    const card = cards.find(c => String(c.id) === id);
+    if (card) {
+      card.starred = !card.starred;
+      saveCards();
+      renderBubbles();
+      renderGrid();
+      showToast(card.starred ? '⭐ Starred!' : 'Removed star', 'success');
+    }
+  }
+}
+
+function handleBubbleVote(id, event) {
+  event.stopPropagation();
+  const bubble = bubbles.find(b => b.bubbleId === id);
+  if (!bubble) return;
+  
+  if (bubble.isGuide) {
+    showToast('Star this card first to vote on it', 'default');
+    return;
+  }
+  
+  const card = cards.find(c => String(c.id) === id);
+  if (card) {
+    vote(card.id, 1);
+    bubble.votes = card.votes;
+    renderBubbles();
+  }
+}
+
+function handleBubbleCollection(id, event) {
+  event.stopPropagation();
+  const bubble = bubbles.find(b => b.bubbleId === id);
+  if (!bubble) return;
+  
+  if (bubble.isGuide) {
+    const promoted = promoteGuideCard(id);
+    if (promoted) {
+      showToast('Added to collection!', 'success');
+      // Don't close Discover - modal will appear on top
+      setTimeout(() => openAddToCollection(promoted.id), 100);
+    }
+  } else {
+    const card = cards.find(c => String(c.id) === id);
+    if (card) {
+      // Don't close Discover - modal will appear on top
+      openAddToCollection(card.id);
+    }
+  }
+}
+
+function handleBubbleOpen(id, event) {
+  if (event) event.stopPropagation();
+  const bubble = bubbles.find(b => b.bubbleId === id);
+  if (!bubble) return;
+  
+  if (bubble.isGuide) {
+    const promoted = promoteGuideCard(id);
+    if (promoted) {
+      // Don't close Discover - modal will appear on top
+      openEditModal(promoted.id);
+    }
+  } else {
+    const card = cards.find(c => String(c.id) === id);
+    if (card) {
+      // Don't close Discover - modal will appear on top
+      openEditModal(card.id);
+    }
+  }
+}
+
+function openCardFromDiscover() {
+  if (!selectedBubbleId) return;
+  // Don't close Discover - just open the card
+  handleBubbleOpen(selectedBubbleId, null);
+}
+
+function focusOnBubble(id) {
+  const bubble = bubbles.find(b => b.bubbleId === id);
+  if (!bubble) return;
+  
+  const container = document.getElementById('bubbleContainer');
+  const rect = container.parentElement.getBoundingClientRect();
+  
+  // Animate to focused position
+  bubblePanX = rect.width / 2 - bubble.x;
+  bubblePanY = rect.height / 2 - bubble.y;
+  bubbleZoom = 1.15;
+  
+  applyTransform();
+}
+
+// Controls
+function zoomBubbles(factor) {
+  bubbleZoom = Math.max(0.3, Math.min(2.5, bubbleZoom * factor));
+  applyTransform();
+}
+
+function resetBubbleView() {
+  bubbleZoom = 1;
+  bubblePanX = 0;
+  bubblePanY = 0;
+  applyTransform();
+  closeDiscoverInfo();
+}
+
+function shuffleBubbles() {
+  // Rebuild with fresh Fibonacci spiral
+  layoutFibonacciSpiral();
+  renderBubbles();
+  closeDiscoverInfo();
+  showToast('🎲 Reshuffled!', 'default');
+}
+
+function filterDiscoverByTag() {
+  const tag = document.getElementById('discoverFilter').value;
+  
+  document.querySelectorAll('.bubble-card').forEach(el => {
+    const bubble = bubbles.find(b => b.bubbleId === el.dataset.id);
+    const matches = !tag || (bubble?.tags || []).includes(tag);
+    
+    if (matches) {
+      el.style.opacity = '';
+      el.style.pointerEvents = 'auto';
+      el.style.filter = '';
+    } else {
+      el.style.opacity = '0.15';
+      el.style.pointerEvents = 'none';
+      el.style.filter = 'blur(2px)';
+    }
+  });
+}
+
+// Canvas drag and zoom
+function setupCanvasDrag() {
+  const canvas = document.getElementById('discoverCanvas');
+  
+  // Mouse events
+  canvas.addEventListener('mousedown', e => {
+    if (e.target.closest('.bubble-card') || e.target.closest('.discover-info') || e.target.closest('.discover-controls')) return;
+    isDraggingCanvas = true;
+    dragStartX = e.clientX - bubblePanX;
+    dragStartY = e.clientY - bubblePanY;
+    canvas.style.cursor = 'grabbing';
+  });
+  
+  canvas.addEventListener('mousemove', e => {
+    if (!isDraggingCanvas) return;
+    bubblePanX = e.clientX - dragStartX;
+    bubblePanY = e.clientY - dragStartY;
+    applyTransform();
+  });
+  
+  canvas.addEventListener('mouseup', () => {
+    isDraggingCanvas = false;
+    canvas.style.cursor = 'default';
+  });
+  
+  canvas.addEventListener('mouseleave', () => {
+    isDraggingCanvas = false;
+    canvas.style.cursor = 'default';
+  });
+  
+  // Touch events
+  canvas.addEventListener('touchstart', e => {
+    if (e.target.closest('.bubble-card') || e.target.closest('.discover-info')) return;
+    isDraggingCanvas = true;
+    dragStartX = e.touches[0].clientX - bubblePanX;
+    dragStartY = e.touches[0].clientY - bubblePanY;
+  }, { passive: true });
+  
+  canvas.addEventListener('touchmove', e => {
+    if (!isDraggingCanvas) return;
+    bubblePanX = e.touches[0].clientX - dragStartX;
+    bubblePanY = e.touches[0].clientY - dragStartY;
+    applyTransform();
+  }, { passive: true });
+  
+  canvas.addEventListener('touchend', () => {
+    isDraggingCanvas = false;
+  });
+  
+  // Mouse wheel zoom
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const zoomFactor = e.deltaY > 0 ? 0.92 : 1.08;
+    zoomBubbles(zoomFactor);
+  }, { passive: false });
+  
+  // Click on canvas to deselect
+  canvas.addEventListener('click', e => {
+    if (!e.target.closest('.bubble-card') && 
+        !e.target.closest('.discover-info') && 
+        !e.target.closest('.discover-controls')) {
+      closeDiscoverInfo();
+    }
+  });
+}
+
+// ============== CLOUD SYNC ==============
+let cloudSyncEnabled = false;
+let realtimeSubscription = null;
+let syncInProgress = false;
+let lastSyncTime = null;
+
+// Initialize cloud sync after authentication
+async function initCloudSync() {
+  if (!supabaseClient || !currentUser) {
+    cloudSyncEnabled = false;
+    return;
+  }
+  
+  cloudSyncEnabled = true;
+  console.log('☁️ Cloud sync enabled for:', currentUser.email);
+  
+  // Initial sync - merge local and cloud
+  await performInitialSync();
+  
+  // Setup realtime subscriptions
+  setupRealtimeSubscriptions();
+  
+  // Periodic sync every 30 seconds
+  setInterval(syncToCloud, 30000);
+}
+
+// Initial sync: merge local cards with cloud
+async function performInitialSync() {
+  if (syncInProgress) return;
+  syncInProgress = true;
+  
+  try {
+    showToast('☁️ Syncing...', 'default');
+    
+    // 1. Fetch user's own cards from cloud
+    const { data: myCloudCards, error: myError } = await supabaseClient
+      .from('cards')
+      .select('*')
+      .eq('user_id', currentUser.id);
+    
+    if (myError) throw myError;
+    
+    // 2. Get local cards that belong to this user
+    const localUserCards = cards.filter(c => !c.isGuide && !c.cloudId);
+    
+    // 3. Upload local cards that aren't in cloud yet
+    for (const localCard of localUserCards) {
+      const existsInCloud = myCloudCards?.some(cc => cc.id === localCard.id || cc.url === localCard.url);
+      if (!existsInCloud && !localCard.isPrivate) {
+        await uploadCardToCloud(localCard);
+      }
+    }
+    
+    // 4. Merge cloud cards into local (avoid duplicates)
+    if (myCloudCards?.length) {
+      const localUrls = new Set(cards.map(c => c.url));
+      const localIds = new Set(cards.map(c => c.id));
+      
+      for (const cloudCard of myCloudCards) {
+        if (!localIds.has(cloudCard.id) && !localUrls.has(cloudCard.url)) {
+          cards.push(cloudCardToLocal(cloudCard));
+        }
+      }
+    }
+    
+    // 5. Fetch votes for all cards
+    await syncVotesFromCloud();
+    
+    // 6. Fetch comments for all cards
+    await syncCommentsFromCloud();
+    
+    saveCards();
+    renderGrid();
+    
+    lastSyncTime = new Date();
+    showToast('☁️ Synced!', 'success');
+    
+  } catch (error) {
+    console.error('Sync error:', error);
+    showToast('Sync failed - working offline', 'error');
+  } finally {
+    syncInProgress = false;
+  }
+}
+
+// Upload a single card to cloud
+async function uploadCardToCloud(card) {
+  if (!cloudSyncEnabled || !currentUser) return null;
+  if (card.isPrivate) return null; // Never upload private cards
+  if (card.url?.startsWith('thought://') && card.url?.includes('-guide')) return null; // Don't upload guide cards
+  
+  try {
+    // Prepare card data (exclude large photos from main record)
+    const cloudCard = {
+      id: String(card.id),  // Ensure it's a string
+      user_id: currentUser.id,
+      url: card.url,
+      title: card.title,
+      notes: card.notes || '',
+      location: card.location || '',
+      topic: card.topic || 'other',
+      tags: card.tags || [],
+      screenshot: card.screenshot?.substring(0, 50000) || null, // Limit screenshot size
+      screenshot_real: card.screenshotReal || false,
+      is_private: false,
+      added_by: card.addedBy || username,
+      created_at: card.createdAt || new Date().toISOString()
+    };
+    
+    const { data, error } = await supabaseClient
+      .from('cards')
+      .upsert(cloudCard, { onConflict: 'id' })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    // Mark local card as synced
+    card.cloudSynced = true;
+    card.lastCloudSync = new Date().toISOString();
+    
+    return data;
+    
+  } catch (error) {
+    console.error('Upload card error:', error);
+    return null;
+  }
+}
+
+// Delete card from cloud
+async function deleteCardFromCloud(cardId) {
+  if (!cloudSyncEnabled || !currentUser) return;
+  
+  try {
+    await supabaseClient
+      .from('cards')
+      .delete()
+      .eq('id', cardId)
+      .eq('user_id', currentUser.id);
+  } catch (error) {
+    console.error('Delete from cloud error:', error);
+  }
+}
+
+// Convert cloud card format to local format
+function cloudCardToLocal(cloudCard) {
+  return {
+    id: Number(cloudCard.id) || cloudCard.id,  // Convert back to number if possible
+    url: cloudCard.url,
+    title: cloudCard.title,
+    notes: cloudCard.notes || '',
+    location: cloudCard.location || '',
+    topic: cloudCard.topic || 'other',
+    tags: cloudCard.tags || [],
+    screenshot: cloudCard.screenshot,
+    screenshotReal: cloudCard.screenshot_real,
+    isPrivate: cloudCard.is_private,
+    votes: cloudCard.vote_total || 0,
+    photos: [],
+    comments: [],
+    starred: false,
+    addedBy: cloudCard.added_by,
+    createdAt: cloudCard.created_at,
+    lastEdited: cloudCard.updated_at,
+    editedBy: cloudCard.added_by,
+    cloudSynced: true,
+    cloudUserId: cloudCard.user_id,
+    isOwnCard: cloudCard.user_id === currentUser?.id
+  };
+}
+
+// Sync votes from cloud
+async function syncVotesFromCloud() {
+  if (!cloudSyncEnabled || !currentUser) return;
+  
+  try {
+    // Get user's votes
+    const { data: myVotes, error } = await supabaseClient
+      .from('votes')
+      .select('card_id, value')
+      .eq('user_id', currentUser.id);
+    
+    if (error) throw error;
+    
+    if (myVotes) {
+      myVotes.forEach(v => {
+        userVotes[v.card_id] = v.value;
+      });
+      localStorage.setItem('linkgrid-votes', JSON.stringify(userVotes));
+    }
+    
+  } catch (error) {
+    console.error('Sync votes error:', error);
+  }
+}
+
+// Sync comments from cloud
+async function syncCommentsFromCloud() {
+  if (!cloudSyncEnabled) return;
+  
+  try {
+    const cardIds = cards.map(c => c.id);
+    if (!cardIds.length) return;
+    
+    const { data: comments, error } = await supabaseClient
+      .from('comments')
+      .select('*')
+      .in('card_id', cardIds)
+      .order('created_at', { ascending: true });
+    
+    if (error) throw error;
+    
+    if (comments) {
+      // Group comments by card
+      const commentsByCard = {};
+      comments.forEach(c => {
+        if (!commentsByCard[c.card_id]) commentsByCard[c.card_id] = [];
+        commentsByCard[c.card_id].push({
+          id: c.id,
+          text: c.text,
+          author: c.author,
+          timestamp: c.created_at,
+          userId: c.user_id,
+          isOwn: c.user_id === currentUser?.id
+        });
+      });
+      
+      // Merge into cards
+      cards.forEach(card => {
+        if (commentsByCard[card.id]) {
+          card.comments = commentsByCard[card.id];
+        }
+      });
+    }
+    
+  } catch (error) {
+    console.error('Sync comments error:', error);
+  }
+}
+
+// Background sync to cloud
+async function syncToCloud() {
+  if (!cloudSyncEnabled || !currentUser || syncInProgress) return;
+  
+  // Find cards that need syncing
+  const needsSync = cards.filter(c => 
+    !c.isPrivate && 
+    !c.cloudSynced && 
+    !c.url?.includes('-guide') &&
+    c.addedBy === username
+  );
+  
+  for (const card of needsSync) {
+    await uploadCardToCloud(card);
+  }
+  
+  if (needsSync.length > 0) {
+    saveCards();
+  }
+}
+
+// Vote on cloud
+async function voteOnCloud(cardId, value) {
+  if (!cloudSyncEnabled || !currentUser) return;
+  
+  try {
+    if (value === 0) {
+      // Remove vote
+      await supabaseClient
+        .from('votes')
+        .delete()
+        .eq('card_id', cardId)
+        .eq('user_id', currentUser.id);
+    } else {
+      // Upsert vote
+      await supabaseClient
+        .from('votes')
+        .upsert({
+          card_id: cardId,
+          user_id: currentUser.id,
+          value: value
+        }, { onConflict: 'card_id,user_id' });
+    }
+  } catch (error) {
+    console.error('Vote cloud error:', error);
+  }
+}
+
+// Add comment to cloud
+async function addCommentToCloud(cardId, text) {
+  if (!cloudSyncEnabled || !currentUser) return null;
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('comments')
+      .insert({
+        card_id: cardId,
+        user_id: currentUser.id,
+        text: text,
+        author: username
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+    
+  } catch (error) {
+    console.error('Add comment cloud error:', error);
+    return null;
+  }
+}
+
+// Delete comment from cloud
+async function deleteCommentFromCloud(commentId) {
+  if (!cloudSyncEnabled || !currentUser) return;
+  
+  try {
+    await supabaseClient
+      .from('comments')
+      .delete()
+      .eq('id', commentId)
+      .eq('user_id', currentUser.id);
+  } catch (error) {
+    console.error('Delete comment cloud error:', error);
+  }
+}
+
+// Setup realtime subscriptions for live updates
+function setupRealtimeSubscriptions() {
+  if (!supabaseClient || realtimeSubscription) return;
+  
+  realtimeSubscription = supabaseClient
+    .channel('public-cards')
+    .on('postgres_changes', 
+      { event: 'INSERT', schema: 'public', table: 'cards', filter: 'is_private=eq.false' },
+      (payload) => {
+        handleNewCardFromCloud(payload.new);
+      }
+    )
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'cards' },
+      (payload) => {
+        handleCardUpdateFromCloud(payload.new);
+      }
+    )
+    .on('postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'cards' },
+      (payload) => {
+        handleCardDeleteFromCloud(payload.old);
+      }
+    )
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'comments' },
+      (payload) => {
+        handleNewCommentFromCloud(payload.new);
+      }
+    )
+    .subscribe();
+}
+
+// Handle new card from another user
+function handleNewCardFromCloud(cloudCard) {
+  // Don't add if it's our own card (we already have it)
+  if (cloudCard.user_id === currentUser?.id) return;
+  
+  // Don't add if we already have this card
+  if (cards.some(c => c.id === cloudCard.id || c.url === cloudCard.url)) return;
+  
+  // Add to local cards
+  const localCard = cloudCardToLocal(cloudCard);
+  cards.unshift(localCard);
+  saveCards();
+  renderGrid();
+  
+  // Show notification
+  showToast(`🆕 New card: "${cloudCard.title.substring(0, 30)}..."`, 'success');
+  
+  // Update Discover if open
+  if (document.getElementById('discoverView').classList.contains('active')) {
+    buildBubbleData();
+    renderBubbles();
+  }
+}
+
+// Handle card update from cloud
+function handleCardUpdateFromCloud(cloudCard) {
+  const localCard = cards.find(c => c.id === cloudCard.id);
+  if (!localCard) return;
+  
+  // Only update if it's not our card (we're the source of truth for our own cards)
+  if (cloudCard.user_id === currentUser?.id) return;
+  
+  // Update local card
+  localCard.title = cloudCard.title;
+  localCard.notes = cloudCard.notes;
+  localCard.tags = cloudCard.tags;
+  localCard.topic = cloudCard.topic;
+  
+  saveCards();
+  renderGrid();
+}
+
+// Handle card deletion from cloud
+function handleCardDeleteFromCloud(cloudCard) {
+  // Only remove if it's not our card
+  if (cloudCard.user_id === currentUser?.id) return;
+  
+  const index = cards.findIndex(c => c.id === cloudCard.id);
+  if (index > -1) {
+    cards.splice(index, 1);
+    saveCards();
+    renderGrid();
+  }
+}
+
+// Handle new comment from cloud
+function handleNewCommentFromCloud(cloudComment) {
+  // Don't duplicate our own comments
+  if (cloudComment.user_id === currentUser?.id) return;
+  
+  const card = cards.find(c => c.id === cloudComment.card_id);
+  if (!card) return;
+  
+  // Check if comment already exists
+  if (card.comments?.some(c => c.id === cloudComment.id)) return;
+  
+  if (!card.comments) card.comments = [];
+  card.comments.push({
+    id: cloudComment.id,
+    text: cloudComment.text,
+    author: cloudComment.author,
+    timestamp: cloudComment.created_at,
+    userId: cloudComment.user_id,
+    isOwn: false
+  });
+  
+  saveCards();
+  
+  // Update UI if viewing this card
+  if (currentCardId === card.id) {
+    renderEditComments();
+  }
+}
+
+// Fetch all public cards for Discover feed
+async function fetchCommunityCards() {
+  if (!supabaseClient) return [];
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('cards_with_votes')
+      .select('*')
+      .eq('is_private', false)
+      .order('created_at', { ascending: false })
+      .limit(200); // Limit for performance
+    
+    if (error) throw error;
+    
+    return (data || []).map(cloudCardToLocal);
+    
+  } catch (error) {
+    console.error('Fetch community cards error:', error);
+    return [];
+  }
+}
+
+// Cleanup realtime subscription
+function cleanupRealtimeSubscription() {
+  if (realtimeSubscription) {
+    supabaseClient.removeChannel(realtimeSubscription);
+    realtimeSubscription = null;
+  }
+}
+
+// ============== LOAD & SAVE ==============
+async function loadCards() {
+  const stored = localStorage.getItem('linkgrid-cards');
+  if (stored) {
+    let loaded = JSON.parse(stored);
+    
+    // Fix images from IndexedDB
+    loaded = await Promise.all(loaded.map(async (c) => {
+      if (c.screenshot && !c.screenshot.startsWith('data:') && !c.screenshot.startsWith('http')) {
+        try { c.screenshot = await getImage(c.screenshot) || c.screenshot; } catch(e) {}
+      }
+      if (c.photos?.length) {
+        c.photos = await Promise.all(c.photos.map(async (p) => {
+          if (!p.startsWith('data:') && !p.startsWith('http')) {
+            try { return await getImage(p) || p; } catch(e) { return p; }
+          }
+          return p;
+        }));
+      }
+      return c;
+    }));
+    
+    // Filter out guide cards that shouldn't be in main collection
+    loaded = loaded.filter(c => {
+      // Remove guide cards unless they were starred (promoted)
+      if (c.url?.startsWith('thought://') && c.url?.includes('-guide')) {
+        return c.starred === true;
+      }
+      return true;
+    });
+    
+    // Remove duplicates by URL
+    const seen = new Set();
+    cards = loaded.filter(card => {
+      if (seen.has(card.url)) return false;
+      seen.add(card.url);
+      return true;
+    });
+  }
+  
+  userVotes = JSON.parse(localStorage.getItem('linkgrid-votes') || '{}');
+  username = localStorage.getItem('linkgrid-username') || 'You';
+  collections = JSON.parse(localStorage.getItem('linkgrid-collections') || '[]');
+  
+  if (localStorage.getItem('linkgrid-header-collapsed') === 'true') {
+    headerCollapsed = true;
+    const el = document.getElementById('headerExpand');
+    if (el) el.classList.add('collapsed');
+  }
+  
+  compactCards = new Set(JSON.parse(localStorage.getItem('linkgrid-compact-cards') || '[]'));
+  const sp = localStorage.getItem('linkgrid-show-contributors');
+  if (sp !== null) showContributors = sp === 'true';
+  
+  checkForSharedCard();
+  checkForSharedCollection();
+  renderGrid();
+}
+
+async function saveCards() {
+  const toSave = await Promise.all(cards.map(async (c) => {
+    const copy = { ...c };
+    if (c.screenshot?.startsWith('data:')) {
+      const key = `screenshot-${c.id}`;
+      await storeImage(key, c.screenshot);
+      copy.screenshot = key;
+    }
+    if (c.photos?.length) {
+      copy.photos = await Promise.all(c.photos.map(async (p, i) => {
+        if (p.startsWith('data:')) {
+          const key = `photo-${c.id}-${i}`;
+          await storeImage(key, p);
+          return key;
+        }
+        return p;
+      }));
+    }
+    return copy;
+  }));
+  localStorage.setItem('linkgrid-cards', JSON.stringify(toSave));
+  document.getElementById('link-count').textContent = cards.length;
+  
+  // Trigger background cloud sync for new/updated cards
+  if (cloudSyncEnabled && !syncInProgress) {
+    syncToCloud();
+  }
+}
+function saveCollections() {
+  localStorage.setItem('linkgrid-collections', JSON.stringify(collections));
+}
+
+// ============== METADATA ==============
+async function fetchMetadata(url) {
+  try {
+    const res = await fetch(`https://jsonlink.io/api/extract?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
+    if (res.ok) {
+      const d = await res.json();
+      return { title: d.title || new URL(url).hostname, description: d.description || '', icon: d.images?.[0] || '', hasMetadata: true };
+    }
+  } catch(e) {}
+  return extractMetadataFromURL(url);
+}
+
+function extractMetadataFromURL(url) {
+  try {
+    const u = new URL(url);
+    let title = u.hostname.replace('www.', '');
+    const path = u.pathname.split('/').filter(p => p);
+    if (path.length) {
+      const last = path[path.length - 1].replace(/[-_]/g, ' ').replace(/\.(html|php|asp|jsp)$/i, '');
+      if (last.length > 3 && last.length < 60) title = last.charAt(0).toUpperCase() + last.slice(1);
+    }
+    if (u.hostname.includes('twitter.com') || u.hostname.includes('x.com')) title = 'Post on X';
+    else if (u.hostname.includes('youtube.com')) title = 'YouTube Video';
+    else if (u.hostname.includes('github.com')) title = 'GitHub Repository';
+    return { title, description: url, icon: `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=64`, hasMetadata: true };
+  } catch(e) {
+    return { title: url, description: '', icon: '', hasMetadata: false };
+  }
+}
+
+// ============== SCREENSHOTS ==============
+async function generateScreenshot(url) {
+  try {
+    const screenshotUrl = `https://image.thum.io/get/width/400/crop/300/noanimate/${encodeURIComponent(url)}`;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ url: screenshotUrl, isReal: true, success: true });
+      img.onerror = () => resolve({ url: generateMockScreenshot(url), isReal: false, success: false });
+      img.src = screenshotUrl;
+      setTimeout(() => resolve({ url: generateMockScreenshot(url), isReal: false, success: false }), 5000);
+    });
+  } catch(e) {
+    return { url: generateMockScreenshot(url), isReal: false, success: false };
+  }
+}
+
+function generateMockScreenshot(url) {
+  const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+  const c = colors[Math.floor(Math.random() * colors.length)];
+  const text = encodeURIComponent(url.substring(0, 30));
+  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='${c}'/%3E%3Ctext x='50%25' y='50%25' font-family='sans-serif' font-size='14' fill='white' text-anchor='middle'%3E${text}%3C/text%3E%3C/svg%3E`;
+}
+
+// Generate beautiful placeholder thumbnail
+function generatePlaceholderThumbnail(card) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 400;
+  canvas.height = 250;
+  const ctx = canvas.getContext('2d');
+  
+  // Topic-based color schemes
+  const colorSchemes = {
+    tech: { primary: '#6366f1', secondary: '#8b5cf6', accent: '#a5b4fc' },
+    news: { primary: '#f59e0b', secondary: '#d97706', accent: '#fcd34d' },
+    food: { primary: '#10b981', secondary: '#059669', accent: '#6ee7b7' },
+    travel: { primary: '#06b6d4', secondary: '#0891b2', accent: '#67e8f9' },
+    entertainment: { primary: '#ec4899', secondary: '#db2777', accent: '#f9a8d4' },
+    other: { primary: '#8b5cf6', secondary: '#7c3aed', accent: '#c4b5fd' }
+  };
+  
+  const colors = colorSchemes[card.topic] || colorSchemes.other;
+  
+  // Create gradient background
+  const grad = ctx.createLinearGradient(0, 0, 400, 250);
+  grad.addColorStop(0, colors.primary);
+  grad.addColorStop(0.5, colors.secondary);
+  grad.addColorStop(1, colors.primary);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 400, 250);
+  
+  // Add animated-looking wave pattern
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0, 150 + i * 20);
+    for (let x = 0; x <= 400; x += 20) {
+      ctx.lineTo(x, 150 + i * 20 + Math.sin(x * 0.02 + i) * 20);
+    }
+    ctx.lineTo(400, 250);
+    ctx.lineTo(0, 250);
+    ctx.closePath();
+    ctx.fill();
+  }
+  
+  // Add floating circles/orbs
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+  const orbs = [
+    { x: 50, y: 40, r: 60 },
+    { x: 350, y: 60, r: 80 },
+    { x: 150, y: 180, r: 40 },
+    { x: 300, y: 200, r: 50 },
+    { x: 80, y: 150, r: 30 }
+  ];
+  orbs.forEach(orb => {
+    ctx.beginPath();
+    ctx.arc(orb.x, orb.y, orb.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  // Add small floating particles
+  ctx.fillStyle = colors.accent;
+  for (let i = 0; i < 30; i++) {
+    ctx.globalAlpha = Math.random() * 0.5 + 0.2;
+    ctx.beginPath();
+    ctx.arc(
+      Math.random() * 400,
+      Math.random() * 250,
+      Math.random() * 3 + 1,
+      0, Math.PI * 2
+    );
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  
+  // Add subtle grid pattern
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < 400; x += 40) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, 250);
+    ctx.stroke();
+  }
+  for (let y = 0; y < 250; y += 40) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(400, y);
+    ctx.stroke();
+  }
+  
+  // Topic emoji
+  const emojis = { tech: '💻', news: '📰', food: '🍔', travel: '✈️', entertainment: '🎬', other: '📌' };
+  ctx.font = '40px sans-serif';
+  ctx.fillText(emojis[card.topic] || '📌', 20, 50);
+  
+  // Title text with shadow
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 22px Inter, system-ui, sans-serif';
+  
+  // Word wrap title
+  const words = card.title.split(' ');
+  let line = '';
+  let y = 100;
+  const maxWidth = 360;
+  
+  words.forEach(word => {
+    const testLine = line + word + ' ';
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      ctx.fillText(line.trim(), 20, y);
+      line = word + ' ';
+      y += 28;
+    } else {
+      line = testLine;
+    }
+  });
+  if (line && y < 200) {
+    ctx.fillText(line.trim(), 20, y);
+  }
+  
+  // Reset shadow
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  
+  // URL domain at bottom
+  try {
+    const domain = new URL(card.url).hostname.replace('www.', '');
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '12px Inter, system-ui, sans-serif';
+    ctx.fillText(domain, 20, 235);
+  } catch (e) {}
+  
+  return canvas.toDataURL('image/png');
+}
+
+// Get valid thumbnail or generate placeholder
+function getCardThumbnail(card) {
+  // Check if screenshot exists and is valid
+  if (card.screenshot && card.screenshot.startsWith('data:') && card.screenshotReal) {
+    return card.screenshot;
+  }
+  if (card.screenshot && card.screenshot.startsWith('http')) {
+    return card.screenshot;
+  }
+  // Check photos
+  if (card.photos && card.photos.length > 0 && card.photos[0].startsWith('data:')) {
+    return card.photos[0];
+  }
+  // Generate placeholder
+  return generatePlaceholderThumbnail(card);
+}
+
+async function retryScreenshot(cardId) {
+  const card = cards.find(c => c.id === cardId);
+  if (!card || card.screenshotReal) return;
+  const result = await generateScreenshot(card.url);
+  card.screenshot = result.url;
+  card.screenshotReal = result.isReal;
+  saveCards();
+  renderGrid();
+}
+
+// ============== ADD MODAL ==============
+function openAddModal() {
+  document.getElementById('addModal').classList.add('active');
+  switchAddTab('link');
+}
+
+function closeAddModal() {
+  document.getElementById('addModal').classList.remove('active');
+  document.getElementById('newUrl').value = '';
+  const titleEl = document.getElementById('newMediaTitle');
+  if (titleEl) titleEl.value = '';
+  const thoughtTitle = document.getElementById('thoughtTitle');
+  const thoughtContent = document.getElementById('thoughtContent');
+  if (thoughtTitle) thoughtTitle.value = '';
+  if (thoughtContent) thoughtContent.value = '';
+  selectedNewMediaFiles = [];
+  const preview = document.getElementById('newMediaPreviewArea');
+  if (preview) preview.style.display = 'none';
+}
+
+function switchAddTab(tab) {
+  const linkTab = document.getElementById('linkTab');
+  const mediaTab = document.getElementById('mediaTab');
+  const thoughtTab = document.getElementById('thoughtTab');
+  const linkBtn = document.getElementById('linkTabBtn');
+  const mediaBtn = document.getElementById('mediaTabBtn');
+  const thoughtBtn = document.getElementById('thoughtTabBtn');
+  
+  if (linkTab) linkTab.style.display = 'none';
+  if (mediaTab) mediaTab.style.display = 'none';
+  if (thoughtTab) thoughtTab.style.display = 'none';
+  
+  const inactive = { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' };
+  const active = { background: 'var(--gradient)', border: 'none' };
+  
+  if (linkBtn) Object.assign(linkBtn.style, inactive);
+  if (mediaBtn) Object.assign(mediaBtn.style, inactive);
+  if (thoughtBtn) Object.assign(thoughtBtn.style, inactive);
+  
+  if (tab === 'link' && linkTab && linkBtn) {
+    linkTab.style.display = 'block';
+    Object.assign(linkBtn.style, active);
+    document.getElementById('newUrl')?.focus();
+  } else if (tab === 'media' && mediaTab && mediaBtn) {
+    mediaTab.style.display = 'block';
+    Object.assign(mediaBtn.style, active);
+  } else if (tab === 'thought' && thoughtTab && thoughtBtn) {
+    thoughtTab.style.display = 'block';
+    Object.assign(thoughtBtn.style, active);
+    document.getElementById('thoughtContent')?.focus();
+  }
+}
+
+async function addLink() {
+  const url = document.getElementById('newUrl').value.trim();
+  const topicEl = document.getElementById('newLinkTopic');
+  const topic = topicEl ? topicEl.value : 'other';
+  if (!url) return;
+  
+  try {
+    new URL(url);
+  } catch(e) {
+    showToast('Please enter a valid URL', 'error');
+    return;
+  }
+  
+  const [screenshotResult, metadata] = await Promise.all([
+    generateScreenshot(url),
+    fetchMetadata(url)
+  ]);
+  
+const newCard = {
+    id: Date.now(),
+    url: url,
+    screenshot: screenshotResult.url,
+    screenshotReal: screenshotResult.isReal,
+    title: metadata.title || new URL(url).hostname,
+    notes: '',
+    location: '',
+    tags: [],
+    topic: topic,
+    votes: 0,
+    photos: [],
+    comments: [],
+    starred: false,
+    isPrivate: localStorage.getItem('linkgrid-default-card-private') === 'true',
+    metadata: metadata,
+    createdAt: new Date().toISOString(),
+    lastEdited: new Date().toISOString(),
+    editedBy: username,
+    addedBy: username
+  };
+  
+  cards.unshift(newCard);
+  saveCards();
+  renderGrid();
+  closeAddModal();
+  showToast('Link added!', 'success');
+  
+  if (!screenshotResult.isReal) {
+    setTimeout(() => retryScreenshot(newCard.id), 3000);
+  }
+}
+// ============== EDIT MODAL ==============
+function openEditModal(id) {
+  currentCardId = id;
+  const card = cards.find(c => c.id === id);
+  if (!card) return;
+  
+  document.getElementById('editModal').classList.add('active');
+  
+  // Image
+  const detailImage = document.getElementById('detailImage');
+  const uploadPrompt = document.getElementById('uploadPrompt');
+  const removeBtn = document.getElementById('removeImageBtn');
+  
+  let mainImage = card.screenshot;
+  if (!card.screenshotReal && !card.customScreenshot && card.photos?.length) {
+    mainImage = card.photos[0];
+  }
+  
+  if (mainImage) {
+    detailImage.src = mainImage;
+    detailImage.style.display = 'block';
+    uploadPrompt.style.display = 'none';
+    removeBtn.style.display = card.customScreenshot ? 'inline-flex' : 'none';
+  } else {
+    detailImage.style.display = 'none';
+    uploadPrompt.style.display = 'flex';
+    removeBtn.style.display = 'none';
+  }
+  
+  // Basic fields
+  document.getElementById('editTitle').value = card.title;
+  const urlLink = document.getElementById('editUrlLink');
+  urlLink.href = card.url;
+  urlLink.textContent = card.url + ' ↗';
+  document.getElementById('editLocation').value = card.location || '';
+  document.getElementById('editNotes').value = card.notes || '';
+  
+  // Info footer
+  document.getElementById('editInfo').innerHTML = `Created: ${new Date(card.createdAt).toLocaleDateString()} · Edited: ${new Date(card.lastEdited).toLocaleDateString()} by ${card.editedBy}`;
+  
+  // Privacy
+  document.getElementById('editPrivate').checked = card.isPrivate || false;
+  
+  // Update vote display, tags, photos, comments
+  updateVoteDisplay(id);
+  renderEditTags();
+  renderEditPhotos();
+  renderEditComments();
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('active');
+  updateCard();
+  currentCardId = null;
+}
+
+function updateCard() {
+  if (!currentCardId) return;
+  const card = cards.find(c => c.id === currentCardId);
+  if (!card) return;
+  card.title = document.getElementById('editTitle').value;
+  const locEl = document.getElementById('editLocation');
+  if (locEl) card.location = locEl.value;
+  card.notes = document.getElementById('editNotes').value;
+  card.lastEdited = new Date().toISOString();
+  card.editedBy = username;
+  saveCards();
+  renderGrid();
+}
+
+function deleteCard() {
+  const card = cards.find(c => c.id === currentCardId);
+  
+  // Check ownership for cloud cards
+  if (card?.cloudUserId && currentUser && card.cloudUserId !== currentUser.id) {
+    showToast('You can only delete your own cards', 'error');
+    return;
+  }
+  
+  if (!confirm('Delete this link?')) return;
+  
+  // Delete from cloud first
+  deleteCardFromCloud(currentCardId);
+  
+  // Delete locally
+  cards = cards.filter(c => c.id !== currentCardId);
+  collections.forEach(col => {
+    if (col.cardIds) col.cardIds = col.cardIds.filter(id => id !== currentCardId);
+  });
+  
+  saveCards();
+  saveCollections();
+  renderGrid();
+  closeEditModal();
+  showToast('Deleted', 'success');
+}
+// ============== TAGS ==============
+function renderTags() {
+  const card = cards.find(c => c.id === currentCardId);
+  const container = document.getElementById('tagsContainer');
+  if (!card || !container) return;
+  container.innerHTML = card.tags.map(tag => `
+    <span class="tag" onclick="removeTag('${tag}')" title="Click to remove">${tag} ×</span>
+  `).join('');
+}
+
+function addTag() {
+  const input = document.getElementById('newTag');
+  const tag = input.value.trim();
+  if (!tag) return;
+  const card = cards.find(c => c.id === currentCardId);
+  if (!card || card.tags.includes(tag)) { input.value = ''; return; }
+  card.tags.push(tag);
+  input.value = '';
+  renderTags();
+  saveCards();
+}
+
+function removeTag(tag) {
+  const card = cards.find(c => c.id === currentCardId);
+  if (!card) return;
+  card.tags = card.tags.filter(t => t !== tag);
+  renderTags();
+  saveCards();
+}
+
+// New Edit Modal Section Toggle
+function toggleEditSection(section) {
+  const header = document.querySelector(`#edit${section.charAt(0).toUpperCase() + section.slice(1)}Content`).previousElementSibling;
+  const content = document.getElementById(`edit${section.charAt(0).toUpperCase() + section.slice(1)}Content`);
+  header.classList.toggle('collapsed');
+  content.classList.toggle('collapsed');
+}
+
+// Render tags in new format
+function renderEditTags() {
+  const card = cards.find(c => c.id === currentCardId);
+  const container = document.getElementById('tagsContainer');
+  if (!card || !container) return;
+  container.innerHTML = card.tags.map(tag => `
+    <span class="tag" onclick="removeTag('${tag}')" title="Click to remove">${tag}</span>
+  `).join('');
+}
+
+// Render photos in new grid format
+function renderEditPhotos() {
+  const card = cards.find(c => c.id === currentCardId);
+  const grid = document.getElementById('editPhotoGrid');
+  const countEl = document.getElementById('editPhotoCount');
+  
+  if (!card || !grid) return;
+  
+  const photoCount = card.photos?.length || 0;
+  countEl.textContent = photoCount > 0 ? `(${photoCount})` : '';
+  
+  let html = '';
+  if (card.photos?.length) {
+    html = card.photos.map((photo, i) => `
+      <div class="edit-photo-item">
+        <img src="${photo}" alt="Photo ${i+1}">
+        <button class="delete-btn" onclick="deletePhoto(${i})">×</button>
+      </div>
+    `).join('');
+  }
+  html += `<div class="edit-photo-add" onclick="document.getElementById('addPhoto').click()">+</div>`;
+  grid.innerHTML = html;
+}
+
+// Render comments in new format
+function renderEditComments() {
+  const card = cards.find(c => c.id === currentCardId);
+  const container = document.getElementById('editCommentsContainer');
+  const countEl = document.getElementById('editCommentCount');
+  
+  if (!card || !container) return;
+  
+  const commentCount = card.comments?.length || 0;
+  countEl.textContent = commentCount > 0 ? `(${commentCount})` : '';
+  
+  if (!commentCount) {
+    container.innerHTML = '<p style="color:var(--text-3);font-size:0.75rem;text-align:center;padding:0.5rem;">No comments yet</p>';
+    return;
+  }
+  
+  container.innerHTML = card.comments.map(c => `
+    <div class="edit-comment">
+      <div class="edit-comment-header">
+        <span class="edit-comment-author">${c.author}</span>
+        <span>
+          <span class="edit-comment-time">${getRelativeTime(c.timestamp)}</span>
+          <button class="edit-comment-delete" onclick="deleteComment(${c.id})">×</button>
+        </span>
+      </div>
+      <div class="edit-comment-text">${c.text}</div>
+    </div>
+  `).join('');
+}
+
+// Add comment from input field
+async function addCommentFromInput() {
+  const input = document.getElementById('newCommentInput');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  const card = cards.find(c => c.id === currentCardId);
+  if (!card) return;
+  
+  if (!card.comments) card.comments = [];
+  
+  // Add locally first
+  const localComment = { 
+    id: Date.now(), 
+    text, 
+    author: username, 
+    timestamp: new Date().toISOString(),
+    isOwn: true
+  };
+  
+  card.comments.push(localComment);
+  input.value = '';
+  saveCards();
+  renderEditComments();
+  
+  // Sync to cloud
+  const cloudComment = await addCommentToCloud(card.id, text);
+  if (cloudComment) {
+    // Update local comment with cloud ID
+    localComment.id = cloudComment.id;
+    saveCards();
+  }
+  
+  showToast('Comment added', 'success');
+}
+
+// Relative time helper
+function getRelativeTime(timestamp) {
+  const diff = Date.now() - new Date(timestamp).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  return new Date(timestamp).toLocaleDateString();
+}
+
+// ============== PHOTOS ==============
+function addPhotos(event) {
+  const files = Array.from(event.target.files);
+  const card = cards.find(c => c.id === currentCardId);
+  if (!card) return;
+  if (!card.photos) card.photos = [];
+  
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      card.photos.push(e.target.result);
+      loaded++;
+      if (loaded === files.length) {
+        saveCards();
+        renderPhotoGallery();
+        renderGrid();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function deletePhoto(index) {
+  const card = cards.find(c => c.id === currentCardId);
+  if (!card?.photos) return;
+  if (confirm('Delete this photo?')) {
+    card.photos.splice(index, 1);
+    saveCards();
+    renderPhotoGallery();
+    renderGrid();
+  }
+}
+
+function renderPhotoGallery() {
+  const card = cards.find(c => c.id === currentCardId);
+  const gallery = document.getElementById('photoGallery');
+  if (!gallery) return;
+  if (!card?.photos?.length) {
+    gallery.innerHTML = '<p style="color:var(--text-3);font-size:0.8rem;text-align:center;padding:1rem;">No photos yet</p>';
+    return;
+  }
+  gallery.innerHTML = card.photos.map((photo, i) => `
+    <div class="gallery-item">
+      <img src="${photo}" alt="Photo ${i+1}">
+      <button class="gallery-item-delete" onclick="deletePhoto(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+// ============== COMMENTS ==============
+function addComment() {
+  const card = cards.find(c => c.id === currentCardId);
+  const text = document.getElementById('newComment').value.trim();
+  if (!card || !text) return;
+  if (!card.comments) card.comments = [];
+  card.comments.push({ id: Date.now(), text, author: username, timestamp: new Date().toISOString() });
+  document.getElementById('newComment').value = '';
+  saveCards();
+  renderComments();
+}
+
+function deleteComment(commentId) {
+  const card = cards.find(c => c.id === currentCardId);
+  if (!card?.comments) return;
+  
+  const comment = card.comments.find(c => c.id === commentId);
+  
+  // Only allow deleting own comments
+  if (comment && !comment.isOwn && currentUser && comment.userId !== currentUser.id) {
+    showToast('You can only delete your own comments', 'error');
+    return;
+  }
+  
+  if (confirm('Delete comment?')) {
+    card.comments = card.comments.filter(c => c.id !== commentId);
+    saveCards();
+    renderEditComments();
+    
+    // Sync to cloud
+    deleteCommentFromCloud(commentId);
+  }
+}
+
+function renderComments() {
+  const card = cards.find(c => c.id === currentCardId);
+  const container = document.getElementById('commentsContainer');
+  if (!container) return;
+  if (!card?.comments?.length) {
+    container.innerHTML = '<p style="color:var(--text-3);font-size:0.8rem;">No comments yet</p>';
+    return;
+  }
+  container.innerHTML = card.comments.map(c => `
+    <div class="comment">
+      <div class="comment-header">
+        <span class="comment-author">${c.author}</span>
+        <span class="comment-time">${new Date(c.timestamp).toLocaleString()}</span>
+      </div>
+      <div class="comment-text">${c.text}</div>
+      <button onclick="deleteComment(${c.id})" style="background:transparent;border:none;color:var(--danger);font-size:0.7rem;cursor:pointer;margin-top:0.25rem;">Delete</button>
+    </div>
+  `).join('');
+}
+
+// ============== RENDER GRID ==============
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  updateCollectionFilterDropdown();
+  
+  let filtered = currentTopic === 'all' ? cards : cards.filter(c => c.topic === currentTopic);
+  if (currentCollectionFilter) {
+    const col = collections.find(c => c.id === currentCollectionFilter);
+    if (col) filtered = filtered.filter(c => col.cardIds?.includes(c.id));
+  }
+  if (showOnlyStarred) filtered = filtered.filter(c => c.starred);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(c => 
+      c.title.toLowerCase().includes(q) || c.url.toLowerCase().includes(q) ||
+      c.notes?.toLowerCase().includes(q) || c.tags?.some(t => t.toLowerCase().includes(q))
+    );
+  }
+  
+  filtered = sortCards(filtered);
+  
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">${searchQuery ? '🔍' : showOnlyStarred ? '⭐' : '🌐'}</div><h2>${searchQuery ? 'No results' : showOnlyStarred ? 'No starred links' : 'No links yet'}</h2><p>${searchQuery ? 'Try different terms' : 'Add your first link'}</p><button class="btn btn-primary" onclick="${searchQuery ? "document.getElementById('searchBar').value='';handleSearch()" : 'openAddModal()'}">+ Add Link</button></div>`;
+    return;
+  }
+  
+  const topicEmojis = {tech:'💻',news:'📰',food:'🍔',travel:'✈️',entertainment:'🎬',other:'📌'};
+  
+  grid.innerHTML = filtered.map(card => {
+    const emoji = topicEmojis[card.topic] || '📌';
+    const v = card.votes || 0;
+    const compact = compactCards.has(card.id);
+    
+    return `
+      <div class="card ${compact ? 'compact' : ''}" onclick="${bulkSelectMode ? `toggleCardSelection(${card.id},event)` : `openEditModal(${card.id})`}">
+        ${bulkSelectMode ? `<input type="checkbox" ${selectedCards.has(card.id)?'checked':''} onclick="toggleCardSelection(${card.id},event)" style="position:absolute;top:0.75rem;left:0.75rem;width:20px;height:20px;z-index:10">` : ''}
+        ${!compact ? `<button class="card-star ${card.starred?'active':''}" onclick="event.stopPropagation();toggleStar(${card.id})">${card.starred?'⭐':'☆'}</button>` : ''}
+        <div class="card-image">
+          <img src="${card.screenshot || card.photos?.[0] || ''}" alt="${card.title}" loading="lazy">
+          <div class="card-badges">
+            <span class="badge">${emoji}</span>
+            ${v ? `<span class="badge badge-vote ${v<0?'negative':''}">${v>0?'+':''}${v}</span>` : ''}
+			${card.isPrivate ? `<span class="badge" style="background:rgba(99,102,241,0.9)">🔒</span>` : ''}
+		  </div>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">${card.title}</h3>
+          <p class="card-url">${card.url}</p>
+          ${card.location ? `<div class="card-location">📍 ${card.location}</div>` : ''}
+          ${card.notes ? `<p class="card-notes">${card.notes}</p>` : ''}
+          ${card.tags?.length ? `<div class="card-tags">${card.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>` : ''}
+          <div class="card-meta"><span>👤 ${showContributors ? (card.addedBy||'Unknown') : 'Anonymous'}</span></div>
+        </div>
+        ${!compact ? `<div class="card-footer">
+          <button class="btn btn-ghost" onclick="event.stopPropagation();toggleCard(${card.id})">▲</button>
+          <button class="btn btn-ghost" onclick="event.stopPropagation();openAddToCollection(${card.id})">📁</button>
+          <button class="btn btn-ghost" onclick="event.stopPropagation();showQuickActions(${card.id})">⋮</button>
+        </div>` : ''}
+      </div>
+    `;
+  }).join('');
+  
+  document.getElementById('link-count').textContent = cards.length;
+  const contribs = new Set(cards.map(c=>c.addedBy).filter(Boolean));
+  document.getElementById('contributor-count').textContent = showContributors ? contribs.size : '?';
+}
+
+function sortCards(arr) {
+  const sorted = [...arr];
+  if (sortMode === 'votes') sorted.sort((a,b) => (b.votes||0) - (a.votes||0));
+  else if (sortMode === 'title') sorted.sort((a,b) => a.title.localeCompare(b.title));
+  else sorted.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return sorted;
+}
+
+// ============== VOTING ==============
+function vote(cardId, value) {
+  const c = cards.find(x => x.id === cardId);
+  if (!c) return;
+  if (!c.votes) c.votes = 0;
+  
+  const prev = userVotes[cardId] || 0;
+  
+  if (prev === value) {
+    // Toggle off
+    c.votes -= value;
+    userVotes[cardId] = 0;
+    voteOnCloud(cardId, 0); // Sync to cloud
+  } else {
+    // Change vote
+    c.votes -= prev;
+    c.votes += value;
+    userVotes[cardId] = value;
+    voteOnCloud(cardId, value); // Sync to cloud
+  }
+  
+  saveCards();
+  localStorage.setItem('linkgrid-votes', JSON.stringify(userVotes));
+  updateVoteDisplay(cardId);
+  renderGrid();
+}
+
+function updateVoteDisplay(cardId) {
+  const c = cards.find(x => x.id === cardId);
+  if (!c) return;
+  const score = document.getElementById('voteScore');
+  const up = document.getElementById('upvoteBtn'), down = document.getElementById('downvoteBtn');
+  if (score) {
+    score.textContent = c.votes || 0;
+    score.className = 'vote-score' + (c.votes > 0 ? ' positive' : c.votes < 0 ? ' negative' : '');
+  }
+  const uv = userVotes[cardId] || 0;
+  if (up) up.className = 'vote-btn' + (uv === 1 ? ' upvoted' : '');
+  if (down) down.className = 'vote-btn' + (uv === -1 ? ' downvoted' : '');
+}
+
+// ============== STARS & FILTERS ==============
+function toggleStar(id) {
+  const c = cards.find(x => x.id === id);
+  if (c) { c.starred = !c.starred; saveCards(); renderGrid(); }
+}
+
+function toggleStarred() {
+  showOnlyStarred = !showOnlyStarred;
+  document.getElementById('starFilterBtn').textContent = showOnlyStarred ? '⭐ All' : '⭐ Starred';
+  renderGrid();
+}
+
+function handleSearch() {
+  searchQuery = document.getElementById('searchBar').value.toLowerCase();
+  renderGrid();
+}
+
+function switchTopic(topic, el) {
+  currentTopic = topic;
+  document.querySelectorAll('#topicChips .chip').forEach(c => c.classList.remove('active'));
+  el?.classList.add('active');
+  renderGrid();
+}
+
+function setSortMode(mode, el) {
+  sortMode = mode;
+  document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+  el?.classList.add('active');
+  renderGrid();
+}
+
+function toggleHeaderCollapse() {
+  headerCollapsed = !headerCollapsed;
+  const el = document.getElementById('headerExpand');
+  if (headerCollapsed) { el.classList.add('collapsed'); document.getElementById('collapseIcon').textContent = '▼'; document.getElementById('collapseText').textContent = 'Show filters'; }
+  else { el.classList.remove('collapsed'); document.getElementById('collapseIcon').textContent = '▲'; document.getElementById('collapseText').textContent = 'Hide filters'; }
+  localStorage.setItem('linkgrid-header-collapsed', headerCollapsed);
+}
+
+function toggleSection(name) {
+  const content = document.getElementById(name + 'Content');
+  const toggle = document.getElementById(name + 'Toggle');
+  if (content && toggle) { content.classList.toggle('collapsed'); toggle.classList.toggle('collapsed'); }
+}
+
+function toggleCard(id) {
+  if (compactCards.has(id)) compactCards.delete(id);
+  else compactCards.add(id);
+  localStorage.setItem('linkgrid-compact-cards', JSON.stringify([...compactCards]));
+  renderGrid();
+}
+
+// ============== COLLECTIONS ==============
+function updateCollectionFilterDropdown() {
+  const sel = document.getElementById('collectionFilter');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">All Collections</option>' + 
+    collections.map(c => `<option value="${c.id}">${c.emoji||'📁'} ${c.name} (${c.cardIds?.length||0})</option>`).join('');
+}
+
+function filterByCollection() {
+  currentCollectionFilter = document.getElementById('collectionFilter').value;
+  renderGrid();
+}
+
+function renderCollectionsList() {
+  const el = document.getElementById('collectionsList');
+  if (!collections.length) { el.innerHTML = '<p style="color:var(--text-3);text-align:center;padding:2rem">No collections yet</p>'; return; }
+  el.innerHTML = collections.map(c => `
+    <div style="background:var(--bg-elevated);padding:1rem;border-radius:var(--radius-md);margin-bottom:0.75rem;border-left:4px solid ${c.color||'var(--accent)'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+        <strong>${c.emoji||'📁'} ${c.name}</strong>
+        <button onclick="deleteCollection('${c.id}')" style="background:transparent;border:none;color:var(--danger);cursor:pointer">🗑</button>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-2)">${c.cardIds?.length||0} links</div>
+    </div>
+  `).join('');
+}
+
+function createNewCollection() {
+  const name = prompt('Collection name:');
+  if (!name?.trim()) return;
+  const emoji = prompt('Emoji (optional):', '📁') || '📁';
+  collections.push({ id: 'col_'+Date.now(), name: name.trim(), emoji, color: '#6366f1', cardIds: [], createdAt: new Date().toISOString(), createdBy: username });
+  saveCollections();
+  renderCollectionsList();
+  updateCollectionFilterDropdown();
+  showToast('Collection created!', 'success');
+}
+
+function deleteCollection(id) {
+  if (!confirm('Delete this collection?')) return;
+  collections = collections.filter(c => c.id !== id);
+  saveCollections();
+  renderCollectionsList();
+  updateCollectionFilterDropdown();
+}
+
+function openAddToCollection(cardId) {
+  currentCardForCollection = cardId;
+  const card = cards.find(c => c.id === cardId);
+  if (!card) return;
+  document.getElementById('addToCollectionCardTitle').textContent = card.title;
+  document.getElementById('addToCollectionCardUrl').textContent = card.url;
+  document.getElementById('addToCollectionModal').classList.add('active');
+  renderCollectionsCheckboxes();
+}
+
+function closeAddToCollection() { document.getElementById('addToCollectionModal').classList.remove('active'); currentCardForCollection = null; }
+
+function renderCollectionsCheckboxes() {
+  const el = document.getElementById('collectionsCheckboxList');
+  if (!collections.length) { el.innerHTML = '<p style="color:var(--text-3);text-align:center">No collections</p>'; return; }
+  el.innerHTML = collections.map(c => {
+    const checked = c.cardIds?.includes(currentCardForCollection);
+    return `<label style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:var(--bg-elevated);border-radius:var(--radius-md);cursor:pointer;border:2px solid ${checked?'var(--success)':'var(--border-subtle)'}">
+      <input type="checkbox" value="${c.id}" ${checked?'checked':''} style="width:18px;height:18px;accent-color:var(--success)">
+      <span>${c.emoji||'📁'} ${c.name}</span>
+    </label>`;
+  }).join('');
+}
+
+function saveToCollections() {
+  if (!currentCardForCollection) return;
+  document.querySelectorAll('#collectionsCheckboxList input').forEach(cb => {
+    const col = collections.find(c => c.id === cb.value);
+    if (!col) return;
+    if (!col.cardIds) col.cardIds = [];
+    if (cb.checked && !col.cardIds.includes(currentCardForCollection)) col.cardIds.push(currentCardForCollection);
+    else if (!cb.checked) col.cardIds = col.cardIds.filter(id => id !== currentCardForCollection);
+  });
+  saveCollections();
+  closeAddToCollection();
+  showToast('Saved!', 'success');
+}
+
+function createCollectionFromModal() { createNewCollection(); setTimeout(renderCollectionsCheckboxes, 100); }
+
+// ============== QUICK ACTIONS ==============
+function showQuickActions(cardId) {
+  currentQuickActionCardId = cardId;
+  const card = cards.find(c => c.id === cardId);
+  if (!card) return;
+  document.getElementById('quickActionsCardTitle').textContent = card.title;
+  document.getElementById('quickActionStarText').textContent = card.starred ? '⭐ Unstar' : '⭐ Star';
+  document.getElementById('quickActionsModal').classList.add('active');
+}
+
+function closeQuickActions() { document.getElementById('quickActionsModal').classList.remove('active'); currentQuickActionCardId = null; }
+function quickActionAddToCollection() { const id = currentQuickActionCardId; closeQuickActions(); openAddToCollection(id); }
+function quickActionStar() { toggleStar(currentQuickActionCardId); closeQuickActions(); }
+function quickActionCopyLink() { const c = cards.find(x => x.id === currentQuickActionCardId); if (c) navigator.clipboard?.writeText(c.url); showToast('Copied!', 'success'); closeQuickActions(); }
+function quickActionEdit() { const id = currentQuickActionCardId; closeQuickActions(); openEditModal(id); }
+function quickActionDelete() { if (confirm('Delete this link?')) { cards = cards.filter(c => c.id !== currentQuickActionCardId); saveCards(); renderGrid(); } closeQuickActions(); }
+
+// ============== BULK MODE ==============
+function toggleBulkMode() {
+  bulkSelectMode = !bulkSelectMode;
+  selectedCards.clear();
+  const btn = document.getElementById('bulkModeBtn');
+  const bar = document.getElementById('bulkBar');
+  if (bulkSelectMode) { btn.textContent = '✕ Cancel'; bar.classList.add('active'); }
+  else { btn.textContent = '☑️ Select'; bar.classList.remove('active'); }
+  renderGrid();
+}
+
+function toggleCardSelection(id, e) {
+  e?.stopPropagation();
+  if (selectedCards.has(id)) selectedCards.delete(id);
+  else selectedCards.add(id);
+  document.getElementById('bulkCount').textContent = selectedCards.size;
+  renderGrid();
+}
+
+function bulkAddToCollection() {
+  if (!selectedCards.size) { showToast('No cards selected', 'error'); return; }
+  if (!collections.length) { showToast('Create a collection first', 'error'); return; }
+  const choice = prompt('Add to which collection?\n\n' + collections.map((c,i) => `${i+1}. ${c.emoji} ${c.name}`).join('\n') + '\n\nEnter number:');
+  if (!choice) return;
+  const idx = parseInt(choice) - 1;
+  if (idx < 0 || idx >= collections.length) { showToast('Invalid selection', 'error'); return; }
+  const col = collections[idx];
+  if (!col.cardIds) col.cardIds = [];
+  let added = 0;
+  selectedCards.forEach(id => { if (!col.cardIds.includes(id)) { col.cardIds.push(id); added++; } });
+  saveCollections();
+  showToast(`Added ${added} to "${col.name}"`, 'success');
+  toggleBulkMode();
+}
+
+function bulkDelete() {
+  if (!selectedCards.size) { showToast('No cards selected', 'error'); return; }
+  if (!confirm(`Delete ${selectedCards.size} cards?`)) return;
+  cards = cards.filter(c => !selectedCards.has(c.id));
+  collections.forEach(col => { if (col.cardIds) col.cardIds = col.cardIds.filter(id => !selectedCards.has(id)); });
+  saveCards();
+  saveCollections();
+  showToast(`Deleted ${selectedCards.size} cards`, 'success');
+  toggleBulkMode();
+}
+
+// ============== SHARING ==============
+async function shareLink() {
+  const c = cards.find(x => x.id === currentCardId);
+  if (!c) return;
+  const text = `${c.title}\n${c.url}${c.location ? '\n📍 ' + c.location : ''}${c.notes ? '\n\n' + c.notes : ''}`;
+  if (navigator.share) {
+    try { await navigator.share({ title: c.title, text, url: c.url }); showToast('Shared!', 'success'); return; } catch(e) {}
+  }
+  navigator.clipboard?.writeText(text);
+  showToast('Copied to clipboard!', 'success');
+}
+
+function shareToX() { const c = cards.find(x => x.id === currentCardId); if (c) window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(c.title)}&url=${encodeURIComponent(c.url)}`, '_blank'); }
+function shareToReddit() { const c = cards.find(x => x.id === currentCardId); if (c) window.open(`https://reddit.com/submit?title=${encodeURIComponent(c.title)}&url=${encodeURIComponent(c.url)}`, '_blank'); }
+function shareToFacebook() { const c = cards.find(x => x.id === currentCardId); if (c) window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(c.url)}`, '_blank'); }
+function shareToLinkedIn() { const c = cards.find(x => x.id === currentCardId); if (c) window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(c.url)}`, '_blank'); }
+function shareToWhatsApp() { const c = cards.find(x => x.id === currentCardId); if (c) window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(c.title + '\n' + c.url)}`, '_blank'); }
+function shareToEmail() { const c = cards.find(x => x.id === currentCardId); if (c) window.location.href = `mailto:?subject=${encodeURIComponent(c.title)}&body=${encodeURIComponent(c.url + '\n\n' + (c.notes || ''))}`; }
+
+// ============== EXPORT/IMPORT ==============
+function exportCollection() {
+  const data = { cards, collections, exportedBy: username, exportedAt: new Date().toISOString(), version: '2.0' };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `communecollab-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast(`Exported ${cards.length} links`, 'success');
+}
+
+function importCollection(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.cards?.length) {
+        const existing = new Set(cards.map(c => c.url));
+        const newCards = data.cards.filter(c => !existing.has(c.url));
+        cards = [...cards, ...newCards];
+        saveCards();
+        renderGrid();
+        showToast(`Imported ${newCards.length} new links`, 'success');
+      }
+    } catch(err) { showToast('Invalid file', 'error'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function shareCollectionURL(btn, excludePhotos = false) {
+  try {
+    const data = { cards: excludePhotos ? cards.map(c => ({...c, photos: [], screenshot: c.screenshotReal ? c.screenshot : null})) : cards, sharedBy: username, sharedAt: new Date().toISOString() };
+    const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+    const url = window.location.href.split('?')[0] + '?import=' + encoded;
+    if (url.length > 8000) { showToast('Too large! Use Export instead.', 'error'); return; }
+    navigator.clipboard?.writeText(url);
+    showToast('Share link copied!', 'success');
+  } catch(err) { showToast('Error creating link', 'error'); }
+}
+
+function checkForSharedCard() {
+  const params = new URLSearchParams(window.location.search);
+  const importData = params.get('import');
+  if (importData) {
+    try {
+      const data = JSON.parse(decodeURIComponent(atob(importData)));
+      if (data.cards?.length && confirm(`Import ${data.cards.length} links from ${data.sharedBy || 'someone'}?`)) {
+        const existing = new Set(cards.map(c => c.url));
+        const newCards = data.cards.filter(c => !existing.has(c.url));
+        cards = [...cards, ...newCards];
+        saveCards();
+        renderGrid();
+        showToast(`Imported ${newCards.length} links`, 'success');
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    } catch(e) { console.log('Invalid share link'); }
+  }
+}
+
+function checkForSharedCollection() {
+  const hash = window.location.hash;
+  if (hash.startsWith('#collection=')) {
+    try {
+      const data = JSON.parse(decodeURIComponent(atob(hash.substring(12))));
+      if (data.cards?.length && confirm(`Import collection "${data.collection?.name}" with ${data.cards.length} links?`)) {
+        const existing = new Set(cards.map(c => c.url));
+        const newCards = data.cards.filter(c => !existing.has(c.url));
+        cards = [...cards, ...newCards];
+        if (data.collection) {
+          collections.push({ ...data.collection, id: 'col_' + Date.now(), cardIds: newCards.map(c => c.id), createdAt: new Date().toISOString() });
+          saveCollections();
+        }
+        saveCards();
+        renderGrid();
+        showToast(`Imported ${newCards.length} links`, 'success');
+        window.location.hash = '';
+      }
+    } catch(e) { console.log('Invalid collection link'); }
+  }
+}
+
+// ============== SCREENSHOT UPLOAD ==============
+function handleUploadZoneClick(e) {
+  if (e.target.id === 'removeImageBtn') return;
+  document.getElementById('screenshotUpload').click();
+}
+
+async function handleScreenshotUpload(e) {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    const card = cards.find(c => c.id === currentCardId);
+    if (!card) return;
+    const compressed = await compressImage(ev.target.result);
+    card.screenshot = compressed;
+    card.screenshotReal = true;
+    card.customScreenshot = true;
+    document.getElementById('detailImage').src = compressed;
+    document.getElementById('detailImage').style.display = 'block';
+    document.getElementById('uploadPrompt').style.display = 'none';
+    document.getElementById('uploadZone').classList.add('has-image');
+    document.getElementById('removeImageBtn').style.display = 'block';
+    saveCards();
+    renderGrid();
+    showToast('Screenshot uploaded', 'success');
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function removeUploadedImage(e) {
+  e.stopPropagation();
+  const card = cards.find(c => c.id === currentCardId);
+  if (!card || !confirm('Remove screenshot?')) return;
+  card.customScreenshot = false;
+  document.getElementById('removeImageBtn').style.display = 'none';
+  saveCards();
+  renderGrid();
+  showToast('Screenshot removed', 'success');
+}
+
+// ============== LOCATION ==============
+function getMyLocation() {
+  if (!navigator.geolocation) { showToast('Location not supported', 'error'); return; }
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+        const data = await res.json();
+        const loc = data.address ? [data.address.road, data.address.city || data.address.town, data.address.state].filter(Boolean).join(', ') : `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+        document.getElementById('editLocation').value = loc;
+        showToast('Location added', 'success');
+      } catch(e) { document.getElementById('editLocation').value = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`; }
+    },
+    (err) => { showToast('Could not get location', 'error'); }
+  );
+}
+
+// ============== MEDIA CARDS ==============
+selectedNewMediaFiles = [];
+
+function handleNewMediaUpload(e) {
+  selectedNewMediaFiles = Array.from(e.target.files);
+  if (!selectedNewMediaFiles.length) return;
+  const titleEl = document.getElementById('newMediaTitle');
+  if (titleEl && !titleEl.value) titleEl.value = selectedNewMediaFiles[0].name.replace(/\.[^/.]+$/, '');
+  document.getElementById('newMediaPreviewArea').style.display = 'block';
+  document.getElementById('newMediaPreviewList').innerHTML = selectedNewMediaFiles.map((f, i) => `
+    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:var(--bg-elevated);border-radius:var(--radius-md)">
+      <span style="font-size:1.5rem">${f.type.startsWith('image/')?'🖼️':f.type.includes('pdf')?'📄':'📁'}</span>
+      <div style="flex:1;min-width:0"><div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div><div style="font-size:0.75rem;color:var(--text-3)">${(f.size/1024).toFixed(1)} KB</div></div>
+      <button onclick="removeNewMediaFile(${i})" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:1.2rem">×</button>
+    </div>
+  `).join('');
+  const btn = document.getElementById('createMediaCardBtn');
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+}
+
+function removeNewMediaFile(i) {
+  selectedNewMediaFiles.splice(i, 1);
+  if (!selectedNewMediaFiles.length) {
+    document.getElementById('newMediaPreviewArea').style.display = 'none';
+    const btn = document.getElementById('createMediaCardBtn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; }
+  } else { handleNewMediaUpload({ target: { files: selectedNewMediaFiles } }); }
+}
+
+async function createMediaCard() {
+  if (!selectedNewMediaFiles.length) return;
+  const title = document.getElementById('newMediaTitle').value.trim() || selectedNewMediaFiles[0].name;
+  const topic = document.getElementById('newMediaTopic')?.value || 'other';
+  const photos = await Promise.all(selectedNewMediaFiles.filter(f => f.type.startsWith('image/')).map(f => new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(f); })));
+  const newCard = { id: Date.now(), url: `media://${selectedNewMediaFiles[0].name}`, title, topic, screenshot: photos[0] || null, screenshotReal: false, notes: '', tags: [], votes: 0, photos, comments: [], starred: false, metadata: { isMediaCard: true }, addedBy: username, createdAt: new Date().toISOString(), lastEdited: new Date().toISOString(), editedBy: username };
+  cards.unshift(newCard);
+  saveCards();
+  renderGrid();
+  closeAddModal();
+  showToast('Media card created!', 'success');
+}
+
+// ============== THOUGHT CARDS ==============
+function updateThoughtPreview() {
+  const title = document.getElementById('thoughtTitle')?.value.trim() || '';
+  const content = document.getElementById('thoughtContent')?.value || '';
+  document.getElementById('thoughtCharCount').textContent = `${content.length} chars`;
+  document.getElementById('thoughtLineCount').textContent = `${content.split('\n').length} lines`;
+  document.getElementById('previewTitle').textContent = title || 'Untitled';
+  document.getElementById('previewContent').textContent = content || 'Your thought will appear here...';
+  const btn = document.getElementById('createThoughtBtn');
+  if (btn) { btn.disabled = !content.trim(); btn.style.opacity = content.trim() ? '1' : '0.5'; btn.style.cursor = content.trim() ? 'pointer' : 'not-allowed'; }
+}
+
+function generateThoughtImage(title, content) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 800; canvas.height = 500;
+  const ctx = canvas.getContext('2d');
+  const hour = new Date().getHours();
+  let g1, g2;
+  if (hour >= 5 && hour < 8) { g1 = '#FFB88C'; g2 = '#DE6262'; }
+  else if (hour >= 8 && hour < 12) { g1 = '#56CCF2'; g2 = '#2F80ED'; }
+  else if (hour >= 12 && hour < 17) { g1 = '#4A90E2'; g2 = '#7B68EE'; }
+  else if (hour >= 17 && hour < 20) { g1 = '#FF6B6B'; g2 = '#764BA2'; }
+  else if (hour >= 20 && hour < 22) { g1 = '#667EEA'; g2 = '#4A148C'; }
+  else { g1 = '#1e3c72'; g2 = '#2a5298'; }
+  const grad = ctx.createLinearGradient(0, 0, 800, 500);
+  grad.addColorStop(0, g1); grad.addColorStop(1, g2);
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, 800, 500);
+  if (hour >= 20 || hour < 6) { ctx.fillStyle = 'rgba(255,255,255,0.8)'; for (let i = 0; i < 80; i++) { ctx.beginPath(); ctx.arc(Math.random()*800, Math.random()*300, Math.random()*2, 0, Math.PI*2); ctx.fill(); } }
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  [{ x: 0, w: 80, h: 180 }, { x: 90, w: 60, h: 240 }, { x: 160, w: 100, h: 140 }, { x: 270, w: 70, h: 210 }, { x: 350, w: 90, h: 160 }, { x: 450, w: 80, h: 270 }, { x: 540, w: 60, h: 190 }, { x: 610, w: 110, h: 150 }, { x: 730, w: 70, h: 220 }].forEach(b => ctx.fillRect(b.x, 500 - b.h, b.w, b.h));
+  ctx.fillStyle = 'white'; ctx.font = 'bold 32px Inter, system-ui'; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 8;
+  ctx.fillText(title.substring(0, 30), 40, 80);
+  ctx.font = '20px Inter, system-ui'; ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  let y = 140;
+  content.split('\n').slice(0, 10).forEach(line => {
+    const words = line.split(' '); let currentLine = '';
+    words.forEach(word => {
+      const test = currentLine + word + ' ';
+      if (ctx.measureText(test).width > 720 && currentLine) { ctx.fillText(currentLine, 40, y); y += 30; currentLine = word + ' '; }
+      else currentLine = test;
+    });
+    if (currentLine && y <= 380) { ctx.fillText(currentLine, 40, y); y += 30; }
+  });
+  return canvas.toDataURL('image/png');
+}
+
+async function createThoughtCard() {
+  const title = document.getElementById('thoughtTitle')?.value.trim() || 'Thought';
+  const content = document.getElementById('thoughtContent')?.value.trim();
+  const topic = document.getElementById('thoughtTopic')?.value || 'other';
+  if (!content) return;
+  const img = generateThoughtImage(title, content);
+  const newCard = { id: Date.now(), url: `thought://${Date.now()}`, title, topic, screenshot: img, screenshotReal: false, notes: content, tags: ['thought'], votes: 0, photos: [img], comments: [], starred: false, metadata: { isThought: true }, addedBy: username, createdAt: new Date().toISOString(), lastEdited: new Date().toISOString(), editedBy: username };
+  cards.unshift(newCard);
+  saveCards();
+  renderGrid();
+  closeAddModal();
+  showToast('Thought posted!', 'success');
+}
+
+// ============== SETTINGS ==============
+function openSettings() {
+  document.getElementById('settingsModal').classList.add('active');
+  document.getElementById('usernameInput').value = username;
+  
+  // Load privacy toggles
+  const showToggle = document.getElementById('showContributorsToggle');
+  if (showToggle) showToggle.checked = showContributors;
+  
+  const profileToggle = document.getElementById('profilePublicToggle');
+  if (profileToggle) profileToggle.checked = localStorage.getItem('linkgrid-profile-public') === 'true';
+  
+  const cardPrivateToggle = document.getElementById('defaultCardPrivateToggle');
+  if (cardPrivateToggle) cardPrivateToggle.checked = localStorage.getItem('linkgrid-default-card-private') === 'true';
+  
+  updateContributorList();
+  
+  // Show appropriate auth section
+  const cloudSection = document.getElementById('cloudSyncSection');
+  const signInSection = document.getElementById('settingsSignInSection');
+  if (currentUser) {
+    if (cloudSection) { cloudSection.style.display = 'block'; document.getElementById('userEmailDisplay').textContent = currentUser.email; }
+    if (signInSection) signInSection.style.display = 'none';
+  } else {
+    if (cloudSection) cloudSection.style.display = 'none';
+    if (signInSection) signInSection.style.display = 'block';
+  }
+}
+
+function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
+
+function saveSettings() {
+  const n = document.getElementById('usernameInput').value.trim();
+  if (n) { username = n; localStorage.setItem('linkgrid-username', username); }
+  closeSettings();
+  showToast('Saved!', 'success');
+}
+
+function toggleShowContributors() {
+  showContributors = document.getElementById('showContributorsToggle').checked;
+  localStorage.setItem('linkgrid-show-contributors', showContributors);
+  renderGrid();
+}
+
+// Privacy settings
+let profilePublic = false;
+let defaultCardPrivate = false;
+
+function toggleProfilePublic() {
+  profilePublic = document.getElementById('profilePublicToggle').checked;
+  localStorage.setItem('linkgrid-profile-public', profilePublic);
+  showToast(profilePublic ? '🌐 Profile is now public' : '🔒 Profile is now private', 'success');
+}
+
+function toggleDefaultCardPrivate() {
+  defaultCardPrivate = document.getElementById('defaultCardPrivateToggle').checked;
+  localStorage.setItem('linkgrid-default-card-private', defaultCardPrivate);
+  showToast(defaultCardPrivate ? '🔒 New cards will be private' : '🌐 New cards will be public', 'success');
+}
+
+function toggleCardPrivacy(cardId) {
+  const card = cards.find(c => c.id === cardId);
+  if (!card) return;
+  card.isPrivate = !card.isPrivate;
+  saveCards();
+  renderGrid();
+  showToast(card.isPrivate ? '🔒 Card is now private' : '🌐 Card is now public', 'success');
+}
+
+function toggleCollectionPrivacy(collectionId) {
+  const col = collections.find(c => c.id === collectionId);
+  if (!col) return;
+  col.isPrivate = !col.isPrivate;
+  saveCollections();
+  renderCollectionsList();
+  showToast(col.isPrivate ? '🔒 Collection is now private' : '🌐 Collection is now public', 'success');
+}
+
+function updateContributorList() {
+  const stats = {};
+  cards.forEach(c => { const name = c.addedBy || 'Unknown'; if (!stats[name]) stats[name] = { links: 0, votes: 0 }; stats[name].links++; stats[name].votes += (c.votes || 0); });
+  const sorted = Object.entries(stats).sort((a, b) => b[1].links - a[1].links).slice(0, 10);
+  const el = document.getElementById('contributorList');
+  if (!el) return;
+  if (!showContributors) { el.innerHTML = '<div style="opacity:0.6">Privacy mode enabled</div>'; return; }
+  if (!sorted.length) { el.innerHTML = '<div style="opacity:0.6">No contributors yet</div>'; return; }
+  el.innerHTML = sorted.map(([name, s], i) => `<div style="display:flex;justify-content:space-between;padding:0.5rem 0;${i > 0 ? 'border-top:1px solid var(--border-subtle);' : ''}"><span>#${i + 1} <strong>${name}</strong></span><span style="opacity:0.7;font-size:0.75rem;">${s.links} links</span></div>`).join('');
+}
+
+function openCommunity() { document.getElementById('communityModal').classList.add('active'); updateCommunityData(); }
+function closeCommunity() { document.getElementById('communityModal').classList.remove('active'); }
+function openCollections() { document.getElementById('collectionsModal').classList.add('active'); renderCollectionsList(); }
+function closeCollections() { document.getElementById('collectionsModal').classList.remove('active'); }
+
+function updateCommunityData() {
+  const totalVotes = cards.reduce((sum, c) => sum + Math.abs(c.votes || 0), 0);
+  const totalComments = cards.reduce((sum, c) => sum + (c.comments?.length || 0), 0);
+  const contributors = new Set(cards.map(c => c.addedBy).filter(Boolean));
+  const el1 = document.getElementById('statsTotal'); if (el1) el1.textContent = cards.length;
+  const el2 = document.getElementById('statsContributors'); if (el2) el2.textContent = showContributors ? contributors.size : '?';
+  const el3 = document.getElementById('statsVotes'); if (el3) el3.textContent = totalVotes;
+  const el4 = document.getElementById('statsComments'); if (el4) el4.textContent = totalComments;
+}
+
+// ============== SUPABASE AUTH ==============
+async function initSupabase() {
+  if (typeof supabase === 'undefined' || !SUPABASE_URL || !SUPABASE_ANON_KEY) return false;
+  try {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) { currentUser = session.user; onUserLoggedIn(); }
+    else { setTimeout(() => document.getElementById('authModal')?.classList.add('active'), 500); }
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) { currentUser = session.user; onUserLoggedIn(); }
+      else if (event === 'SIGNED_OUT') { currentUser = null; }
+    });
+    return true;
+  } catch (e) { console.error('Supabase error:', e); return false; }
+}
+
+async function sendMagicLink() {
+  const email = document.getElementById('authEmail').value.trim();
+  const status = document.getElementById('authStatus');
+  const btn = document.getElementById('sendMagicLinkBtn');
+  if (!email || !email.includes('@')) { if (status) { status.textContent = '❌ Enter valid email'; status.style.color = 'var(--danger)'; } return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+  if (status) { status.textContent = '📧 Sending...'; status.style.color = 'var(--accent)'; }
+  try {
+    const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+    if (error) throw error;
+    if (status) { status.textContent = '✅ Check your email!'; status.style.color = 'var(--success)'; }
+    document.getElementById('authEmail').value = '';
+  } catch (e) {
+    if (status) { status.textContent = '❌ ' + e.message; status.style.color = 'var(--danger)'; }
+    if (btn) { btn.disabled = false; btn.textContent = '📧 Send Magic Link'; }
+  }
+}
+
+async function sendMagicLinkFromSettings() {
+  const email = document.getElementById('settingsAuthEmail')?.value.trim();
+  const status = document.getElementById('settingsAuthStatus');
+  if (!email || !email.includes('@')) { 
+    if (status) { status.textContent = '❌ Enter valid email'; status.style.color = 'var(--danger)'; } 
+    return; 
+  }
+  if (status) { status.textContent = '📧 Sending...'; status.style.color = 'var(--accent)'; }
+  try {
+    const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+    if (error) throw error;
+    if (status) { status.textContent = '✅ Check your email!'; status.style.color = 'var(--success)'; }
+    document.getElementById('settingsAuthEmail').value = '';
+  } catch (e) { 
+    if (status) { status.textContent = '❌ ' + e.message; status.style.color = 'var(--danger)'; } 
+  }
+}
+
+function onUserLoggedIn() {
+  document.getElementById('authModal')?.classList.remove('active');
+  
+  if (!username || username === 'You') {
+    username = currentUser.email.split('@')[0];
+    localStorage.setItem('linkgrid-username', username);
+  }
+  
+  showToast('✅ Signed in!', 'success');
+  
+  // Initialize cloud sync
+  initCloudSync();
+}
+
+async function signOut() {
+  if (!supabaseClient) return;
+  
+  if (confirm('Sign out? Your local data will be kept.')) {
+    cleanupRealtimeSubscription();
+    cloudSyncEnabled = false;
+    
+    await supabaseClient.auth.signOut();
+    currentUser = null;
+    
+    closeSettings();
+    showToast('Signed out', 'default');
+  }
+}
+// ============== KEYBOARD SHORTCUTS ==============
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) { e.preventDefault(); document.getElementById('searchBar')?.focus(); }
+  if (e.key === 'Escape') { closeAddModal(); closeEditModal(); closeSettings(); closeCommunity(); closeCollections(); closeAddToCollection(); closeQuickActions(); closeDiscover(); document.getElementById('authModal')?.classList.remove('active'); document.getElementById('customConfirmModal')?.classList.remove('active'); }
+  if (e.key === 'n' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openAddModal(); }
+});
+
+// Close modals on backdrop click
+['addModal', 'editModal', 'settingsModal', 'communityModal', 'collectionsModal', 'addToCollectionModal', 'quickActionsModal', 'customConfirmModal', 'authModal', 'discoverView'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+});
+function compressImage(base64Data, maxWidth = 800, quality = 0.8) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width, height = img.height;
+      if (width > maxWidth) { height = (height * maxWidth) / width; width = maxWidth; }
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = base64Data;
+  });
+}
+function checkRestrictedSite() {
+  const url = document.getElementById('newUrl').value.trim();
+  const restricted = ['twitter.com', 'x.com', 'instagram.com', 'facebook.com', 'linkedin.com'];
+  const isRestricted = restricted.some(site => url.includes(site));
+  document.getElementById('restrictedSitePrompt').style.display = isRestricted ? 'block' : 'none';
+}
+
+function handleLinkScreenshot(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    pendingLinkScreenshot = ev.target.result;
+    document.getElementById('linkScreenshotImg').src = ev.target.result;
+    document.getElementById('linkScreenshotPreview').style.display = 'block';
+    document.getElementById('uploadScreenshotPrompt').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLinkScreenshot(e) {
+  e.stopPropagation();
+  pendingLinkScreenshot = null;
+  document.getElementById('linkScreenshotPreview').style.display = 'none';
+  document.getElementById('uploadScreenshotPrompt').style.display = 'block';
+}
+// ============== INIT ==============
+async function init() {
+  await initDB();
+  await loadCards();
+  await initSupabase();
+  
+  // Default to Discover view after a brief moment for everything to load
+  setTimeout(() => {
+    openDiscover();
+  }, 300);
+}
+init();
+</script>
+</body>
+</html>
+  
+  
