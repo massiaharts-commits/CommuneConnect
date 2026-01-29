@@ -4269,6 +4269,7 @@ function renderEditComments() {
       <div class="edit-comment-text">${sanitizeHTML(c.text)}</div>
     </div>
   `).join('');
+}
 
 // Add comment from input field
 async function addCommentFromInput() {
@@ -5061,39 +5062,6 @@ function toggleShowContributors() {
   renderGrid();
 }
 
-// Privacy settings
-let profilePublic = false;
-let defaultCardPrivate = false;
-
-function toggleProfilePublic() {
-  profilePublic = document.getElementById('profilePublicToggle').checked;
-  localStorage.setItem('linkgrid-profile-public', profilePublic);
-  showToast(profilePublic ? '🌐 Profile is now public' : '🔒 Profile is now private', 'success');
-}
-
-function toggleDefaultCardPrivate() {
-  defaultCardPrivate = document.getElementById('defaultCardPrivateToggle').checked;
-  localStorage.setItem('linkgrid-default-card-private', defaultCardPrivate);
-  showToast(defaultCardPrivate ? '🔒 New cards will be private' : '🌐 New cards will be public', 'success');
-}
-
-function toggleCardPrivacy(cardId) {
-  const card = cards.find(c => c.id === cardId);
-  if (!card) return;
-  card.isPrivate = !card.isPrivate;
-  saveCards();
-  renderGrid();
-  showToast(card.isPrivate ? '🔒 Card is now private' : '🌐 Card is now public', 'success');
-}
-
-function toggleCollectionPrivacy(collectionId) {
-  const col = collections.find(c => c.id === collectionId);
-  if (!col) return;
-  col.isPrivate = !col.isPrivate;
-  saveCollections();
-  renderCollectionsList();
-  showToast(col.isPrivate ? '🔒 Collection is now private' : '🌐 Collection is now public', 'success');
-}
 
 function updateContributorList() {
   const stats = {};
