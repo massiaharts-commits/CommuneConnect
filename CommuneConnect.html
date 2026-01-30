@@ -8501,24 +8501,12 @@ async function initSupabase() {
   try {
     console.log('🔧 Initializing Supabase...');
     
-    // Debug: Check ALL localStorage keys for any Supabase data
-    console.log('📦 Checking all localStorage keys...');
-    const allKeys = Object.keys(localStorage);
-    const supabaseKeys = allKeys.filter(k => k.includes('supabase') || k.includes('sb-') || k.includes('auth'));
-    console.log('📦 Found auth-related keys:', supabaseKeys);
-    supabaseKeys.forEach(key => {
-      const value = localStorage.getItem(key);
-      console.log(`📦 ${key}:`, value ? value.substring(0, 100) + '...' : 'empty');
-    });
-    
-    // Use DEFAULT Supabase storage (don't override the key)
-    // This ensures we read whatever Supabase naturally stores
+    // Initialize client
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true
-        // NOT setting storageKey - let Supabase use its default
       }
     });
     
@@ -8542,13 +8530,6 @@ async function initSupabase() {
         currentUser = data.session.user;
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
         console.log('✅ Signed in via magic link:', currentUser.email);
-        
-        // Debug: Check if session was stored
-        setTimeout(() => {
-          const keysAfterLogin = Object.keys(localStorage).filter(k => k.includes('supabase') || k.includes('sb-') || k.includes('auth'));
-          console.log('📦 Keys after login:', keysAfterLogin);
-        }, 500);
-        
         onUserLoggedIn();
         return true;
       }
@@ -8563,26 +8544,74 @@ async function initSupabase() {
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     }
     
-    // Check for existing session
+    // Try to get existing session with retry logic
     console.log('🔍 Checking for existing session...');
-    const { data, error: sessionError } = await supabaseClient.auth.getSession();
+    let session = null;
     
-    if (sessionError) {
-      console.error('❌ Session retrieval error:', sessionError);
+    // Attempt 1: Normal getSession
+    try {
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (!error && data?.session) {
+        session = data.session;
+        console.log('✅ Got session via getSession()');
+      }
+    } catch (e) {
+      console.warn('⚠️ getSession() failed:', e.message);
     }
     
-    console.log('📋 getSession result:', { 
-      hasSession: !!data?.session, 
-      user: data?.session?.user?.email || 'none',
-      expiresAt: data?.session?.expires_at ? new Date(data.session.expires_at * 1000).toLocaleString() : 'none'
-    });
+    // Attempt 2: If getSession failed, try to restore from localStorage manually
+    if (!session) {
+      console.log('🔄 Attempting manual session restore...');
+      const storageKey = `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`;
+      const storedData = localStorage.getItem(storageKey);
+      
+      if (storedData) {
+        try {
+          const parsed = JSON.parse(storedData);
+          console.log('📦 Found stored session, attempting restore...');
+          
+          if (parsed.access_token && parsed.refresh_token) {
+            // Use setSession to restore
+            const { data, error } = await supabaseClient.auth.setSession({
+              access_token: parsed.access_token,
+              refresh_token: parsed.refresh_token
+            });
+            
+            if (!error && data?.session) {
+              session = data.session;
+              console.log('✅ Session restored from localStorage');
+            } else if (error) {
+              console.warn('⚠️ setSession failed:', error.message);
+              
+              // Token might be expired, try refresh
+              console.log('🔄 Attempting token refresh...');
+              const { data: refreshData, error: refreshError } = await supabaseClient.auth.refreshSession({
+                refresh_token: parsed.refresh_token
+              });
+              
+              if (!refreshError && refreshData?.session) {
+                session = refreshData.session;
+                console.log('✅ Session restored via refresh');
+              } else {
+                console.warn('⚠️ Refresh failed:', refreshError?.message);
+                // Clear invalid stored data
+                localStorage.removeItem(storageKey);
+              }
+            }
+          }
+        } catch (parseError) {
+          console.warn('⚠️ Could not parse stored session:', parseError.message);
+        }
+      }
+    }
     
-    if (data?.session) {
-      currentUser = data.session.user;
-      console.log('✅ Restored existing session:', currentUser.email);
+    // Process the session if we got one
+    if (session) {
+      currentUser = session.user;
+      console.log('✅ Session active:', currentUser.email);
       onUserLoggedIn(true);
     } else {
-      console.log('ℹ️ No existing session found');
+      console.log('ℹ️ No valid session found');
       
       // Only show auth modal on first visit
       const hasSeenAuthPrompt = localStorage.getItem('linkgrid-seen-auth');
@@ -8597,14 +8626,6 @@ async function initSupabase() {
     // Listen for auth state changes
     supabaseClient.auth.onAuthStateChange((event, session) => {
       console.log('🔄 Auth state changed:', event, session?.user?.email || 'no user');
-      
-      // Debug: Check localStorage after any auth change
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        setTimeout(() => {
-          const keysAfterEvent = Object.keys(localStorage).filter(k => k.includes('supabase') || k.includes('sb-') || k.includes('auth'));
-          console.log(`📦 Keys after ${event}:`, keysAfterEvent);
-        }, 500);
-      }
       
       if (event === 'SIGNED_IN' && session) {
         currentUser = session.user;
@@ -8633,6 +8654,29 @@ async function initSupabase() {
     return true;
   } catch (e) {
     console.error('❌ Supabase init error:', e);
+    
+    // Even if init fails, try one more manual restore
+    try {
+      const storageKey = `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`;
+      const storedData = localStorage.getItem(storageKey);
+      if (storedData) {
+        const parsed = JSON.parse(storedData);
+        if (parsed.user) {
+          currentUser = parsed.user;
+          console.log('🔧 Emergency session restore from cache:', currentUser.email);
+          // Try to reinitialize cloud sync later
+          setTimeout(() => {
+            if (supabaseClient && currentUser && !cloudSyncEnabled) {
+              initCloudSync();
+            }
+          }, 2000);
+          return true;
+        }
+      }
+    } catch (e2) {
+      console.error('❌ Emergency restore failed:', e2);
+    }
+    
     return false;
   }
 }
