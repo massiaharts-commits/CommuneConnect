@@ -8501,28 +8501,26 @@ async function initSupabase() {
   try {
     console.log('🔧 Initializing Supabase...');
     
-    // Initialize with explicit persistence settings (Supabase v2 format)
+    // Debug: Check ALL localStorage keys for any Supabase data
+    console.log('📦 Checking all localStorage keys...');
+    const allKeys = Object.keys(localStorage);
+    const supabaseKeys = allKeys.filter(k => k.includes('supabase') || k.includes('sb-') || k.includes('auth'));
+    console.log('📦 Found auth-related keys:', supabaseKeys);
+    supabaseKeys.forEach(key => {
+      const value = localStorage.getItem(key);
+      console.log(`📦 ${key}:`, value ? value.substring(0, 100) + '...' : 'empty');
+    });
+    
+    // Use DEFAULT Supabase storage (don't override the key)
+    // This ensures we read whatever Supabase naturally stores
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         persistSession: true,
-        storage: window.localStorage,
-        storageKey: 'communecollab-auth-token',
         autoRefreshToken: true,
         detectSessionInUrl: true
+        // NOT setting storageKey - let Supabase use its default
       }
     });
-    
-    // Debug: Check what's in localStorage
-    const storedAuth = localStorage.getItem('communecollab-auth-token');
-    console.log('📦 Stored auth data exists:', !!storedAuth);
-    if (storedAuth) {
-      try {
-        const parsed = JSON.parse(storedAuth);
-        console.log('📦 Stored session expires:', parsed?.expires_at ? new Date(parsed.expires_at * 1000).toLocaleString() : 'unknown');
-      } catch(e) {
-        console.log('📦 Could not parse stored auth');
-      }
-    }
     
     // Check for auth callback in URL (magic link redirect)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -8544,6 +8542,13 @@ async function initSupabase() {
         currentUser = data.session.user;
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
         console.log('✅ Signed in via magic link:', currentUser.email);
+        
+        // Debug: Check if session was stored
+        setTimeout(() => {
+          const keysAfterLogin = Object.keys(localStorage).filter(k => k.includes('supabase') || k.includes('sb-') || k.includes('auth'));
+          console.log('📦 Keys after login:', keysAfterLogin);
+        }, 500);
+        
         onUserLoggedIn();
         return true;
       }
@@ -8579,19 +8584,6 @@ async function initSupabase() {
     } else {
       console.log('ℹ️ No existing session found');
       
-      // Try to refresh the session in case it just needs a token refresh
-      console.log('🔄 Attempting token refresh...');
-      const { data: refreshData, error: refreshError } = await supabaseClient.auth.refreshSession();
-      
-      if (refreshError) {
-        console.log('ℹ️ Refresh failed (expected if no session):', refreshError.message);
-      } else if (refreshData?.session) {
-        currentUser = refreshData.session.user;
-        console.log('✅ Session restored via refresh:', currentUser.email);
-        onUserLoggedIn(true);
-        return true;
-      }
-      
       // Only show auth modal on first visit
       const hasSeenAuthPrompt = localStorage.getItem('linkgrid-seen-auth');
       if (!hasSeenAuthPrompt) {
@@ -8605,6 +8597,14 @@ async function initSupabase() {
     // Listen for auth state changes
     supabaseClient.auth.onAuthStateChange((event, session) => {
       console.log('🔄 Auth state changed:', event, session?.user?.email || 'no user');
+      
+      // Debug: Check localStorage after any auth change
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setTimeout(() => {
+          const keysAfterEvent = Object.keys(localStorage).filter(k => k.includes('supabase') || k.includes('sb-') || k.includes('auth'));
+          console.log(`📦 Keys after ${event}:`, keysAfterEvent);
+        }, 500);
+      }
       
       if (event === 'SIGNED_IN' && session) {
         currentUser = session.user;
@@ -8622,7 +8622,6 @@ async function initSupabase() {
           currentUser = session.user;
         }
       } else if (event === 'INITIAL_SESSION') {
-        // This fires on page load with the restored session
         console.log('📋 Initial session event:', session?.user?.email || 'no session');
         if (session && !currentUser) {
           currentUser = session.user;
