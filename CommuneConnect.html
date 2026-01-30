@@ -3,7 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CommuneCollab</title>
+  <title>CommuneCollab
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com;
+    img-src 'self' data: https: blob:;
+    connect-src 'self' https://*.supabase.co https://jsonlink.io https://image.thum.io https://nominatim.openstreetmap.org https://img.youtube.com https://www.google.com;
+    frame-src 'none';
+    object-src 'none';
+    base-uri 'self';
+  ">
+  </title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -538,250 +550,711 @@
       align-items: center;
       justify-content: center;
     }
-    /* ========== TWO-COLUMN EDIT MODAL ========== */
+    /* ========== REDESIGNED EDIT MODAL - COMMUNITY FOCUSED ========== */
     .modal-content.edit-modal {
-      max-width: 1100px;
-      max-height: 92vh;
+      max-width: 900px;
+      max-height: 90vh;
       padding: 0;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-    }
-    
-    .edit-modal .modal-header {
-      padding: 1.25rem 1.75rem;
-      border-bottom: 1px solid var(--border-subtle);
-      flex-shrink: 0;
-    }
-    
-    .edit-modal-body {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-      min-height: 0;
-    }
-    
-    .edit-modal-left {
-      width: 38%;
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-      border-right: 1px solid var(--border-subtle);
-      overflow-y: auto;
-    }
-    
-    .edit-modal-right {
-      width: 62%;
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      overflow-y: auto;
-    }
-    
-    .edit-modal-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 1.5rem;
-      border-top: 1px solid var(--border-subtle);
-      background: rgba(0, 0, 0, 0.2);
-      flex-shrink: 0;
-    }
-    
-    .edit-modal-footer .info-text {
-      font-size: 0.75rem;
-      color: var(--text-3);
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(20, 20, 24, 0.98) 100%);
+      border: 1px solid var(--border-medium);
     }
 
-    /* Image Section - Larger */
+    .edit-modal .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    /* Top Section - Image, Title, Votes, Tags */
+    .edit-top-section {
+      display: flex;
+      gap: 1.5rem;
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(0, 0, 0, 0.15);
+    }
+
     .edit-image-container {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16/9;
+      width: 200px;
+      height: 140px;
+      flex-shrink: 0;
       border-radius: var(--radius-lg);
       overflow: hidden;
       background: var(--bg-elevated);
       border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
     }
-    
-    /* Notes - Much larger */
-    .edit-modal .form-textarea {
-      min-height: 140px;
-      max-height: 200px;
-      resize: vertical;
-      font-size: 0.9rem;
-      line-height: 1.6;
+
+    .edit-image-container:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
     }
-    
-    /* Collapsible sections - More space when expanded */
-    .edit-collapsible-content {
-      max-height: 300px;
-      overflow-y: auto;
-      padding: 1rem;
-      border-top: 1px solid var(--border-subtle);
-      transition: max-height 0.25s ease, padding 0.25s ease;
+
+    .edit-image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
-    
-    .edit-collapsible-content.collapsed {
-      max-height: 0;
-      padding: 0 1rem;
-      border-top: none;
+
+    .edit-image-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      color: white;
+      font-size: 0.8rem;
+      gap: 0.5rem;
+    }
+
+    .edit-image-container:hover .edit-image-overlay {
+      opacity: 1;
+    }
+
+    .edit-top-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .edit-title-input {
+      font-size: 1.25rem;
+      font-weight: 600;
+      background: transparent;
+      border: none;
+      color: var(--text-1);
+      padding: 0.5rem 0;
+      border-bottom: 2px solid transparent;
+      transition: border-color 0.2s ease;
+      width: 100%;
+    }
+
+    .edit-title-input:focus {
+      outline: none;
+      border-bottom-color: var(--accent);
+    }
+
+    .edit-url-display {
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+
+    .edit-url-display:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+
+    /* Votes Row - BIG and satisfying */
+    .edit-votes-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.5rem 0;
+    }
+
+    .edit-vote-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--border-subtle);
+      background: var(--bg-elevated);
+      color: var(--text-2);
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .edit-vote-btn:hover {
+      transform: scale(1.1);
+      border-color: var(--border-medium);
+    }
+
+    .edit-vote-btn.upvoted {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--success);
+      color: var(--success);
+      animation: votePop 0.3s ease;
+    }
+
+    .edit-vote-btn.downvoted {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: var(--danger);
+      color: var(--danger);
+      animation: votePop 0.3s ease;
+    }
+
+    @keyframes votePop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .edit-vote-score {
+      font-size: 2rem;
+      font-weight: 700;
+      min-width: 60px;
+      text-align: center;
+      background: linear-gradient(135deg, var(--text-1) 0%, var(--text-2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .edit-vote-score.positive {
+      background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+      -webkit-background-clip: text;
+    }
+
+    .edit-vote-score.negative {
+      background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+      -webkit-background-clip: text;
+    }
+
+    .edit-actions-quick {
+      display: flex;
+      gap: 0.25rem;
+      margin-left: auto;
+    }
+
+    .edit-actions-quick .btn-icon {
+      width: 38px;
+      height: 38px;
+      font-size: 1rem;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Tags Bar - Prominent */
+    .edit-tags-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      background: rgba(99, 102, 241, 0.05);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .edit-tags-bar .tag {
+      padding: 0.4rem 0.75rem;
+      font-size: 0.85rem;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .edit-tags-bar .tag:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: var(--danger);
+    }
+
+    .edit-tags-bar .tag:hover::after {
+      content: ' ×';
+    }
+
+    .edit-tag-input {
+      flex: 1;
+      min-width: 120px;
+      max-width: 200px;
+      padding: 0.4rem 0.75rem;
+      background: var(--bg-elevated);
+      border: 1px dashed var(--border-medium);
+      border-radius: var(--radius-xl);
+      color: var(--text-1);
+      font-size: 0.85rem;
+    }
+
+    .edit-tag-input:focus {
+      outline: none;
+      border-style: solid;
+      border-color: var(--accent);
+    }
+
+    .edit-tag-input::placeholder {
+      color: var(--text-3);
+    }
+
+    /* Main Content - Two Columns */
+    .edit-main-content {
+      display: flex;
+      flex: 1;
+      min-height: 0;
       overflow: hidden;
     }
-    
-    /* Comments - Better spacing */
-    .edit-comment {
-      padding: 0.75rem;
-      background: var(--bg-card);
-      border-radius: var(--radius-md);
-      margin-bottom: 0.75rem;
+
+    /* Left Column - Personal Stuff (Collapsible) */
+    .edit-left-column {
+      width: 280px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border-subtle);
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.1);
     }
-    
-    .edit-comment-text {
-      font-size: 0.85rem;
-      color: var(--text-2);
-      line-height: 1.5;
+
+    .edit-section {
+      border-bottom: 1px solid var(--border-subtle);
     }
-    
-    .edit-comment-input-row {
+
+    .edit-section-header {
       display: flex;
-      gap: 0.75rem;
-      margin-top: 0.75rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid var(--border-subtle);
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      user-select: none;
     }
-    
-    .edit-comment-input-row input {
-      flex: 1;
-      padding: 0.6rem 0.85rem;
-      font-size: 0.85rem;
+
+    .edit-section-header:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .edit-section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .edit-section-toggle {
+      color: var(--text-3);
+      font-size: 0.7rem;
+      transition: transform 0.2s ease;
+    }
+
+    .edit-section-header.collapsed .edit-section-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .edit-section-content {
+      padding: 0 1rem 1rem;
+      max-height: 300px;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .edit-section-content.collapsed {
+      max-height: 0;
+      padding-bottom: 0;
+      opacity: 0;
+    }
+
+    .edit-section-content textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
       background: var(--bg-elevated);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       color: var(--text-1);
-    }
-    
-    .edit-comment-input-row .btn {
-      padding: 0.6rem 1rem;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
+      font-family: inherit;
+      resize: vertical;
+      line-height: 1.5;
     }
 
-    /* Photo grid - Larger thumbnails */
+    .edit-section-content textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .edit-section-content textarea::placeholder {
+      color: var(--text-3);
+    }
+
+    .edit-location-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .edit-location-row input {
+      flex: 1;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-1);
+      font-size: 0.85rem;
+    }
+
+    .edit-location-row input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .edit-location-row .btn {
+      padding: 0.6rem 0.75rem;
+    }
+
+    /* Photo Grid */
     .edit-photo-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: 0.75rem;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
     }
-    
-    /* Vote row - More prominent */
-    .edit-vote-row {
+
+    .edit-photo-item {
+      aspect-ratio: 1;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .edit-photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .edit-photo-delete {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      background: var(--danger);
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: 0.7rem;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s ease;
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 0;
+      justify-content: center;
     }
-    
-    .edit-vote-row .vote-btn {
-      width: 50px;
-      height: 50px;
-      font-size: 1.25rem;
+
+    .edit-photo-item:hover .edit-photo-delete {
+      opacity: 1;
     }
-    
-    .edit-vote-row .vote-score {
-      font-size: 1.75rem;
-      font-weight: 700;
-      min-width: 70px;
-      text-align: center;
+
+    .edit-photo-add {
+      aspect-ratio: 1;
+      border: 2px dashed var(--border-medium);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-3);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
     }
-    
-    /* Tags section - Better layout */
-    .edit-tags-section {
+
+    .edit-photo-add:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    /* Right Column - Comments (Community!) */
+    .edit-right-column {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
+      min-width: 0;
+      background: rgba(0, 0, 0, 0.05);
     }
-    
-    .edit-tags-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: center;
-    }
-    
-    .edit-tags-row .tag {
-      padding: 0.35rem 0.65rem;
-      font-size: 0.8rem;
-    }
-    
-    .edit-tags-input {
-      flex: 1;
-      min-width: 120px;
-      padding: 0.4rem 0.6rem;
-      font-size: 0.8rem;
-    }
-    
-    /* URL link - More visible */
-    .edit-url-link {
-      display: block;
-      font-size: 0.85rem;
-      color: var(--accent);
-      text-decoration: none;
-      word-break: break-all;
-      padding: 0.5rem 0;
-    }
-    
-    /* Share buttons - Slightly larger */
-    .share-buttons .btn {
-      width: 40px;
-      height: 40px;
-      padding: 0;
-      font-size: 1rem;
-    }
-    
-    /* Collapsible headers - Better touch targets */
-    .edit-collapsible-header {
+
+    .edit-comments-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.85rem 1rem;
-      background: var(--bg-elevated);
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 500;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(99, 102, 241, 0.03);
     }
 
-    /* Mobile Responsive - Updated breakpoint */
-    @media (max-width: 800px) {
-      .edit-modal-body {
-        flex-direction: column;
-      }
-      
-      .edit-modal-left,
-      .edit-modal-right {
-        width: 100%;
-        border-right: none;
-      }
-      
-      .edit-modal-left {
-        border-bottom: 1px solid var(--border-subtle);
-        max-height: 40vh;
-      }
-      
-      .edit-image-container {
-        aspect-ratio: 16/9;
-      }
-      
+    .edit-comments-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+
+    .edit-comments-count {
+      background: var(--accent);
+      color: white;
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-xl);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .edit-comments-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+    }
+
+    .edit-comments-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-3);
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .edit-comments-empty-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+      opacity: 0.5;
+    }
+
+    .edit-comments-empty p {
+      font-size: 0.85rem;
+    }
+
+    .edit-comment {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.875rem;
+      transition: all 0.15s ease;
+    }
+
+    .edit-comment:hover {
+      border-color: var(--border-medium);
+      background: var(--bg-card-hover);
+    }
+
+    .edit-comment-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .edit-comment-author {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .edit-comment-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: white;
+      font-weight: 600;
+    }
+
+    .edit-comment-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .edit-comment-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .edit-comment-time {
+      font-size: 0.7rem;
+      color: var(--text-3);
+    }
+
+    .edit-comment-delete {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 4px;
+      opacity: 0;
+      transition: all 0.15s ease;
+    }
+
+    .edit-comment:hover .edit-comment-delete {
+      opacity: 1;
+    }
+
+    .edit-comment-delete:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .edit-comment-text {
+      font-size: 0.875rem;
+      color: var(--text-2);
+      line-height: 1.5;
+    }
+
+    /* Comment Input */
+    .edit-comment-input-area {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .edit-comment-input-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .edit-comment-input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      color: var(--text-1);
+      font-size: 0.875rem;
+      font-family: inherit;
+    }
+
+    .edit-comment-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .edit-comment-input::placeholder {
+      color: var(--text-3);
+    }
+
+    .edit-comment-submit {
+      padding: 0.75rem 1.25rem;
+      background: var(--gradient);
+      border: none;
+      border-radius: var(--radius-xl);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .edit-comment-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    /* Footer */
+    .edit-modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.5rem;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .edit-footer-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .edit-privacy-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-2);
+      cursor: pointer;
+    }
+
+    .edit-privacy-toggle input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    .edit-footer-meta {
+      font-size: 0.75rem;
+      color: var(--text-3);
+    }
+
+    .edit-footer-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 700px) {
       .modal-content.edit-modal {
         max-height: 95vh;
       }
       
-      .edit-modal .form-textarea {
-        min-height: 100px;
+      .edit-top-section {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .edit-image-container {
+        width: 100%;
+        height: 160px;
+      }
+      
+      .edit-main-content {
+        flex-direction: column;
+      }
+      
+      .edit-left-column {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+        max-height: 200px;
+      }
+      
+      .edit-right-column {
+        min-height: 250px;
+      }
+      
+      .edit-votes-row {
+        flex-wrap: wrap;
+      }
+      
+      .edit-actions-quick {
+        margin-left: 0;
+        margin-top: 0.5rem;
+        width: 100%;
+        justify-content: flex-start;
       }
     }
-    
     /* Location with inline button */
     .location-input-row {
       display: flex;
@@ -1717,6 +2190,137 @@
       font-weight: 600;
     }
 
+    /* ========== CELESTIAL TYPE STYLES ========== */
+
+    /* Star - Hub cards */
+    .bubble-card.celestial-star {
+      border: 2px solid rgba(250, 204, 21, 0.4);
+      box-shadow: 
+        0 8px 40px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(250, 204, 21, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      z-index: 50;
+    }
+
+    .bubble-card.celestial-star::before {
+      background: linear-gradient(135deg, 
+        rgba(250, 204, 21, 0.15) 0%, 
+        transparent 50%,
+        rgba(251, 191, 36, 0.1) 100%);
+    }
+
+    .star-corona {
+      position: absolute;
+      inset: -8px;
+      border-radius: 20px;
+      background: radial-gradient(ellipse at center, 
+        rgba(250, 204, 21, 0.1) 0%, 
+        transparent 70%);
+      pointer-events: none;
+      animation: coronaPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes coronaPulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.02); }
+    }
+
+    /* Planet - Connected cards */
+    .bubble-card.celestial-planet {
+      border-color: rgba(99, 102, 241, 0.3);
+      animation: gentleFloat 6s ease-in-out infinite;
+    }
+
+    @keyframes gentleFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    /* Moon - Secondary cards */
+    .bubble-card.celestial-moon {
+      border-color: rgba(148, 163, 184, 0.25);
+      opacity: 0.9;
+    }
+
+    .bubble-card.celestial-moon .bubble-card-image {
+      height: 100px;
+    }
+
+    /* Comet - New arrivals */
+    .bubble-card.celestial-comet {
+      border: 2px solid rgba(34, 211, 238, 0.4);
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(34, 211, 238, 0.2);
+      animation: cometShimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes cometShimmer {
+      0%, 100% { 
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 30px rgba(34, 211, 238, 0.2);
+      }
+      50% { 
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 50px rgba(34, 211, 238, 0.35);
+      }
+    }
+
+    .comet-tail {
+      position: absolute;
+      top: 50%;
+      right: 100%;
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(34, 211, 238, 0.1) 30%,
+        rgba(34, 211, 238, 0.3) 70%,
+        rgba(34, 211, 238, 0.5) 100%);
+      transform: translateY(-50%);
+      border-radius: 2px;
+      pointer-events: none;
+      animation: tailFade 2s ease-in-out infinite;
+    }
+
+    @keyframes tailFade {
+      0%, 100% { opacity: 0.6; width: 60px; }
+      50% { opacity: 1; width: 100px; }
+    }
+
+    .comet-badge {
+      background: linear-gradient(135deg, #22d3ee, #06b6d4) !important;
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Asteroid - Orphan cards */
+    .bubble-card.celestial-asteroid {
+      border-color: rgba(100, 116, 139, 0.2);
+      opacity: 0.75;
+    }
+
+    .bubble-card.celestial-asteroid .bubble-card-image {
+      height: 90px;
+    }
+
+    .bubble-card.celestial-asteroid:hover {
+      opacity: 1;
+    }
+
+    /* Remove breathing animation from non-stars to keep things subtle */
+    .bubble-card.celestial-planet,
+    .bubble-card.celestial-moon,
+    .bubble-card.celestial-asteroid {
+      animation: none;
+    }
+
+    .bubble-card.celestial-planet {
+      animation: gentleFloat 6s ease-in-out infinite;
+    }
+
     /* ========== CONNECTION LINES ========== */
     .connection-line {
       pointer-events: none;
@@ -1850,15 +2454,15 @@
     /* Floating add button for Discover (mobile friendly) */
     .discover-fab {
       position: absolute;
-      bottom: 6rem;
-      right: 1.5rem;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
+      bottom: 1.5rem;
+      right: 6.5rem;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
       background: var(--gradient);
       border: none;
       color: white;
-      font-size: 1.75rem;
+      font-size: 1.5rem;
       cursor: pointer;
       box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
       z-index: 200;
@@ -1868,7 +2472,7 @@
       transition: all 0.2s ease;
       animation: fabPulse 3s ease-in-out infinite;
     }
-    
+
     .discover-fab:hover {
       transform: scale(1.1);
       box-shadow: 0 12px 40px rgba(99, 102, 241, 0.6);
@@ -2247,7 +2851,7 @@
   </div>
 </div>
 
-<!-- EDIT MODAL -->
+<!-- EDIT MODAL - COMMUNITY FOCUSED -->
 <div class="modal" id="editModal">
   <div class="modal-content edit-modal">
     <div class="modal-header">
@@ -2255,104 +2859,122 @@
       <button class="modal-close" onclick="closeEditModal()">×</button>
     </div>
     
-    <div class="edit-modal-body">
-      <!-- LEFT COLUMN -->
-      <div class="edit-modal-left">
-        <div class="edit-image-container" onclick="document.getElementById('screenshotUpload').click()">
-          <input type="file" id="screenshotUpload" accept="image/*" onchange="handleScreenshotUpload(event)" style="display:none">
-          <img id="detailImage" style="display:none">
-          <div class="upload-prompt" id="uploadPrompt">
-            <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.5">📸</div>
-            <div style="font-size:0.8rem">Click to upload image</div>
-          </div>
-        </div>
-        <div class="edit-image-actions">
-          <button class="btn btn-secondary" onclick="document.getElementById('screenshotUpload').click()">📸 Change</button>
-          <button class="btn btn-ghost" id="removeImageBtn" onclick="removeUploadedImage(event)" style="display:none">× Remove</button>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">📍 Location</label>
-          <div class="location-input-row">
-            <input type="text" class="form-input" id="editLocation" placeholder="e.g., New York">
-            <button class="btn btn-secondary" onclick="getMyLocation()">📍</button>
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">📝 Notes</label>
-          <textarea class="form-textarea" id="editNotes" placeholder="Add notes..."></textarea>
+    <!-- Top Section: Image, Title, Votes -->
+    <div class="edit-top-section">
+      <div class="edit-image-container" onclick="document.getElementById('screenshotUpload').click()">
+        <input type="file" id="screenshotUpload" accept="image/*" onchange="handleScreenshotUpload(event)" style="display:none">
+        <img id="detailImage" src="" alt="">
+        <div class="edit-image-overlay">
+          <span>📷</span>
+          <span>Change</span>
         </div>
       </div>
       
-      <!-- RIGHT COLUMN -->
-      <div class="edit-modal-right">
-        <div class="form-group">
-          <label class="form-label">Title</label>
-          <input type="text" class="form-input" id="editTitle">
-        </div>
+      <div class="edit-top-info">
+        <input type="text" class="edit-title-input" id="editTitle" placeholder="Title...">
+        <a class="edit-url-display" id="editUrlLink" href="" target="_blank">
+          <span>🔗</span>
+          <span id="editUrlText"></span>
+        </a>
         
-        <a class="edit-url-link" id="editUrlLink" href="" target="_blank"></a>
-        
-        <div class="edit-vote-row">
-          <button class="vote-btn" id="upvoteBtn" onclick="vote(currentCardId,1)">👍</button>
-          <div class="vote-score" id="voteScore">0</div>
-          <button class="vote-btn" id="downvoteBtn" onclick="vote(currentCardId,-1)">👎</button>
-        </div>
-        
-        <div class="edit-tags-section">
-          <label class="form-label">🏷️ Tags</label>
-          <div class="edit-tags-row">
-            <div id="tagsContainer"></div>
-            <input type="text" class="edit-tags-input" id="newTag" placeholder="+ Add tag" onkeypress="if(event.key==='Enter'){addTag();event.preventDefault()}">
-          </div>
-        </div>
-        
-        <div class="edit-actions-row">
-          <label class="privacy-toggle">
-            <input type="checkbox" id="editPrivate" onchange="toggleCardPrivacy(currentCardId)">
-            <span>🔒 Private</span>
-          </label>
-          <div class="share-buttons">
-            <button class="btn btn-ghost" onclick="shareToX()" title="Share to X">𝕏</button>
-            <button class="btn btn-ghost" onclick="navigator.clipboard.writeText(cards.find(c=>c.id===currentCardId)?.url);showToast('Copied!','success')" title="Copy Link">📋</button>
-            <button class="btn btn-ghost" onclick="shareLink()" title="Share">↗</button>
-            <button class="btn btn-ghost" onclick="shareToEmail()" title="Email">✉️</button>
-          </div>
-        </div>
-        
-        <!-- Photos Collapsible -->
-        <div class="edit-collapsible">
-          <div class="edit-collapsible-header collapsed" onclick="toggleEditSection('photos')">
-            <span>📸 Photos <span class="count" id="editPhotoCount"></span></span>
-            <span class="toggle-icon">▼</span>
-          </div>
-          <div class="edit-collapsible-content collapsed" id="editPhotosContent">
-            <div class="edit-photo-grid" id="editPhotoGrid"></div>
-            <input type="file" id="addPhoto" accept="image/*" multiple onchange="addPhotos(event)" style="display:none">
-          </div>
-        </div>
-        
-        <!-- Comments Collapsible -->
-        <div class="edit-collapsible">
-          <div class="edit-collapsible-header collapsed" onclick="toggleEditSection('comments')">
-            <span>💬 Comments <span class="count" id="editCommentCount"></span></span>
-            <span class="toggle-icon">▼</span>
-          </div>
-          <div class="edit-collapsible-content collapsed" id="editCommentsContent">
-            <div id="editCommentsContainer"></div>
-            <div class="edit-comment-input-row">
-              <input type="text" id="newCommentInput" placeholder="Write a comment..." onkeypress="if(event.key==='Enter'){addCommentFromInput();event.preventDefault()}">
-              <button class="btn btn-primary" onclick="addCommentFromInput()">Post</button>
-            </div>
+        <div class="edit-votes-row">
+          <button class="edit-vote-btn" id="upvoteBtn" onclick="vote(currentCardId, 1)">👍</button>
+          <div class="edit-vote-score" id="voteScore">0</div>
+          <button class="edit-vote-btn" id="downvoteBtn" onclick="vote(currentCardId, -1)">👎</button>
+          
+          <div class="edit-actions-quick">
+            <button class="btn btn-icon" onclick="toggleStar(currentCardId)" id="editStarBtn" title="Star">☆</button>
+            <button class="btn btn-icon" onclick="shareToX()" title="Share to X">𝕏</button>
+            <button class="btn btn-icon" onclick="navigator.clipboard.writeText(cards.find(c=>c.id===currentCardId)?.url);showToast('Copied!','success')" title="Copy Link">📋</button>
+            <button class="btn btn-icon" onclick="shareLink()" title="Share">↗</button>
+            <button class="btn btn-icon" onclick="shareToEmail()" title="Email">✉️</button>
           </div>
         </div>
       </div>
     </div>
     
+    <!-- Tags Bar -->
+    <div class="edit-tags-bar" id="editTagsBar">
+      <div id="tagsContainer"></div>
+      <input type="text" class="edit-tag-input" id="newTag" placeholder="+ Add tag..." onkeypress="if(event.key==='Enter'){addTag();event.preventDefault()}">
+    </div>
+    
+    <!-- Main Content: Left (Personal) + Right (Community) -->
+    <div class="edit-main-content">
+      <!-- Left Column - Personal Stuff -->
+      <div class="edit-left-column">
+        <!-- Notes Section -->
+        <div class="edit-section">
+          <div class="edit-section-header" onclick="toggleEditSection('notes')">
+            <span class="edit-section-title">📝 Notes</span>
+            <span class="edit-section-toggle">▼</span>
+          </div>
+          <div class="edit-section-content" id="editNotesSection">
+            <textarea id="editNotes" placeholder="Add personal notes about this link..."></textarea>
+          </div>
+        </div>
+        
+        <!-- Photos Section -->
+        <div class="edit-section">
+          <div class="edit-section-header collapsed" onclick="toggleEditSection('photos')">
+            <span class="edit-section-title">📸 Photos <span id="editPhotoCount"></span></span>
+            <span class="edit-section-toggle">▼</span>
+          </div>
+          <div class="edit-section-content collapsed" id="editPhotosSection">
+            <div class="edit-photo-grid" id="editPhotoGrid"></div>
+            <input type="file" id="addPhoto" accept="image/*" multiple onchange="addPhotos(event)" style="display:none">
+          </div>
+        </div>
+        
+        <!-- Location Section -->
+        <div class="edit-section">
+          <div class="edit-section-header collapsed" onclick="toggleEditSection('location')">
+            <span class="edit-section-title">📍 Location</span>
+            <span class="edit-section-toggle">▼</span>
+          </div>
+          <div class="edit-section-content collapsed" id="editLocationSection">
+            <div class="edit-location-row">
+              <input type="text" id="editLocation" placeholder="Add location...">
+              <button class="btn btn-secondary" onclick="getMyLocation()">📍</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Column - Comments (Community!) -->
+      <div class="edit-right-column">
+        <div class="edit-comments-header">
+          <span class="edit-comments-title">
+            💬 Comments
+            <span class="edit-comments-count" id="editCommentsCount">0</span>
+          </span>
+        </div>
+        
+        <div class="edit-comments-list" id="editCommentsList">
+          <!-- Comments will be rendered here -->
+        </div>
+        
+        <div class="edit-comment-input-area">
+          <div class="edit-comment-input-row">
+            <input type="text" class="edit-comment-input" id="newCommentInput" placeholder="Join the conversation..." onkeypress="if(event.key==='Enter'){addCommentFromInput();event.preventDefault()}">
+            <button class="edit-comment-submit" onclick="addCommentFromInput()">Post</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
     <div class="edit-modal-footer">
-      <span class="info-text" id="editInfo"></span>
-      <button class="btn btn-danger" onclick="deleteCard()">🗑️ Delete</button>
+      <div class="edit-footer-left">
+        <label class="edit-privacy-toggle">
+          <input type="checkbox" id="editPrivate" onchange="toggleCardPrivacy(currentCardId)">
+          <span>🔒 Private</span>
+        </label>
+        <span class="edit-footer-meta" id="editFooterMeta"></span>
+      </div>
+      <div class="edit-footer-right">
+        <button class="btn btn-danger" onclick="deleteCard()">🗑️ Delete</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2601,15 +3223,87 @@ function showToast(msg, type = 'default') {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 // ============== SECURITY ==============
-// Sanitize HTML to prevent XSS attacks
+// Sanitization to prevent XSS attacks (not over-aggressive)
 function sanitizeHTML(str) {
   if (!str) return '';
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/"/g, '&quot;');
+  // Note: apostrophes (') and forward slashes (/) are safe in text content
+}
+// Sanitize URL to prevent javascript: and data: exploits
+function sanitizeURL(url) {
+  if (!url) return '';
+  const str = String(url).trim();
+  const lower = str.toLowerCase();
+  
+  // Block dangerous protocols
+  if (lower.startsWith('javascript:') || 
+      lower.startsWith('data:text/html') ||
+      lower.startsWith('vbscript:')) {
+    return '';
+  }
+  
+  // Allow safe protocols (return original, not lowercased)
+  if (lower.startsWith('http://') || 
+      lower.startsWith('https://') || 
+      lower.startsWith('mailto:') ||
+      lower.startsWith('thought://') ||
+      lower.startsWith('media://')) {
+    return str; // Return original URL, preserving case
+  }
+  
+  // Default: assume https
+  if (!lower.includes('://')) {
+    return 'https://' + str;
+  }
+  
+  return '';
+}
+
+// Sanitize imported card data
+function sanitizeCardData(card) {
+  return {
+    id: typeof card.id === 'number' ? card.id : Date.now(),
+    url: sanitizeURL(card.url) || 'about:blank',
+    title: sanitizeHTML(String(card.title || 'Untitled').substring(0, 200)),
+    notes: sanitizeHTML(String(card.notes || '').substring(0, 5000)),
+    location: sanitizeHTML(String(card.location || '').substring(0, 200)),
+    tags: Array.isArray(card.tags) 
+      ? card.tags.slice(0, 20).map(t => sanitizeHTML(String(t).substring(0, 50)))
+      : [],
+    topic: ['tech', 'news', 'food', 'travel', 'entertainment', 'other'].includes(card.topic) 
+      ? card.topic 
+      : 'other',
+    votes: typeof card.votes === 'number' ? Math.max(-1000, Math.min(1000, card.votes)) : 0,
+    screenshot: sanitizeURL(card.screenshot),
+    screenshotReal: Boolean(card.screenshotReal),
+    isPrivate: Boolean(card.isPrivate),
+    starred: Boolean(card.starred),
+    photos: Array.isArray(card.photos) 
+      ? card.photos.slice(0, 20).filter(p => typeof p === 'string' && (p.startsWith('data:image/') || sanitizeURL(p)))
+      : [],
+    comments: Array.isArray(card.comments)
+      ? card.comments.slice(0, 100).map(c => ({
+          id: typeof c.id === 'number' ? c.id : Date.now(),
+          text: sanitizeHTML(String(c.text || '').substring(0, 1000)),
+          author: sanitizeHTML(String(c.author || 'Anonymous').substring(0, 50)),
+          timestamp: c.timestamp || new Date().toISOString()
+        }))
+      : [],
+    addedBy: sanitizeHTML(String(card.addedBy || 'Unknown').substring(0, 50)),
+    createdAt: card.createdAt || new Date().toISOString(),
+    lastEdited: card.lastEdited || new Date().toISOString(),
+    editedBy: sanitizeHTML(String(card.editedBy || 'Unknown').substring(0, 50))
+  };
+}
+
+// Validate and sanitize username
+function sanitizeUsername(name) {
+  if (!name) return 'Anonymous';
+  return sanitizeHTML(String(name).substring(0, 50).replace(/[<>'"]/g, ''));
 }
 // ============== DISCOVER BUBBLE VIEW ==============
 let bubbles = [];
@@ -2648,6 +3342,130 @@ const GUIDE_CARDS = [
   { id: 'guide_7', title: 'Discover Connections', url: 'thought://discover-guide', tags: ['guide', 'discover', 'connections', 'explore'], topic: 'tech', notes: 'You are here! This view shows how ideas connect through shared tags. Click cards to see their connections light up.', votes: 22, addedBy: 'CommuneCollab', isGuide: true }
 ];
 
+// Celestial classification thresholds
+const CELESTIAL_CONFIG = {
+  // Mass calculation weights
+  massWeights: {
+    connection: 3,
+    vote: 2,
+    freshness: 5,
+    trending: 4
+  },
+  
+  // Classification thresholds (mass ranges)
+  thresholds: {
+    star: 25,      // mass >= 25 → star
+    planet: 10,    // mass >= 10 → planet
+    moon: 3,       // mass >= 3 → moon
+    comet: 0,      // new cards (< 72 hours)
+    asteroid: 0    // old + low mass
+  },
+  
+  // Size ranges (in pixels)
+  sizes: {
+    star: { min: 260, max: 300 },
+    planet: { min: 200, max: 250 },
+    moon: { min: 160, max: 190 },
+    comet: { min: 200, max: 240 },  // boosted for visibility
+    asteroid: { min: 140, max: 160 }
+  },
+  
+  // Orbital distances from parent
+  orbits: {
+    planet: { min: 280, max: 450 },  // distance from star
+    moon: { min: 180, max: 280 }      // distance from planet
+  },
+  
+  // Time thresholds (in hours)
+  time: {
+    cometAge: 72,     // cards < 72 hours old are comets
+    freshBoost: 48    // peak freshness boost < 48 hours
+  },
+  
+  // Layout zones (percentage of canvas)
+  zones: {
+    cometY: 0.12,      // top 12% for comet zone
+    asteroidRing: 0.9, // outer 10% for asteroids
+    mainGalaxy: 0.75   // center 75% for star systems
+  }
+};
+
+// Card age in hours
+function getCardAgeHours(card) {
+  const created = new Date(card.createdAt || Date.now());
+  return (Date.now() - created.getTime()) / (1000 * 60 * 60);
+}
+
+// Calculate freshness multiplier (1.0 for old, up to 2.0 for brand new)
+function getFreshnessMultiplier(card) {
+  const ageHours = getCardAgeHours(card);
+  if (ageHours > CELESTIAL_CONFIG.time.cometAge) return 1.0;
+  // Exponential decay from 2.0 to 1.0 over 72 hours
+  return 1.0 + Math.exp(-ageHours / 24);
+}
+
+// Calculate trending boost (based on recent vote velocity)
+function getTrendingBoost(card) {
+  // Simple approximation: votes / age gives velocity
+  const ageHours = Math.max(getCardAgeHours(card), 1);
+  const votes = Math.abs(card.votes || 0);
+  return Math.min(votes / (ageHours / 24), 10); // cap at 10
+}
+
+// Calculate card "mass" (gravitational importance)
+function calculateMass(card) {
+  const w = CELESTIAL_CONFIG.massWeights;
+  
+  const connectionMass = Math.min(card.connectionCount || 0, 15) * w.connection;
+  const voteMass = Math.log(Math.abs(card.votes || 0) + 1) * w.vote;
+  const freshnessMass = (getFreshnessMultiplier(card) - 1) * w.freshness;
+  const trendingMass = getTrendingBoost(card) * w.trending;
+  
+  return connectionMass + voteMass + freshnessMass + trendingMass;
+}
+
+// Classify card into celestial type
+function classifyCard(card) {
+  const ageHours = getCardAgeHours(card);
+  const mass = card.mass || 0;
+  const t = CELESTIAL_CONFIG.thresholds;
+  
+  // New cards are comets (regardless of mass)
+  if (ageHours < CELESTIAL_CONFIG.time.cometAge) {
+    return 'comet';
+  }
+  
+  // Guide cards are always stars
+  if (card.isGuide) {
+    return 'star';
+  }
+  
+  // Old cards with very low mass are asteroids
+  if (mass < t.moon && ageHours > CELESTIAL_CONFIG.time.cometAge * 2) {
+    return 'asteroid';
+  }
+  
+  // Classification by mass
+  if (mass >= t.star) return 'star';
+  if (mass >= t.planet) return 'planet';
+  if (mass >= t.moon) return 'moon';
+  
+  return 'asteroid';
+}
+
+// Get card size based on classification and mass
+function getCardSize(card) {
+  const type = card.celestialType || 'asteroid';
+  const sizes = CELESTIAL_CONFIG.sizes[type];
+  const mass = card.mass || 0;
+  
+  // Normalize mass to 0-1 range for size interpolation
+  const maxMass = CELESTIAL_CONFIG.thresholds.star * 2;
+  const normalizedMass = Math.min(mass / maxMass, 1);
+  
+  return sizes.min + (sizes.max - sizes.min) * normalizedMass;
+}
+
 function openDiscover() {
   document.getElementById('discoverView').classList.add('active');
   bubbleZoom = 1;
@@ -2678,19 +3496,18 @@ function closeDiscoverInfo() {
 }
 
 async function initBubbleView() {
-  // Show loading state
   const container = document.getElementById('bubbleContainer');
   container.innerHTML = `
     <div class="discover-loading">
       <div class="discover-loading-spinner"></div>
-      <span style="color: var(--text-2);">Loading community feed...</span>
+      <span style="color: var(--text-2);">Mapping the cosmos...</span>
     </div>
   `;
   
   await buildBubbleData();
   populateTagFilter();
   createBackgroundEffects();
-  layoutFibonacciSpiral();
+  layoutCelestialSystem();  // Changed from layoutFibonacciSpiral()
   renderBubbles();
   setupCanvasDrag();
   startAmbientAnimation();
@@ -2743,19 +3560,26 @@ function createBackgroundEffects() {
 }
 
 async function buildBubbleData() {
-  // Fetch community cards from cloud if enabled
+  const container = document.getElementById('bubbleContainer');
+  container.innerHTML = `
+    <div class="discover-loading">
+      <div class="discover-loading-spinner"></div>
+      <span style="color: var(--text-2);">Mapping the cosmos...</span>
+    </div>
+  `;
+  
+  // Fetch community cards if enabled
   let communityCards = [];
   if (cloudSyncEnabled) {
     communityCards = await fetchCommunityCards();
   }
   
-  // Get URLs of guide cards that have been promoted
+  // Filter out promoted guide cards
   const promotedGuideUrls = new Set(
     cards.filter(c => c.url?.startsWith('thought://') && c.url?.includes('-guide'))
          .map(c => c.url)
   );
   
-  // Only include guide cards that haven't been promoted
   const activeGuides = GUIDE_CARDS.filter(g => !promotedGuideUrls.has(g.url));
   
   const guidesWithImages = activeGuides.map(g => ({
@@ -2767,11 +3591,10 @@ async function buildBubbleData() {
     isPrivate: false
   }));
   
-  // Merge local cards with community cards (dedupe by URL)
+  // Merge local and community cards
   const seenUrls = new Set();
   const allUserCards = [];
   
-  // Add local cards first (priority)
   cards.forEach(c => {
     if (!seenUrls.has(c.url)) {
       seenUrls.add(c.url);
@@ -2779,7 +3602,6 @@ async function buildBubbleData() {
     }
   });
   
-  // Add community cards that we don't have locally
   communityCards.forEach(c => {
     if (!seenUrls.has(c.url)) {
       seenUrls.add(c.url);
@@ -2787,25 +3609,26 @@ async function buildBubbleData() {
     }
   });
   
-  const allCards = [
-    ...guidesWithImages,
-    ...allUserCards
-  ];
+  const allCards = [...guidesWithImages, ...allUserCards];
   
+  // Create bubble objects
   bubbles = allCards.map((c, index) => ({
     ...c,
     bubbleId: String(c.id),
     x: 0, y: 0,
     baseX: 0, baseY: 0,
     index: index,
-    depth: 1,
-    breathDelay: Math.random() * 4,
-    noisePhase: Math.random() * Math.PI * 2
+    connectionCount: 0,
+    mass: 0,
+    celestialType: 'asteroid',
+    parentId: null,  // for moons/planets
+    systemId: null,  // which star system
+    orbitAngle: Math.random() * Math.PI * 2,
+    orbitSpeed: 0.0002 + Math.random() * 0.0001,
+    breathDelay: Math.random() * 4
   }));
   
-  
-  
-  // Build connections
+  // Build connections based on shared tags
   bubbleConnections = [];
   for (let i = 0; i < bubbles.length; i++) {
     for (let j = i + 1; j < bubbles.length; j++) {
@@ -2821,124 +3644,433 @@ async function buildBubbleData() {
     }
   }
   
-  // Calculate connection counts and sort
+  // Calculate connection counts
   bubbles.forEach(b => {
     b.connectionCount = bubbleConnections
       .filter(c => c.source === b.bubbleId || c.target === b.bubbleId)
       .reduce((sum, c) => sum + c.strength, 0);
   });
   
-  // Sort by connection count (most connected first)
-  bubbles.sort((a, b) => b.connectionCount - a.connectionCount);
-  centerCardId = bubbles.length > 0 ? bubbles[0].bubbleId : null;
-  
-  // Assign depth based on position
-  bubbles.forEach((b, i) => {
-    if (i === 0) b.depth = 0;
-    else if (i < 5) b.depth = 1;
-    else if (i < 15) b.depth = 2;
-    else if (i < 30) b.depth = 3;
-    else b.depth = 4;
+  // Calculate mass and classify each card
+  bubbles.forEach(b => {
+    b.mass = calculateMass(b);
+    b.celestialType = classifyCard(b);
+    b.size = getCardSize(b);
   });
   
+  // Identify star systems (find stars and their orbiting bodies)
+  identifyStarSystems();
+  
+  // Update stats
   document.getElementById('statNodes').textContent = bubbles.length;
   document.getElementById('statConnections').textContent = bubbleConnections.length;
 }
 
-// Fibonacci spiral layout
-function layoutFibonacciSpiral() {
+// Identify star systems and assign relationships
+function identifyStarSystems() {
+  // Get all stars
+  const stars = bubbles.filter(b => b.celestialType === 'star');
+  const planets = bubbles.filter(b => b.celestialType === 'planet');
+  const moons = bubbles.filter(b => b.celestialType === 'moon');
+  const comets = bubbles.filter(b => b.celestialType === 'comet');
+  const asteroids = bubbles.filter(b => b.celestialType === 'asteroid');
+  
+  // If no stars, promote the highest mass card to be a star
+  if (stars.length === 0 && bubbles.length > 0) {
+    const sorted = [...bubbles].sort((a, b) => b.mass - a.mass);
+    if (sorted[0]) {
+      sorted[0].celestialType = 'star';
+      sorted[0].size = getCardSize(sorted[0]);
+      stars.push(sorted[0]);
+    }
+  }
+  
+  // Assign each star a system ID
+  stars.forEach((star, i) => {
+    star.systemId = `system_${i}`;
+  });
+  
+  // Assign planets to nearest star (by tag overlap)
+  planets.forEach(planet => {
+    let bestStar = null;
+    let bestOverlap = 0;
+    
+    stars.forEach(star => {
+      const overlap = (planet.tags || []).filter(t => (star.tags || []).includes(t)).length;
+      if (overlap > bestOverlap) {
+        bestOverlap = overlap;
+        bestStar = star;
+      }
+    });
+    
+    // If no tag overlap, assign to nearest by mass
+    if (!bestStar && stars.length > 0) {
+      bestStar = stars[0];
+    }
+    
+    if (bestStar) {
+      planet.parentId = bestStar.bubbleId;
+      planet.systemId = bestStar.systemId;
+    }
+  });
+  
+  // Assign moons to nearest planet (by tag overlap)
+  moons.forEach(moon => {
+    let bestPlanet = null;
+    let bestOverlap = 0;
+    
+    planets.forEach(planet => {
+      const overlap = (moon.tags || []).filter(t => (planet.tags || []).includes(t)).length;
+      if (overlap > bestOverlap) {
+        bestOverlap = overlap;
+        bestPlanet = planet;
+      }
+    });
+    
+    if (bestPlanet) {
+      moon.parentId = bestPlanet.bubbleId;
+      moon.systemId = bestPlanet.systemId;
+    } else if (stars.length > 0) {
+      // No planet match, orbit nearest star directly
+      moon.parentId = stars[0].bubbleId;
+      moon.systemId = stars[0].systemId;
+    }
+  });
+  
+  // Comets get assigned to nearest system by tags (but stay in comet zone)
+  comets.forEach(comet => {
+    let bestStar = null;
+    let bestOverlap = 0;
+    
+    stars.forEach(star => {
+      const overlap = (comet.tags || []).filter(t => (star.tags || []).includes(t)).length;
+      if (overlap > bestOverlap) {
+        bestOverlap = overlap;
+        bestStar = star;
+      }
+    });
+    
+    if (bestStar) {
+      comet.systemId = bestStar.systemId;
+      comet.potentialParentId = bestStar.bubbleId; // where it might go
+    }
+  });
+  
+  // Asteroids stay unassigned (asteroid belt)
+}
+
+// ========== CELESTIAL LAYOUT SYSTEM ==========
+// Multi-cluster: Each tag community gets its own mini-spiral
+// Performant: Union-Find clustering + localized collision detection
+
+function layoutCelestialSystem() {
   const canvas = document.getElementById('discoverCanvas');
-  const width = canvas.offsetWidth || window.innerWidth;
-  const height = (canvas.offsetHeight || window.innerHeight) - 80;
+  const rect = canvas.getBoundingClientRect();
+  const width = rect.width || window.innerWidth;
+  const height = rect.height || window.innerHeight - 80;
   const centerX = width / 2;
   const centerY = height / 2;
   
   if (bubbles.length === 0) return;
   
-  const cardWidth = 240;
-  const cardHeight = 280;
-  const baseSpacing = 60;
-  
-  // Position cards in Fibonacci spiral
-  bubbles.forEach((bubble, i) => {
-    if (i === 0) {
-      // Center card
-      bubble.x = centerX;
-      bubble.y = centerY;
-    } else {
-      // Fibonacci spiral positioning
-      const angle = i * GOLDEN_ANGLE;
-      const radius = baseSpacing + Math.sqrt(i) * (cardWidth * 0.55);
-      
-      bubble.x = centerX + Math.cos(angle) * radius;
-      bubble.y = centerY + Math.sin(angle) * radius;
-    }
-    
-    bubble.baseX = bubble.x;
-    bubble.baseY = bubble.y;
+  // === STEP 1: Build connection map (O(n²) but necessary) ===
+  bubbles.forEach(bubble => {
+    bubble.connections = {};
+    bubble.totalConnections = 0;
   });
   
-  // Collision resolution - push overlapping cards apart
-  for (let iteration = 0; iteration < 100; iteration++) {
+  for (let i = 0; i < bubbles.length; i++) {
+    for (let j = i + 1; j < bubbles.length; j++) {
+      const a = bubbles[i];
+      const b = bubbles[j];
+      const shared = (a.tags || []).filter(t => (b.tags || []).includes(t)).length;
+      
+      if (shared > 0) {
+        a.connections[b.bubbleId] = shared;
+        b.connections[a.bubbleId] = shared;
+        a.totalConnections += shared;
+        b.totalConnections += shared;
+      }
+    }
+  }
+  
+  // === STEP 2: Union-Find clustering (nearly O(n)) ===
+  const parent = {};
+  const rank = {};
+  
+  bubbles.forEach(b => {
+    parent[b.bubbleId] = b.bubbleId;
+    rank[b.bubbleId] = 0;
+  });
+  
+  function find(x) {
+    if (parent[x] !== x) {
+      parent[x] = find(parent[x]); // Path compression
+    }
+    return parent[x];
+  }
+  
+  function union(x, y) {
+    const px = find(x), py = find(y);
+    if (px === py) return;
+    // Union by rank
+    if (rank[px] < rank[py]) parent[px] = py;
+    else if (rank[px] > rank[py]) parent[py] = px;
+    else { parent[py] = px; rank[px]++; }
+  }
+  
+  // Union cards that share tags
+  bubbles.forEach(bubble => {
+    Object.keys(bubble.connections).forEach(otherId => {
+      union(bubble.bubbleId, otherId);
+    });
+  });
+  
+  // === STEP 3: Group bubbles by cluster ===
+  const clusters = {};
+  bubbles.forEach(bubble => {
+    const root = find(bubble.bubbleId);
+    if (!clusters[root]) clusters[root] = [];
+    clusters[root].push(bubble);
+  });
+  
+  const clusterList = Object.values(clusters);
+  
+  // Sort clusters: largest/most connected first
+  clusterList.sort((a, b) => {
+    const aTotal = a.reduce((sum, c) => sum + c.totalConnections, 0);
+    const bTotal = b.reduce((sum, c) => sum + c.totalConnections, 0);
+    return bTotal - aTotal;
+  });
+  
+  // === STEP 4: Calculate cluster zone positions ===
+  const clusterZones = [];
+  const minZoneRadius = 180; // Minimum space for a cluster
+  const zoneGap = 80; // Gap between clusters
+  
+  if (clusterList.length === 1) {
+    // Single cluster - center it
+    clusterZones.push({ x: centerX, y: centerY, radius: Math.min(width, height) * 0.4 });
+  } else {
+    // Multiple clusters - distribute around canvas
+    const totalCards = bubbles.length;
+    
+    clusterList.forEach((cluster, i) => {
+      // Size zone proportional to cluster size
+      const clusterWeight = cluster.length / totalCards;
+      const zoneRadius = Math.max(minZoneRadius, Math.min(width, height) * 0.25 * Math.sqrt(clusterWeight) + 100);
+      
+      if (i === 0 && cluster.length > bubbles.length * 0.4) {
+        // Dominant cluster (>40% of cards) gets center
+        clusterZones.push({ x: centerX, y: centerY, radius: zoneRadius });
+      } else {
+        // Distribute others around the canvas
+        // Use golden angle for even distribution
+        const angle = i * GOLDEN_ANGLE + Math.PI / 4;
+        const distanceFromCenter = Math.min(width, height) * 0.28 + (i * 40);
+        
+        clusterZones.push({
+          x: centerX + Math.cos(angle) * distanceFromCenter,
+          y: centerY + Math.sin(angle) * distanceFromCenter,
+          radius: zoneRadius
+        });
+      }
+    });
+  }
+  
+  // === STEP 5: Layout each cluster with its own Fibonacci spiral ===
+  clusterList.forEach((cluster, clusterIndex) => {
+    const zone = clusterZones[clusterIndex];
+    
+    // Sort within cluster by connections (hub first)
+    cluster.sort((a, b) => b.totalConnections - a.totalConnections);
+    
+    // Fibonacci spiral within this cluster's zone
+    const baseSpacing = Math.max(40, 70 - cluster.length * 2); // Tighter for larger clusters
+    
+    cluster.forEach((bubble, i) => {
+      if (i === 0) {
+        // Hub at zone center
+        bubble.x = zone.x;
+        bubble.y = zone.y;
+      } else {
+        const angle = i * GOLDEN_ANGLE;
+        const sizeMultiplier = 1 + ((bubble.size || 200) - 200) / 600;
+        const radius = baseSpacing + Math.sqrt(i) * (75 * sizeMultiplier);
+        
+        // Clamp to zone radius
+        const clampedRadius = Math.min(radius, zone.radius - 50);
+        
+        bubble.x = zone.x + Math.cos(angle) * clampedRadius;
+        bubble.y = zone.y + Math.sin(angle) * clampedRadius;
+      }
+      
+      // Store animation data
+      bubble.baseX = bubble.x;
+      bubble.baseY = bubble.y;
+      bubble.orbitCenterX = zone.x;
+      bubble.orbitCenterY = zone.y;
+      bubble.orbitRadius = Math.sqrt((bubble.x - zone.x) ** 2 + (bubble.y - zone.y) ** 2);
+      bubble.orbitAngle = Math.atan2(bubble.y - zone.y, bubble.x - zone.x);
+      bubble.clusterIndex = clusterIndex;
+      
+      // Animation speed - varies by type and distance
+      const distanceFactor = Math.max(0.2, 1 - (bubble.orbitRadius / 500));
+      switch (bubble.celestialType) {
+        case 'star': bubble.orbitSpeed = 0; break;
+        case 'comet': bubble.orbitSpeed = 0.0001 * distanceFactor; break;
+        case 'planet': bubble.orbitSpeed = 0.00007 * distanceFactor; break;
+        case 'moon': bubble.orbitSpeed = 0.00009 * distanceFactor; break;
+        case 'asteroid': bubble.orbitSpeed = 0.00004 * distanceFactor; break;
+        default: bubble.orbitSpeed = 0.00005 * distanceFactor;
+      }
+    });
+    
+    // Collision resolution WITHIN this cluster only (performance!)
+    resolveClusterCollisions(cluster, zone);
+  });
+  
+  // === STEP 6: Resolve collisions BETWEEN clusters (lighter pass) ===
+  resolveCrossClusterCollisions(clusterList, clusterZones);
+  
+  // === STEP 7: Ensure all visible ===
+  ensureAllVisible(width, height);
+}
+
+// Collision resolution within a single cluster
+function resolveClusterCollisions(cluster, zone) {
+  if (cluster.length < 2) return;
+  
+  const padding = 20;
+  const maxIterations = Math.min(30, 10 + cluster.length); // Scale iterations
+  
+  for (let iter = 0; iter < maxIterations; iter++) {
     let hadCollision = false;
     
-    for (let i = 0; i < bubbles.length; i++) {
-      for (let j = i + 1; j < bubbles.length; j++) {
-        const a = bubbles[i];
-        const b = bubbles[j];
+    for (let i = 0; i < cluster.length; i++) {
+      for (let j = i + 1; j < cluster.length; j++) {
+        const a = cluster[i];
+        const b = cluster[j];
         
         const dx = b.x - a.x;
         const dy = b.y - a.y;
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        
-        const minDist = cardWidth + baseSpacing;
+        const minDist = ((a.size || 200) + (b.size || 200)) / 2 + padding;
         
         if (dist < minDist) {
           hadCollision = true;
           const overlap = (minDist - dist) / 2;
-          const pushX = (dx / dist) * overlap * 1.1;
-          const pushY = (dy / dist) * overlap * 1.1;
+          const pushX = (dx / dist) * overlap;
+          const pushY = (dy / dist) * overlap;
           
-          // Don't move center card
-          if (i !== 0) {
-            a.x -= pushX;
-            a.y -= pushY;
-          }
-          if (j !== 0) {
-            b.x += pushX;
-            b.y += pushY;
+          // Hub (index 0) is anchor
+          if (i === 0) {
+            b.x += pushX * 1.8;
+            b.y += pushY * 1.8;
+          } else {
+            const aWeight = (a.totalConnections || 1);
+            const bWeight = (b.totalConnections || 1);
+            const total = aWeight + bWeight;
+            
+            a.x -= pushX * (bWeight / total);
+            a.y -= pushY * (bWeight / total);
+            b.x += pushX * (aWeight / total);
+            b.y += pushY * (aWeight / total);
           }
         }
       }
     }
     
-    if (!hadCollision && iteration > 30) break;
+    if (!hadCollision) break;
   }
   
-  // Update base positions after collision resolution
-  bubbles.forEach(b => {
+  // Update base positions
+  cluster.forEach(b => {
     b.baseX = b.x;
     b.baseY = b.y;
   });
-  
-  // Calculate required canvas bounds
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  bubbles.forEach(b => {
-    minX = Math.min(minX, b.x - cardWidth / 2);
-    maxX = Math.max(maxX, b.x + cardWidth / 2);
-    minY = Math.min(minY, b.y - cardHeight / 2);
-    maxY = Math.max(maxY, b.y + cardHeight / 2);
-  });
-  
-  // If content overflows, adjust initial pan to center it
-  const contentWidth = maxX - minX;
-  const contentHeight = maxY - minY;
-  
-  if (contentWidth > width || contentHeight > height) {
-    // Start slightly zoomed out for large collections
-    bubbleZoom = Math.min(0.9, Math.min(width / contentWidth, height / contentHeight) * 0.85);
-  }
 }
+
+// Lighter collision pass between clusters (only edge cards)
+function resolveCrossClusterCollisions(clusterList, clusterZones) {
+  if (clusterList.length < 2) return;
+  
+  const padding = 40; // Larger gap between clusters
+  const maxIterations = 15;
+  
+  for (let iter = 0; iter < maxIterations; iter++) {
+    let hadCollision = false;
+    
+    for (let ci = 0; ci < clusterList.length; ci++) {
+      for (let cj = ci + 1; cj < clusterList.length; cj++) {
+        const clusterA = clusterList[ci];
+        const clusterB = clusterList[cj];
+        
+        // Only check outer cards of each cluster (performance)
+        const outerA = clusterA.slice(-Math.min(5, clusterA.length));
+        const outerB = clusterB.slice(-Math.min(5, clusterB.length));
+        
+        outerA.forEach(a => {
+          outerB.forEach(b => {
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const minDist = ((a.size || 200) + (b.size || 200)) / 2 + padding;
+            
+            if (dist < minDist) {
+              hadCollision = true;
+              const overlap = (minDist - dist) / 2;
+              const pushX = (dx / dist) * overlap;
+              const pushY = (dy / dist) * overlap;
+              
+              // Push both clusters apart (move all cards in cluster)
+              clusterA.forEach(card => {
+                card.x -= pushX * 0.3;
+                card.y -= pushY * 0.3;
+              });
+              clusterB.forEach(card => {
+                card.x += pushX * 0.3;
+                card.y += pushY * 0.3;
+              });
+            }
+          });
+        });
+      }
+    }
+    
+    if (!hadCollision) break;
+  }
+  
+  // Update base positions
+  clusterList.flat().forEach(b => {
+    b.baseX = b.x;
+    b.baseY = b.y;
+  });
+}
+
+// Keep all cards within visible bounds
+function ensureAllVisible(width, height) {
+  const margin = 100;
+  
+  bubbles.forEach(b => {
+    const halfSize = (b.size || 200) / 2;
+    b.x = Math.max(margin, Math.min(width - margin - halfSize, b.x));
+    b.y = Math.max(margin, Math.min(height - margin - halfSize, b.y));
+    b.baseX = b.x;
+    b.baseY = b.y;
+  });
+}
+
+function shuffleBubbles() {
+  buildBubbleData().then(() => {
+    layoutCelestialSystem();
+    renderBubbles();
+    closeDiscoverInfo();
+    showToast('🎲 Reshuffled!', 'default');
+  });
+}
+
+
 
 function populateTagFilter() {
   const allTags = new Set();
@@ -2958,28 +4090,47 @@ function renderBubbles() {
     const v = b.votes || 0;
     const img = getCardThumbnail(b);
     const isStarred = b.starred;
-    const isCenter = b.bubbleId === centerCardId;
-    const width = isCenter ? 280 : 240;
-    const delayClass = index < 10 ? `entering-delay-${index}` : '';
+    const width = b.size || 200;
+    const type = b.celestialType || 'asteroid';
+    
+    // Visual classes based on celestial type
+    const typeClasses = {
+      star: 'celestial-star',
+      planet: 'celestial-planet',
+      moon: 'celestial-moon',
+      comet: 'celestial-comet',
+      asteroid: 'celestial-asteroid'
+    };
+    
+    const typeClass = typeClasses[type] || '';
+    const isComet = type === 'comet';
+    const isStar = type === 'star';
+    
+    // Entry animation delay
+    const delayClass = index < 15 ? `entering-delay-${Math.min(index, 10)}` : '';
     
     return `
-      <div class="bubble-card ${isCenter ? 'center-card' : ''} ${b.isGuide ? 'guide-card' : ''} entering ${delayClass} breathing"
+      <div class="bubble-card ${typeClass} ${b.isGuide ? 'guide-card' : ''} entering ${delayClass}"
            id="bubble-${b.bubbleId}"
            data-id="${b.bubbleId}"
-           data-depth="${b.depth}"
+           data-type="${type}"
            data-is-guide="${b.isGuide}"
-           style="left:${b.x - width / 2}px; top:${b.y - 140}px; width:${width}px; --breath-delay:${b.breathDelay}s;"
+           style="left:${b.x - width / 2}px; top:${b.y - (width * 0.7)}px; width:${width}px; --breath-delay:${b.breathDelay}s;"
            onclick="handleBubbleClick('${b.bubbleId}', event)"
            onmouseenter="handleBubbleHover('${b.bubbleId}', true)"
            onmouseleave="handleBubbleHover('${b.bubbleId}', false)">
         
+        ${isComet ? '<div class="comet-tail"></div>' : ''}
+        ${isStar ? '<div class="star-corona"></div>' : ''}
+        
         <div class="bubble-card-image">
-          <img src="${img}" alt="${b.title}" onerror="this.src='${generatePlaceholderThumbnail(b)}'">
+          <img src="${img}" alt="${sanitizeHTML(b.title)}" onerror="this.src='${generatePlaceholderThumbnail(b)}'">
           <div class="bubble-card-image-overlay">
             <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
               <span class="bubble-badge">${emoji}</span>
               ${v ? `<span class="bubble-badge" style="color:${v > 0 ? 'var(--success)' : 'var(--danger)'}">${v > 0 ? '+' : ''}${v}</span>` : ''}
               ${b.isGuide ? `<span class="bubble-badge guide-badge">Guide</span>` : ''}
+              ${isComet ? `<span class="bubble-badge comet-badge">NEW</span>` : ''}
             </div>
             <button class="bubble-star-btn ${isStarred ? 'active' : ''}" onclick="handleBubbleStar('${b.bubbleId}', event)">
               ${isStarred ? '⭐' : '☆'}
@@ -2992,8 +4143,7 @@ function renderBubbles() {
           <p class="bubble-card-url">${sanitizeHTML(formatUrl(b.url))}</p>
           ${tags.length ? `<div class="bubble-card-tags">${tags.map(t => `<span class="tag">${sanitizeHTML(t)}</span>`).join('')}</div>` : ''}
           <span class="bubble-card-author">
-            ${b.isCommunity ? '🌐' : '👤'} ${sanitizeHTML(b.addedBy || 'Anonymous')}
-            ${b.isOwnCard === false && b.cloudUserId ? ' · Community' : ''}
+            ${b.isCommunity ? '🌍' : '👤'} ${sanitizeHTML(b.addedBy || 'Anonymous')}
           </span>
         </div>
         
@@ -3013,7 +4163,7 @@ function renderBubbles() {
     document.querySelectorAll('.bubble-card.entering').forEach(el => {
       el.classList.remove('entering');
     });
-  }, 1000);
+  }, 1200);
 }
 
 function formatUrl(url) {
@@ -3302,23 +4452,46 @@ function startAmbientAnimation() {
     if (currentTime - lastFrameTime < frameInterval) return;
     lastFrameTime = currentTime;
     
-    if (isAnyCardHovered || selectedBubbleId) return;
+    // Don't animate while dragging or selecting
+    if (isAnyCardHovered || selectedBubbleId || isDraggingCanvas) return;
     
-    time += 0.012;
+    time += 0.008;
     
     bubbles.forEach(bubble => {
-      if (bubble.bubbleId === centerCardId) return;
-      
       const card = document.getElementById(`bubble-${bubble.bubbleId}`);
       if (!card || card.classList.contains('selected') || card.classList.contains('related')) return;
       
-      // Gentle floating motion
-      const floatX = Math.sin(time + bubble.noisePhase) * 3;
-      const floatY = Math.cos(time * 0.8 + bubble.noisePhase) * 3;
+      const type = bubble.celestialType;
+      let newX = bubble.baseX;
+      let newY = bubble.baseY;
       
-      const width = bubble.bubbleId === centerCardId ? 280 : 240;
-      card.style.left = `${bubble.baseX + floatX - width / 2}px`;
-      card.style.top = `${bubble.baseY + floatY - 140}px`;
+      // Different movement based on celestial type
+      if (type === 'star') {
+        // Stars: very subtle breathing only (no movement)
+        return;
+      } else if (type === 'planet' && bubble.orbitCenterX !== undefined) {
+        // Planets: slow orbital drift
+        const angle = bubble.orbitAngle + time * bubble.orbitSpeed;
+        newX = bubble.orbitCenterX + Math.cos(angle) * bubble.orbitRadius;
+        newY = bubble.orbitCenterY + Math.sin(angle) * bubble.orbitRadius;
+      } else if (type === 'moon' && bubble.orbitCenterX !== undefined) {
+        // Moons: faster orbital drift
+        const angle = bubble.orbitAngle + time * bubble.orbitSpeed * 1.5;
+        newX = bubble.orbitCenterX + Math.cos(angle) * bubble.orbitRadius;
+        newY = bubble.orbitCenterY + Math.sin(angle) * bubble.orbitRadius;
+      } else if (type === 'comet') {
+        // Comets: gentle bobbing
+        newX = bubble.baseX + Math.sin(time * 0.5 + bubble.breathDelay) * 3;
+        newY = bubble.baseY + Math.cos(time * 0.3 + bubble.breathDelay) * 2;
+      } else if (type === 'asteroid') {
+        // Asteroids: slow tumbling drift
+        newX = bubble.baseX + Math.sin(time * 0.2 + bubble.breathDelay) * 2;
+        newY = bubble.baseY + Math.cos(time * 0.15 + bubble.breathDelay) * 2;
+      }
+      
+      const width = bubble.size || 200;
+      card.style.left = `${newX - width / 2}px`;
+      card.style.top = `${newY - (width * 0.7)}px`;
     });
   }
   
@@ -3478,12 +4651,234 @@ function resetBubbleView() {
   closeDiscoverInfo();
 }
 
+// ========== CELESTIAL LAYOUT SYSTEM ==========
+// Connected cards spiral at center, orphans float in outer void
+
+function layoutCelestialSystem() {
+  const canvas = document.getElementById('discoverCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const width = rect.width || window.innerWidth;
+  const height = rect.height || window.innerHeight - 80;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  
+  if (bubbles.length === 0) return;
+  
+  // === STEP 1: Build connection strength matrix ===
+  const connectionStrength = {};
+  
+  bubbles.forEach(bubble => {
+    connectionStrength[bubble.bubbleId] = {};
+    bubbles.forEach(other => {
+      if (bubble.bubbleId === other.bubbleId) return;
+      const shared = (bubble.tags || []).filter(t => (other.tags || []).includes(t));
+      connectionStrength[bubble.bubbleId][other.bubbleId] = shared.length;
+    });
+  });
+  
+  // === STEP 2: Calculate total connections for each card ===
+  bubbles.forEach(bubble => {
+    bubble.totalConnections = Object.values(connectionStrength[bubble.bubbleId] || {})
+      .reduce((sum, strength) => sum + strength, 0);
+  });
+  
+  // === STEP 3: Split into connected vs orphans ===
+  const connectedCards = bubbles.filter(b => b.totalConnections > 0);
+  const orphanCards = bubbles.filter(b => b.totalConnections === 0);
+  
+  // === STEP 4: Greedy placement for connected cards only ===
+  const placed = [];
+  const unplaced = [...connectedCards];
+  
+  if (unplaced.length > 0) {
+    // Start with the most globally connected card
+    unplaced.sort((a, b) => b.totalConnections - a.totalConnections);
+    placed.push(unplaced.shift());
+    
+    // Greedily add cards by connection strength to placed set
+    while (unplaced.length > 0) {
+      let bestCard = null;
+      let bestScore = -Infinity;
+      
+      unplaced.forEach(candidate => {
+        let connectionScore = 0;
+        placed.forEach(placedCard => {
+          connectionScore += connectionStrength[candidate.bubbleId]?.[placedCard.bubbleId] || 0;
+        });
+        
+        // Prioritize by connections, tiny mass tie-breaker
+        const score = connectionScore * 10 + (candidate.mass || 0) * 0.001;
+        
+        if (score > bestScore) {
+          bestScore = score;
+          bestCard = candidate;
+        }
+      });
+      
+      const idx = unplaced.indexOf(bestCard);
+      if (idx > -1) {
+        unplaced.splice(idx, 1);
+        placed.push(bestCard);
+      }
+    }
+  }
+  
+  // === STEP 5: Fibonacci spiral for connected cards (centered) ===
+  const baseSpacing = 70;
+  const spiralCenterX = centerX;
+  const spiralCenterY = centerY;
+  
+  placed.forEach((bubble, i) => {
+    if (i === 0) {
+      bubble.x = spiralCenterX;
+      bubble.y = spiralCenterY;
+    } else {
+      const angle = i * GOLDEN_ANGLE;
+      const sizeMultiplier = 1 + ((bubble.size || 200) - 200) / 500;
+      const radius = baseSpacing + Math.sqrt(i) * (105 * sizeMultiplier);
+      
+      bubble.x = spiralCenterX + Math.cos(angle) * radius;
+      bubble.y = spiralCenterY + Math.sin(angle) * radius;
+    }
+    
+    bubble.baseX = bubble.x;
+    bubble.baseY = bubble.y;
+    bubble.orbitCenterX = spiralCenterX;
+    bubble.orbitCenterY = spiralCenterY;
+    bubble.orbitRadius = Math.sqrt((bubble.x - spiralCenterX) ** 2 + (bubble.y - spiralCenterY) ** 2);
+    bubble.orbitAngle = Math.atan2(bubble.y - spiralCenterY, bubble.x - spiralCenterX);
+    
+    // Animation speed based on type and distance
+    const distanceFactor = Math.max(0.2, 1 - (bubble.orbitRadius / 1000));
+    switch (bubble.celestialType) {
+      case 'star': bubble.orbitSpeed = 0; break;
+      case 'comet': bubble.orbitSpeed = 0.00012 * distanceFactor; break;
+      case 'planet': bubble.orbitSpeed = 0.00008 * distanceFactor; break;
+      case 'moon': bubble.orbitSpeed = 0.0001 * distanceFactor; break;
+      default: bubble.orbitSpeed = 0.00006 * distanceFactor;
+    }
+  });
+  
+  // === STEP 6: Position orphans in the OUTER VOID ===
+  // They float in corners and edges, clearly separate from the main cluster
+  
+  if (orphanCards.length > 0) {
+    // Calculate the "safe zone" - area occupied by connected cards
+    let maxClusterRadius = 0;
+    placed.forEach(b => {
+      const dist = Math.sqrt((b.x - spiralCenterX) ** 2 + (b.y - spiralCenterY) ** 2);
+      const cardRadius = (b.size || 200) / 2;
+      maxClusterRadius = Math.max(maxClusterRadius, dist + cardRadius);
+    });
+    
+    // Orphan zone starts beyond the cluster with a gap
+    const orphanZoneInnerRadius = maxClusterRadius + 150; // 150px gap from cluster
+    const orphanZoneOuterRadius = Math.min(width, height) / 2 - 100;
+    
+    // Distribute orphans around the outer void
+    orphanCards.forEach((orphan, i) => {
+      // Spread around the circle with some randomness
+      const baseAngle = (i / orphanCards.length) * Math.PI * 2;
+      const angleVariation = (Math.random() - 0.5) * 0.8;
+      const angle = baseAngle + angleVariation;
+      
+      // Random radius within orphan zone
+      const radiusRange = Math.max(100, orphanZoneOuterRadius - orphanZoneInnerRadius);
+      const radius = orphanZoneInnerRadius + Math.random() * radiusRange;
+      
+      orphan.x = spiralCenterX + Math.cos(angle) * radius;
+      orphan.y = spiralCenterY + Math.sin(angle) * radius;
+      
+      orphan.baseX = orphan.x;
+      orphan.baseY = orphan.y;
+      orphan.orbitCenterX = spiralCenterX;
+      orphan.orbitCenterY = spiralCenterY;
+      orphan.orbitRadius = radius;
+      orphan.orbitAngle = angle;
+      
+      // Orphans drift very slowly - lonely in space
+      orphan.orbitSpeed = 0.00003 + Math.random() * 0.00002;
+    });
+  }
+  
+  // === STEP 7: Collision resolution (connected cards only, then orphans) ===
+  resolveCollisions(placed);
+  resolveCollisions(orphanCards);
+  
+  // === STEP 8: Ensure all visible ===
+  ensureAllVisible(width, height);
+}
+
+// Resolve overlapping cards within a group
+function resolveCollisions(cardGroup) {
+  if (!cardGroup || cardGroup.length < 2) return;
+  
+  const padding = 25;
+  const maxIterations = 40;
+  
+  for (let iter = 0; iter < maxIterations; iter++) {
+    let hadCollision = false;
+    
+    for (let i = 0; i < cardGroup.length; i++) {
+      for (let j = i + 1; j < cardGroup.length; j++) {
+        const a = cardGroup[i];
+        const b = cardGroup[j];
+        
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        
+        const minDist = ((a.size || 200) + (b.size || 200)) / 2 + padding;
+        
+        if (dist < minDist) {
+          hadCollision = true;
+          const overlap = (minDist - dist) / 2;
+          const pushX = (dx / dist) * overlap;
+          const pushY = (dy / dist) * overlap;
+          
+          // More connected cards are more anchored
+          const aWeight = (a.totalConnections || 0) + 1;
+          const bWeight = (b.totalConnections || 0) + 1;
+          const totalWeight = aWeight + bWeight;
+          
+          a.x -= pushX * (bWeight / totalWeight);
+          a.y -= pushY * (bWeight / totalWeight);
+          b.x += pushX * (aWeight / totalWeight);
+          b.y += pushY * (aWeight / totalWeight);
+        }
+      }
+    }
+    
+    if (!hadCollision) break;
+  }
+  
+  // Update base positions
+  cardGroup.forEach(b => {
+    b.baseX = b.x;
+    b.baseY = b.y;
+  });
+}
+
+// Keep all cards within visible bounds
+function ensureAllVisible(width, height) {
+  const margin = 120;
+  
+  bubbles.forEach(b => {
+    const halfSize = (b.size || 200) / 2;
+    b.x = Math.max(margin, Math.min(width - margin - halfSize, b.x));
+    b.y = Math.max(margin, Math.min(height - margin - halfSize, b.y));
+    b.baseX = b.x;
+    b.baseY = b.y;
+  });
+}
+
 function shuffleBubbles() {
-  // Rebuild with fresh Fibonacci spiral
-  layoutFibonacciSpiral();
-  renderBubbles();
-  closeDiscoverInfo();
-  showToast('🎲 Reshuffled!', 'default');
+  buildBubbleData().then(() => {
+    layoutCelestialSystem();
+    renderBubbles();
+    closeDiscoverInfo();
+    showToast('🎲 Reshuffled!', 'default');
+  });
 }
 
 function filterDiscoverByTag() {
@@ -4516,9 +5911,16 @@ async function addLink() {
     screenshotResult = await generateScreenshot(url);
   }
   
+    // Sanitize the URL
+  const sanitizedUrl = sanitizeURL(url);
+  if (!sanitizedUrl) {
+    showToast('Invalid URL', 'error');
+    return;
+  }
+
   const newCard = {
     id: Date.now(),
-    url: url,
+    url: sanitizedUrl,
     screenshot: screenshotResult.url,
     screenshotReal: screenshotResult.isReal,
     title: metadata.title || new URL(url).hostname,
@@ -4553,68 +5955,59 @@ function openEditModal(id) {
   currentCardId = id;
   const card = cards.find(c => c.id === id);
   if (!card) return;
+  
   const isGuideCard = card.isGuide || (card.url?.startsWith('thought://') && card.url?.includes('-guide'));
   document.getElementById('editModal').classList.add('active');
   
   // Image
   const detailImage = document.getElementById('detailImage');
-  const uploadPrompt = document.getElementById('uploadPrompt');
-  const removeBtn = document.getElementById('removeImageBtn');
-  
   let mainImage = card.screenshot;
   if (!card.screenshotReal && !card.customScreenshot && card.photos?.length) {
     mainImage = card.photos[0];
   }
-  
   if (mainImage) {
     detailImage.src = mainImage;
     detailImage.style.display = 'block';
-    uploadPrompt.style.display = 'none';
-    removeBtn.style.display = card.customScreenshot ? 'inline-flex' : 'none';
   } else {
-    detailImage.style.display = 'none';
-    uploadPrompt.style.display = 'flex';
-    removeBtn.style.display = 'none';
+    detailImage.src = generatePlaceholderThumbnail(card);
+    detailImage.style.display = 'block';
   }
   
+  // Title
+  const titleInput = document.getElementById('editTitle');
+  titleInput.value = card.title;
+  titleInput.disabled = isGuideCard;
   
-  // Basic fields
-  document.getElementById('editTitle').value = card.title;
-  // Basic fields
-  document.getElementById('editTitle').value = card.title;
-
-  // URL Link - ADD THIS LINE
+  // URL
   const urlLink = document.getElementById('editUrlLink');
-  if (urlLink) {
-    urlLink.href = card.url;
-    urlLink.textContent = card.url;
-  }
-  document.getElementById('editTitle').disabled = isGuideCard;
-  document.getElementById('editTitle').style.opacity = isGuideCard ? '0.6' : '1';
+  const urlText = document.getElementById('editUrlText');
+  urlLink.href = card.url;
+  urlText.textContent = card.url;
   
-  document.getElementById('editLocation').disabled = isGuideCard;
-  document.getElementById('editLocation').style.opacity = isGuideCard ? '0.6' : '1';
-  
+  // Notes
+  document.getElementById('editNotes').value = card.notes || '';
   document.getElementById('editNotes').disabled = isGuideCard;
-  document.getElementById('editNotes').style.opacity = isGuideCard ? '0.6' : '1';
   
-  // Hide delete button and image change for guide cards
-  const deleteBtn = document.querySelector('.edit-modal-footer .btn-danger');
-  if (deleteBtn) deleteBtn.style.display = isGuideCard ? 'none' : 'block';
-  
-  const imageActions = document.querySelector('.edit-image-actions');
-  if (imageActions) imageActions.style.display = isGuideCard ? 'none' : 'flex';
-  
-  const imageContainer = document.querySelector('.edit-image-container');
-  if (imageContainer) imageContainer.style.pointerEvents = isGuideCard ? 'none' : 'auto';
-  
-  // Info footer
-  document.getElementById('editInfo').innerHTML = `Created: ${new Date(card.createdAt).toLocaleDateString()} · Edited: ${new Date(card.lastEdited).toLocaleDateString()} by ${card.editedBy}`;
+  // Location
+  document.getElementById('editLocation').value = card.location || '';
+  document.getElementById('editLocation').disabled = isGuideCard;
   
   // Privacy
   document.getElementById('editPrivate').checked = card.isPrivate || false;
   
-  // Update vote display, tags, photos, comments
+  // Star button
+  const starBtn = document.getElementById('editStarBtn');
+  starBtn.textContent = card.starred ? '⭐' : '☆';
+  starBtn.title = card.starred ? 'Unstar' : 'Star';
+  
+  // Footer meta
+  document.getElementById('editFooterMeta').textContent = `Created: ${new Date(card.createdAt).toLocaleDateString()} · Edited by ${card.editedBy || 'You'}`;
+  
+  // Hide delete for guide cards
+  const deleteBtn = document.querySelector('.edit-footer-right .btn-danger');
+  if (deleteBtn) deleteBtn.style.display = isGuideCard ? 'none' : 'flex';
+  
+  // Update votes, tags, photos, comments
   updateVoteDisplay(id);
   renderEditTags();
   renderEditPhotos();
@@ -4705,8 +6098,18 @@ function removeTag(tag) {
 
 // New Edit Modal Section Toggle
 function toggleEditSection(section) {
-  const header = document.querySelector(`#edit${section.charAt(0).toUpperCase() + section.slice(1)}Content`).previousElementSibling;
-  const content = document.getElementById(`edit${section.charAt(0).toUpperCase() + section.slice(1)}Content`);
+  const sectionMap = {
+    'notes': 'editNotesSection',
+    'photos': 'editPhotosSection',
+    'location': 'editLocationSection'
+  };
+  
+  const contentId = sectionMap[section];
+  if (!contentId) return;
+  
+  const content = document.getElementById(contentId);
+  const header = content.previousElementSibling;
+  
   header.classList.toggle('collapsed');
   content.classList.toggle('collapsed');
 }
@@ -4720,8 +6123,8 @@ function renderEditTags() {
   const isGuideCard = card.isGuide || (card.url?.startsWith('thought://') && card.url?.includes('-guide'));
   
   container.innerHTML = card.tags.map(tag => `
-    <span class="tag" ${!isGuideCard ? `onclick="removeTag('${tag}')" title="Click to remove" style="cursor:pointer"` : ''}>
-      ${tag}${!isGuideCard ? ' ×' : ''}
+    <span class="tag" ${!isGuideCard ? `onclick="removeTag('${tag}')" title="Click to remove"` : ''}>
+      ${tag}
     </span>
   `).join('');
   
@@ -4748,7 +6151,7 @@ function renderEditPhotos() {
     html = card.photos.map((photo, i) => `
       <div class="edit-photo-item">
         <img src="${photo}" alt="Photo ${i+1}">
-        <button class="delete-btn" onclick="deletePhoto(${i})">×</button>
+        <button class="edit-photo-delete" onclick="deletePhoto(${i})">×</button>
       </div>
     `).join('');
   }
@@ -4756,34 +6159,47 @@ function renderEditPhotos() {
   grid.innerHTML = html;
 }
 
+
 // Render comments in new format
 function renderEditComments() {
   const card = cards.find(c => c.id === currentCardId);
-  const container = document.getElementById('editCommentsContainer');
-  const countEl = document.getElementById('editCommentCount');
+  const list = document.getElementById('editCommentsList');
+  const countEl = document.getElementById('editCommentsCount');
   
-  if (!card || !container) return;
+  if (!card || !list) return;
   
   const commentCount = card.comments?.length || 0;
-  countEl.textContent = commentCount > 0 ? `(${commentCount})` : '';
+  countEl.textContent = commentCount;
   
   if (!commentCount) {
-    container.innerHTML = '<p style="color:var(--text-3);font-size:0.75rem;text-align:center;padding:0.5rem;">No comments yet</p>';
+    list.innerHTML = `
+      <div class="edit-comments-empty">
+        <div class="edit-comments-empty-icon">💬</div>
+        <p>No comments yet</p>
+        <p style="font-size: 0.75rem; margin-top: 0.25rem; opacity: 0.7;">Be the first to start the conversation!</p>
+      </div>
+    `;
     return;
   }
   
-  container.innerHTML = card.comments.map(c => `
-    <div class="edit-comment">
-      <div class="edit-comment-header">
-        <span class="edit-comment-author">${sanitizeHTML(c.author)}</span>
-        <span>
-          <span class="edit-comment-time">${getRelativeTime(c.timestamp)}</span>
-          <button class="edit-comment-delete" onclick="deleteComment(${c.id})">×</button>
-        </span>
+  list.innerHTML = card.comments.map(c => {
+    const initial = (c.author || 'A').charAt(0).toUpperCase();
+    return `
+      <div class="edit-comment">
+        <div class="edit-comment-header">
+          <div class="edit-comment-author">
+            <div class="edit-comment-avatar">${initial}</div>
+            <span class="edit-comment-name">${sanitizeHTML(c.author)}</span>
+          </div>
+          <div class="edit-comment-meta">
+            <span class="edit-comment-time">${getRelativeTime(c.timestamp)}</span>
+            <button class="edit-comment-delete" onclick="deleteComment(${c.id})" title="Delete">×</button>
+          </div>
+        </div>
+        <div class="edit-comment-text">${sanitizeHTML(c.text)}</div>
       </div>
-      <div class="edit-comment-text">${sanitizeHTML(c.text)}</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 // Add comment from input field
@@ -5045,15 +6461,27 @@ function vote(cardId, value) {
 function updateVoteDisplay(cardId) {
   const c = cards.find(x => x.id === cardId);
   if (!c) return;
+  
   const score = document.getElementById('voteScore');
-  const up = document.getElementById('upvoteBtn'), down = document.getElementById('downvoteBtn');
+  const up = document.getElementById('upvoteBtn');
+  const down = document.getElementById('downvoteBtn');
+  
   if (score) {
     score.textContent = c.votes || 0;
-    score.className = 'vote-score' + (c.votes > 0 ? ' positive' : c.votes < 0 ? ' negative' : '');
+    score.className = 'edit-vote-score';
+    if (c.votes > 0) score.classList.add('positive');
+    else if (c.votes < 0) score.classList.add('negative');
   }
+  
   const uv = userVotes[cardId] || 0;
-  if (up) up.className = 'vote-btn' + (uv === 1 ? ' upvoted' : '');
-  if (down) down.className = 'vote-btn' + (uv === -1 ? ' downvoted' : '');
+  if (up) {
+    up.className = 'edit-vote-btn';
+    if (uv === 1) up.classList.add('upvoted');
+  }
+  if (down) {
+    down.className = 'edit-vote-btn';
+    if (uv === -1) down.classList.add('downvoted');
+  }
 }
 
 // ============== STARS & FILTERS ==============
@@ -5325,17 +6753,43 @@ function checkForSharedCard() {
   const importData = params.get('import');
   if (importData) {
     try {
+      // Limit import data size to prevent DoS
+      if (importData.length > 500000) {
+        showToast('Import data too large', 'error');
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
+      
       const data = JSON.parse(decodeURIComponent(atob(importData)));
-      if (data.cards?.length && confirm(`Import ${data.cards.length} links from ${data.sharedBy || 'someone'}?`)) {
+      
+      // Validate structure
+      if (!data.cards || !Array.isArray(data.cards)) {
+        throw new Error('Invalid import format');
+      }
+      
+      // Limit number of cards
+      const maxImport = 100;
+      const cardsToImport = data.cards.slice(0, maxImport);
+      
+      if (confirm(`Import ${cardsToImport.length} links from ${sanitizeHTML(data.sharedBy) || 'someone'}?`)) {
         const existing = new Set(cards.map(c => c.url));
-        const newCards = data.cards.filter(c => !existing.has(c.url));
+        
+        // Sanitize each imported card
+        const newCards = cardsToImport
+          .map(c => sanitizeCardData(c))
+          .filter(c => c.url && !existing.has(c.url));
+        
         cards = [...cards, ...newCards];
         saveCards();
         renderGrid();
         showToast(`Imported ${newCards.length} links`, 'success');
-        window.history.replaceState({}, '', window.location.pathname);
       }
-    } catch(e) { console.log('Invalid share link'); }
+      
+      window.history.replaceState({}, '', window.location.pathname);
+    } catch(e) { 
+      console.warn('Invalid share link:', e.message);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }
 }
 
@@ -5343,21 +6797,57 @@ function checkForSharedCollection() {
   const hash = window.location.hash;
   if (hash.startsWith('#collection=')) {
     try {
-      const data = JSON.parse(decodeURIComponent(atob(hash.substring(12))));
-      if (data.cards?.length && confirm(`Import collection "${data.collection?.name}" with ${data.cards.length} links?`)) {
+      const encoded = hash.substring(12);
+      
+      // Limit size
+      if (encoded.length > 500000) {
+        showToast('Collection data too large', 'error');
+        window.location.hash = '';
+        return;
+      }
+      
+      const data = JSON.parse(decodeURIComponent(atob(encoded)));
+      
+      if (!data.cards || !Array.isArray(data.cards)) {
+        throw new Error('Invalid collection format');
+      }
+      
+      const maxImport = 100;
+      const cardsToImport = data.cards.slice(0, maxImport);
+      const collectionName = sanitizeHTML(String(data.collection?.name || 'Imported').substring(0, 100));
+      
+      if (confirm(`Import collection "${collectionName}" with ${cardsToImport.length} links?`)) {
         const existing = new Set(cards.map(c => c.url));
-        const newCards = data.cards.filter(c => !existing.has(c.url));
+        
+        const newCards = cardsToImport
+          .map(c => sanitizeCardData(c))
+          .filter(c => c.url && !existing.has(c.url));
+        
         cards = [...cards, ...newCards];
+        
         if (data.collection) {
-          collections.push({ ...data.collection, id: 'col_' + Date.now(), cardIds: newCards.map(c => c.id), createdAt: new Date().toISOString() });
+          collections.push({
+            id: 'col_' + Date.now(),
+            name: collectionName,
+            emoji: sanitizeHTML(String(data.collection.emoji || '📁').substring(0, 4)),
+            color: /^#[0-9a-fA-F]{6}$/.test(data.collection.color) ? data.collection.color : '#6366f1',
+            cardIds: newCards.map(c => c.id),
+            createdAt: new Date().toISOString(),
+            isPrivate: false
+          });
           saveCollections();
         }
+        
         saveCards();
         renderGrid();
         showToast(`Imported ${newCards.length} links`, 'success');
-        window.location.hash = '';
       }
-    } catch(e) { console.log('Invalid collection link'); }
+      
+      window.location.hash = '';
+    } catch(e) {
+      console.warn('Invalid collection link:', e.message);
+      window.location.hash = '';
+    }
   }
 }
 
@@ -5565,8 +7055,11 @@ function openSettings() {
 function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
 
 function saveSettings() {
-  const n = document.getElementById('usernameInput').value.trim();
-  if (n) { username = n; localStorage.setItem('linkgrid-username', username); }
+  const rawName = document.getElementById('usernameInput').value.trim();
+  if (rawName) { 
+    username = sanitizeUsername(rawName);
+    localStorage.setItem('linkgrid-username', username);
+  }
   closeSettings();
   showToast('Saved!', 'success');
 }
