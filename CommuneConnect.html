@@ -2702,6 +2702,593 @@
     .bubble-card.entering-delay-8 { animation-delay: 0.4s; }
     .bubble-card.entering-delay-9 { animation-delay: 0.45s; }
     .bubble-card.entering-delay-10 { animation-delay: 0.5s; }
+    /* ========== MOBILE RESPONSIVE STYLES ========== */
+    /* These styles ONLY apply on mobile - desktop remains unchanged */
+    
+    @media (max-width: 768px) {
+      /* Safe areas for notched devices */
+      body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+      
+      /* ===== HEADER MOBILE ===== */
+      .header-main {
+        padding: 0.75rem 1rem;
+        gap: 0.5rem;
+      }
+      
+      .logo h1 {
+        font-size: 1.1rem;
+      }
+      
+      .logo-sub {
+        display: none; /* Hide stats on mobile header */
+      }
+      
+      .header-actions {
+        gap: 0.35rem;
+      }
+      
+      .header-actions .btn-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+      }
+      
+      /* Hide less essential header buttons on small screens */
+      .header-actions .btn-icon[title="Community"] {
+        display: none;
+      }
+      
+      .btn-add {
+        width: 44px;
+        height: 44px;
+        font-size: 1.5rem;
+        border-radius: 12px;
+      }
+      
+      .btn-add::after {
+        display: none; /* Hide tooltip on mobile */
+      }
+      
+      .add-btn-pulse {
+        inset: -2px;
+        border-radius: 14px;
+      }
+      
+      /* Header expand section */
+      .header-expand-inner {
+        padding: 0.75rem 0;
+        gap: 0.75rem;
+      }
+      
+      .filter-row {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      
+      .sort-tabs {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .action-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+      }
+      
+      .action-bar .btn {
+        min-width: unset;
+      }
+      
+      /* ===== GRID MOBILE ===== */
+      .grid {
+        padding: 1rem;
+        gap: 1rem;
+      }
+      
+      .card-footer .btn {
+        padding: 0.6rem;
+        font-size: 0.75rem;
+      }
+      
+      /* ===== MODALS MOBILE ===== */
+      .modal {
+        padding: 0.5rem;
+        align-items: flex-end; /* Slide up from bottom */
+      }
+      
+      .modal-content {
+        max-height: 95vh;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        margin-bottom: 0;
+      }
+      
+      .modal-header {
+        padding: 1rem;
+        position: sticky;
+        top: 0;
+        background: var(--bg-secondary);
+        z-index: 10;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      
+      .modal-title {
+        font-size: 1.1rem;
+      }
+      
+      /* Inputs - prevent iOS zoom */
+      .form-input,
+      .form-textarea,
+      .form-select,
+      .search-input,
+      .discover-search-input,
+      .edit-title-input,
+      .edit-tag-input,
+      .edit-comment-input,
+      input[type="text"],
+      input[type="email"],
+      input[type="url"],
+      textarea {
+        font-size: 16px !important; /* Prevents iOS auto-zoom */
+      }
+      
+      /* ===== DISCOVER VIEW MOBILE ===== */
+      .discover-view {
+        flex-direction: column;
+      }
+      
+      .discover-header {
+        padding: 0.75rem 1rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      
+      .discover-header > div:first-child {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      
+      .discover-header > div:first-child > div:first-child {
+        flex-shrink: 0;
+      }
+      
+      .discover-header > div:first-child h2 {
+        font-size: 1rem;
+      }
+      
+      .discover-header > div:first-child span {
+        display: none; /* Hide subtitle */
+      }
+      
+      .discover-search-box {
+        flex: 1;
+        max-width: none;
+        min-width: 120px;
+      }
+      
+      .discover-search-input {
+        padding: 0.5rem 0.75rem 0.5rem 2rem;
+        font-size: 16px !important;
+      }
+      
+      .discover-search-icon {
+        left: 0.6rem;
+        font-size: 0.75rem;
+      }
+      
+      /* Header right side controls */
+      .discover-header > div:last-child {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .discover-header .btn-secondary[onclick="closeDiscover()"] {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.6rem;
+      }
+      
+      .discover-header .filter-select {
+        flex: 1;
+        max-width: 120px;
+        font-size: 0.75rem;
+        padding: 0.4rem 0.5rem;
+      }
+      
+      .discover-add-btn {
+        padding: 0.4rem 0.6rem !important;
+        font-size: 0.75rem !important;
+        border-radius: 8px !important;
+      }
+      
+      .discover-add-btn .discover-add-text {
+        display: none; /* Icon only on mobile */
+      }
+      
+      .discover-header .btn-icon {
+        width: 36px;
+        height: 36px;
+      }
+      
+      /* ===== BUBBLE CARDS MOBILE ===== */
+      .bubble-card {
+        width: 180px !important; /* Smaller cards on mobile */
+      }
+      
+      .bubble-card.center-card,
+      .bubble-card.celestial-star {
+        width: 200px !important;
+      }
+      
+      .bubble-card-image {
+        height: 90px;
+      }
+      
+      .bubble-card.celestial-moon .bubble-card-image,
+      .bubble-card.celestial-asteroid .bubble-card-image {
+        height: 70px;
+      }
+      
+      .bubble-card-content {
+        padding: 0.5rem;
+        gap: 0.25rem;
+      }
+      
+      .bubble-card-title {
+        font-size: 0.75rem;
+        -webkit-line-clamp: 2;
+      }
+      
+      .bubble-card-url {
+        font-size: 0.6rem;
+      }
+      
+      .bubble-card-tags {
+        display: none; /* Hide tags to save space */
+      }
+      
+      .bubble-card-author {
+        font-size: 0.6rem;
+      }
+      
+      .bubble-card-footer {
+        padding: 0.35rem 0.5rem;
+      }
+      
+      .bubble-card-footer button {
+        padding: 0.35rem;
+        font-size: 0.7rem;
+        min-height: 32px; /* Better touch target */
+      }
+      
+      .bubble-badge {
+        font-size: 0.55rem;
+        padding: 0.15rem 0.35rem;
+      }
+      
+      .bubble-star-btn {
+        padding: 0.4rem;
+        font-size: 0.75rem;
+        min-width: 32px;
+        min-height: 32px;
+      }
+      
+      /* ===== DISCOVER INFO PANEL - BOTTOM SHEET ON MOBILE ===== */
+      .discover-info {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-width: 100%;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        padding: 1rem;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+        max-height: 50vh;
+        overflow-y: auto;
+        animation: slideUpMobile 0.3s ease;
+      }
+      
+      @keyframes slideUpMobile {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      
+      .discover-info-header {
+        gap: 0.5rem;
+      }
+      
+      .discover-info-title {
+        font-size: 1rem;
+      }
+      
+      .discover-info-notes {
+        max-height: 60px;
+        font-size: 0.8rem;
+      }
+      
+      .discover-info-actions {
+        flex-direction: row;
+      }
+      
+      .discover-info-actions .btn {
+        flex: 1;
+        padding: 0.75rem;
+        font-size: 0.85rem;
+      }
+      
+      /* ===== DISCOVER CONTROLS MOBILE ===== */
+      .discover-controls {
+        bottom: auto;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 0.5rem;
+        gap: 0.35rem;
+      }
+      
+      .discover-controls .btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+        border-radius: 8px;
+      }
+      
+      /* ===== DISCOVER FAB MOBILE ===== */
+      .discover-fab {
+        bottom: calc(1rem + env(safe-area-inset-bottom));
+        right: 1rem;
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        font-size: 1.25rem;
+      }
+      
+      /* ===== DISCOVER STATS MOBILE ===== */
+      .discover-stats {
+        top: 0.5rem;
+        right: 3rem; /* Don't overlap close button */
+        gap: 0.5rem;
+      }
+      
+      .discover-stat {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.65rem;
+        border-radius: 6px;
+      }
+      
+      /* ===== EDIT MODAL MOBILE ===== */
+      .modal-content.edit-modal {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      }
+      
+      .edit-top-section {
+        flex-direction: column;
+        padding: 1rem;
+        gap: 1rem;
+      }
+      
+      .edit-image-container {
+        width: 100%;
+        height: 150px;
+      }
+      
+      .edit-votes-row {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      
+      .edit-vote-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 1.2rem;
+      }
+      
+      .edit-vote-score {
+        font-size: 1.5rem;
+        min-width: 50px;
+      }
+      
+      .edit-actions-quick {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-end;
+        gap: 0.35rem;
+      }
+      
+      .edit-actions-quick .btn-icon {
+        width: 40px;
+        height: 40px;
+      }
+      
+      .edit-tags-bar {
+        padding: 0.75rem 1rem;
+        gap: 0.35rem;
+      }
+      
+      .edit-tags-bar .tag {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.75rem;
+      }
+      
+      .edit-main-content {
+        flex-direction: column;
+        max-height: 40vh;
+        overflow-y: auto;
+      }
+      
+      .edit-left-column {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+        max-height: none;
+      }
+      
+      .edit-right-column {
+        min-height: 200px;
+      }
+      
+      .edit-section-content textarea {
+        min-height: 80px;
+      }
+      
+      .edit-comment-input-row {
+        gap: 0.5rem;
+      }
+      
+      .edit-comment-input {
+        font-size: 16px !important;
+        padding: 0.65rem 0.85rem;
+      }
+      
+      .edit-comment-submit {
+        padding: 0.65rem 1rem;
+        font-size: 0.8rem;
+      }
+      
+      .edit-modal-footer {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+      }
+      
+      .edit-footer-left,
+      .edit-footer-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      /* ===== TOUCH-FRIENDLY: ALWAYS SHOW DELETE BUTTONS ===== */
+      .edit-photo-delete,
+      .edit-photo-item .delete-btn,
+      .edit-comment-delete,
+      .gallery-delete {
+        opacity: 1 !important; /* Always visible on mobile */
+      }
+      
+      /* ===== BULK BAR MOBILE ===== */
+      .bulk-bar {
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+      }
+      
+      /* ===== TOAST MOBILE ===== */
+      .toast {
+        bottom: calc(1.5rem + env(safe-area-inset-bottom));
+        left: 1rem;
+        right: 1rem;
+        transform: translateX(0) translateY(100px);
+        max-width: none;
+      }
+      
+      .toast.show {
+        transform: translateX(0) translateY(0);
+      }
+      
+      /* ===== PERFORMANCE: REDUCE ANIMATIONS ===== */
+      .star-field .star {
+        animation-duration: 8s; /* Slower = less CPU */
+      }
+      
+      .ambient-particles .particle {
+        animation-duration: 25s; /* Slower = less CPU */
+      }
+      
+      /* Disable breathing on smaller cards */
+      .bubble-card.breathing {
+        animation: none;
+      }
+      
+      .bubble-card.celestial-planet {
+        animation: none;
+      }
+      
+      /* Keep subtle hover effect but simpler */
+      .bubble-card:active {
+        transform: scale(0.98) !important;
+        transition: transform 0.1s ease;
+      }
+    }
+    
+    /* ===== EXTRA SMALL SCREENS (< 360px) ===== */
+    @media (max-width: 360px) {
+      .header-actions .btn-icon[title="Collections"] {
+        display: none; /* Hide more buttons on tiny screens */
+      }
+      
+      .discover-header .btn-secondary[onclick="closeDiscover()"] {
+        display: none; /* Just use X button */
+      }
+      
+      .bubble-card {
+        width: 160px !important;
+      }
+      
+      .bubble-card-image {
+        height: 75px;
+      }
+      
+      .discover-info-actions {
+        flex-direction: column;
+      }
+    }
+    
+    /* ===== LANDSCAPE MOBILE ===== */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .discover-header {
+        padding: 0.5rem 1rem;
+      }
+      
+      .discover-header > div:first-child {
+        width: auto;
+      }
+      
+      .discover-header > div:last-child {
+        width: auto;
+      }
+      
+      .discover-info {
+        max-height: 70vh;
+        width: 300px;
+        left: auto;
+        right: 0;
+        bottom: 0;
+        border-radius: var(--radius-xl) 0 0 0;
+      }
+      
+      .bubble-card {
+        width: 160px !important;
+      }
+      
+      .bubble-card-image {
+        height: 70px;
+      }
+    }
+    
+    /* ===== PREFERS REDUCED MOTION ===== */
+    @media (prefers-reduced-motion: reduce) {
+      .star-field .star,
+      .ambient-particles .particle,
+      .bubble-card.breathing,
+      .bubble-card.celestial-planet,
+      .bubble-card.celestial-comet,
+      .comet-tail,
+      .star-corona,
+      .add-btn-pulse,
+      body::before,
+      body::after {
+        animation: none !important;
+      }
+      
+      .bubble-card {
+        transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+      }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -3307,6 +3894,7 @@ function sanitizeUsername(name) {
 }
 // ============== DISCOVER BUBBLE VIEW ==============
 let bubbles = [];
+let isMobileDevice = false; // Will be set on init
 let bubbleConnections = [];
 let selectedBubbleId = null;
 let bubbleZoom = 1;
@@ -3568,10 +4156,16 @@ async function buildBubbleData() {
     </div>
   `;
   
-  // Fetch community cards if enabled
+// Fetch community cards - allow even for anonymous users (read-only)
+  // Fetch community cards - allow even for anonymous users (read-only)
   let communityCards = [];
-  if (cloudSyncEnabled) {
-    communityCards = await fetchCommunityCards();
+  if (supabaseClient) {
+    try {
+      communityCards = await fetchCommunityCards();
+      console.log(`📡 Fetched ${communityCards.length} community cards`);
+    } catch (e) {
+      console.error('Failed to fetch community cards:', e);
+    }
   }
   
   // Filter out promoted guide cards
@@ -4090,7 +4684,7 @@ function renderBubbles() {
     const v = b.votes || 0;
     const img = getCardThumbnail(b);
     const isStarred = b.starred;
-    const width = b.size || 200;
+    const width = isMobileDevice ? Math.min(b.size || 180, 200) : (b.size || 200);
     const type = b.celestialType || 'asteroid';
     
     // Visual classes based on celestial type
@@ -5433,23 +6027,44 @@ function handleNewCommentFromCloud(cloudComment) {
 }
 
 // Fetch all public cards for Discover feed
+// Fetch all public cards for Discover feed
 async function fetchCommunityCards() {
-  if (!supabaseClient) return [];
+  if (!supabaseClient) {
+    console.log('❌ No Supabase client available');
+    return [];
+  }
   
   try {
-    const { data, error } = await supabaseClient
+    // Try the view first (has vote totals)
+    let { data, error } = await supabaseClient
       .from('cards_with_votes')
       .select('*')
       .eq('is_private', false)
       .order('created_at', { ascending: false })
-      .limit(200); // Limit for performance
+      .limit(200);
     
-    if (error) throw error;
+    // If view doesn't exist, fall back to base table
+    if (error) {
+      console.warn('cards_with_votes view error, trying cards table:', error.message);
+      
+      ({ data, error } = await supabaseClient
+        .from('cards')
+        .select('*')
+        .eq('is_private', false)
+        .order('created_at', { ascending: false })
+        .limit(200));
+    }
     
+    if (error) {
+      console.error('❌ Fetch community cards error:', error);
+      return [];
+    }
+    
+    console.log(`✅ Fetched ${data?.length || 0} public cards from database`);
     return (data || []).map(cloudCardToLocal);
     
   } catch (error) {
-    console.error('Fetch community cards error:', error);
+    console.error('❌ Fetch community cards exception:', error);
     return [];
   }
 }
@@ -5946,6 +6561,13 @@ async function addLink() {
   closeAddModal();
   showToast('Link added!', 'success');
   
+  // Prompt to sign in if not authenticated
+  if (!currentUser) {
+    setTimeout(() => {
+      showToast('💡 Sign in to share with the community!', 'default');
+    }, 2000);
+  }
+  
   if (!screenshotResult.isReal) {
     setTimeout(() => retryScreenshot(newCard.id), 3000);
   }
@@ -6398,7 +7020,8 @@ function renderGrid() {
           <div class="card-badges">
             <span class="badge">${emoji}</span>
             ${v ? `<span class="badge badge-vote ${v<0?'negative':''}">${v>0?'+':''}${v}</span>` : ''}
-			${card.isPrivate ? `<span class="badge" style="background:rgba(99,102,241,0.9)">🔒</span>` : ''}
+			${card.isPrivate ? `<span class="badge" style="background:rgba(99,102,241,0.9)">🔒</span>` : ''}${card.isPrivate ? `<span class="badge" style="background:rgba(99,102,241,0.9)">🔒</span>` : ''}
+   ${card.cloudSynced ? `<span class="badge" style="background:rgba(6,182,212,0.9)">☁️</span>` : ''}
 		  </div>
         </div>
         <div class="card-content">
@@ -7387,6 +8010,213 @@ function removeLinkScreenshot(e) {
   document.getElementById('linkScreenshotPreview').style.display = 'none';
   document.getElementById('uploadScreenshotPrompt').style.display = 'block';
 }
+// ============== MOBILE DETECTION & ADJUSTMENTS ==============
+isMobileDevice = isMobile; // Store globally for runtime checks
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+// Adjust double-click timing for mobile (more forgiving)
+if (isMobile || isTouchDevice) {
+  // Override the double-click threshold
+  const originalHandleBubbleClick = handleBubbleClick;
+  handleBubbleClick = function(id, event) {
+    event.stopPropagation();
+    const now = Date.now();
+    
+    // Use 500ms threshold on mobile instead of 300ms
+    if (lastClickId === id && now - lastClickTime < 500) {
+      handleBubbleOpen(id, event);
+      lastClickTime = 0;
+      lastClickId = null;
+      return;
+    }
+    
+    lastClickTime = now;
+    lastClickId = id;
+    selectBubble(id);
+  };
+}
+
+// Reduce particle count on mobile for performance
+function createBackgroundEffectsMobile() {
+  const canvas = document.getElementById('discoverCanvas');
+  if (!canvas) return;
+  
+  // Remove existing effects
+  canvas.querySelectorAll('.star-field, .ambient-particles').forEach(el => el.remove());
+  
+  // Reduced star field (50 instead of 100)
+  const starField = document.createElement('div');
+  starField.className = 'star-field';
+  
+  const starCount = isMobile ? 40 : 100;
+  for (let i = 0; i < starCount; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = `${Math.random() * 100}%`;
+    star.style.top = `${Math.random() * 100}%`;
+    star.style.setProperty('--duration', `${3 + Math.random() * 5}s`);
+    star.style.setProperty('--opacity', `${0.3 + Math.random() * 0.5}`);
+    starField.appendChild(star);
+  }
+  
+  canvas.insertBefore(starField, canvas.firstChild);
+  
+  // Reduced ambient particles (8 instead of 20)
+  const particles = document.createElement('div');
+  particles.className = 'ambient-particles';
+  
+  const particleColors = ['#6366f1', '#8b5cf6', '#ec4899', '#06b6d4', '#10b981'];
+  const particleCount = isMobile ? 8 : 20;
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = `${Math.random() * 100}%`;
+    particle.style.top = `${Math.random() * 100}%`;
+    particle.style.width = `${4 + Math.random() * 8}px`;
+    particle.style.height = particle.style.width;
+    particle.style.background = particleColors[Math.floor(Math.random() * particleColors.length)];
+    particle.style.setProperty('--duration', `${15 + Math.random() * 25}s`);
+    particle.style.setProperty('--dx', `${(Math.random() - 0.5) * 80}px`);
+    particle.style.setProperty('--dy', `${(Math.random() - 0.5) * 80}px`);
+    particles.appendChild(particle);
+  }
+  
+  canvas.insertBefore(particles, canvas.firstChild);
+}
+
+// Override createBackgroundEffects on mobile
+if (isMobile) {
+  createBackgroundEffects = createBackgroundEffectsMobile;
+}
+
+// Disable magnetic hover effect on touch devices (it doesn't work well)
+if (isTouchDevice) {
+  handleBubbleHover = function(id, isEntering) {
+    // Simplified: just track state, no magnetic push
+    isAnyCardHovered = isEntering;
+    hoveredBubbleId = isEntering ? id : null;
+  };
+}
+
+// Reduce animation frame rate on mobile
+if (isMobile) {
+  const originalStartAmbientAnimation = startAmbientAnimation;
+  startAmbientAnimation = function() {
+    let time = 0;
+    const fps = 20; // Reduced from 30
+    const frameInterval = 1000 / fps;
+    let lastFrameTime = 0;
+    
+    function animate(currentTime) {
+      ambientFrame = requestAnimationFrame(animate);
+      
+      if (currentTime - lastFrameTime < frameInterval) return;
+      lastFrameTime = currentTime;
+      
+      if (isAnyCardHovered || selectedBubbleId || isDraggingCanvas) return;
+      
+      time += 0.006; // Slower increment
+      
+      // Only animate visible cards (performance optimization)
+      const visibleBubbles = bubbles.filter(bubble => {
+        const card = document.getElementById(`bubble-${bubble.bubbleId}`);
+        if (!card) return false;
+        const rect = card.getBoundingClientRect();
+        return rect.bottom > 0 && rect.top < window.innerHeight &&
+               rect.right > 0 && rect.left < window.innerWidth;
+      });
+      
+      visibleBubbles.forEach(bubble => {
+        const card = document.getElementById(`bubble-${bubble.bubbleId}`);
+        if (!card || card.classList.contains('selected') || card.classList.contains('related')) return;
+        
+        // Simplified animation - just subtle drift, no orbital mechanics
+        const driftX = Math.sin(time + bubble.breathDelay) * 2;
+        const driftY = Math.cos(time * 0.7 + bubble.breathDelay) * 2;
+        
+        const width = bubble.size || 180;
+        card.style.left = `${bubble.baseX + driftX - width / 2}px`;
+        card.style.top = `${bubble.baseY + driftY - (width * 0.7)}px`;
+      });
+    }
+    
+    ambientFrame = requestAnimationFrame(animate);
+  };
+}
+
+// Adjust bubble sizes for mobile
+if (isMobile) {
+  const originalGetCardSize = getCardSize;
+  getCardSize = function(card) {
+    const desktopSize = originalGetCardSize(card);
+    // Scale down by ~25% on mobile
+    return Math.max(140, desktopSize * 0.75);
+  };
+}
+
+// Prevent pull-to-refresh when panning in Discover
+document.addEventListener('touchmove', function(e) {
+  if (document.getElementById('discoverView')?.classList.contains('active')) {
+    if (isDraggingCanvas) {
+      e.preventDefault();
+    }
+  }
+}, { passive: false });
+
+// Handle virtual keyboard on mobile
+if (isMobile) {
+  const inputs = ['newCommentInput', 'editNotes', 'editLocation', 'newTag', 'searchBar', 'discoverSearchBar'];
+  
+  inputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('focus', () => {
+        // Scroll input into view when keyboard appears
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      });
+    }
+  });
+}
+
+// Close info panel when tapping outside on mobile
+if (isTouchDevice) {
+  document.getElementById('discoverCanvas')?.addEventListener('touchstart', (e) => {
+    const infoPanel = document.getElementById('discoverInfo');
+    if (infoPanel?.style.display !== 'none' && 
+        !e.target.closest('.discover-info') && 
+        !e.target.closest('.bubble-card')) {
+      closeDiscoverInfo();
+    }
+  }, { passive: true });
+}
+
+// Recalculate mobile state on resize/orientation change
+window.addEventListener('resize', () => {
+  const wasMobile = isMobile;
+  const nowMobile = window.innerWidth < 768;
+  
+  if (wasMobile !== nowMobile && document.getElementById('discoverView')?.classList.contains('active')) {
+    // Re-render bubbles with appropriate sizes
+    renderBubbles();
+  }
+});
+
+// Orientation change handler
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    if (document.getElementById('discoverView')?.classList.contains('active')) {
+      // Recalculate layout after orientation settles
+      layoutCelestialSystem();
+      renderBubbles();
+    }
+  }, 100);
+});
+
+console.log(`📱 Mobile mode: ${isMobile}, Touch device: ${isTouchDevice}`);
 // ============== INIT ==============
 async function init() {
   await initDB();
