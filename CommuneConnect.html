@@ -8083,13 +8083,12 @@ function removeLinkScreenshot(e) {
   document.getElementById('uploadScreenshotPrompt').style.display = 'block';
 }
 // ============== MOBILE DETECTION & ADJUSTMENTS ==============
-isMobileDevice = isMobile; // Store globally for runtime checks
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+isMobileDevice = isMobile; // Store globally for runtime checks
 
 // Adjust double-click timing for mobile (more forgiving)
 if (isMobile || isTouchDevice) {
-  // Override the double-click threshold
   const originalHandleBubbleClick = handleBubbleClick;
   handleBubbleClick = function(id, event) {
     event.stopPropagation();
@@ -8110,121 +8109,60 @@ if (isMobile || isTouchDevice) {
 }
 
 // Reduce particle count on mobile for performance
-function createBackgroundEffectsMobile() {
-  const canvas = document.getElementById('discoverCanvas');
-  if (!canvas) return;
-  
-  // Remove existing effects
-  canvas.querySelectorAll('.star-field, .ambient-particles').forEach(el => el.remove());
-  
-  // Reduced star field (50 instead of 100)
-  const starField = document.createElement('div');
-  starField.className = 'star-field';
-  
-  const starCount = isMobile ? 40 : 100;
-  for (let i = 0; i < starCount; i++) {
-    const star = document.createElement('div');
-    star.className = 'star';
-    star.style.left = `${Math.random() * 100}%`;
-    star.style.top = `${Math.random() * 100}%`;
-    star.style.setProperty('--duration', `${3 + Math.random() * 5}s`);
-    star.style.setProperty('--opacity', `${0.3 + Math.random() * 0.5}`);
-    starField.appendChild(star);
-  }
-  
-  canvas.insertBefore(starField, canvas.firstChild);
-  
-  // Reduced ambient particles (8 instead of 20)
-  const particles = document.createElement('div');
-  particles.className = 'ambient-particles';
-  
-  const particleColors = ['#6366f1', '#8b5cf6', '#ec4899', '#06b6d4', '#10b981'];
-  const particleCount = isMobile ? 8 : 20;
-  
-  for (let i = 0; i < particleCount; i++) {
-    const particle = document.createElement('div');
-    particle.className = 'particle';
-    particle.style.left = `${Math.random() * 100}%`;
-    particle.style.top = `${Math.random() * 100}%`;
-    particle.style.width = `${4 + Math.random() * 8}px`;
-    particle.style.height = particle.style.width;
-    particle.style.background = particleColors[Math.floor(Math.random() * particleColors.length)];
-    particle.style.setProperty('--duration', `${15 + Math.random() * 25}s`);
-    particle.style.setProperty('--dx', `${(Math.random() - 0.5) * 80}px`);
-    particle.style.setProperty('--dy', `${(Math.random() - 0.5) * 80}px`);
-    particles.appendChild(particle);
-  }
-  
-  canvas.insertBefore(particles, canvas.firstChild);
-}
-
-// Override createBackgroundEffects on mobile
 if (isMobile) {
-  createBackgroundEffects = createBackgroundEffectsMobile;
-}
-
-// Disable magnetic hover effect on touch devices (it doesn't work well)
-if (isTouchDevice) {
-  handleBubbleHover = function(id, isEntering) {
-    // Simplified: just track state, no magnetic push
-    isAnyCardHovered = isEntering;
-    hoveredBubbleId = isEntering ? id : null;
-  };
-}
-
-// Reduce animation frame rate on mobile
-if (isMobile) {
-  const originalStartAmbientAnimation = startAmbientAnimation;
-  startAmbientAnimation = function() {
-    let time = 0;
-    const fps = 20; // Reduced from 30
-    const frameInterval = 1000 / fps;
-    let lastFrameTime = 0;
+  const originalCreateBackgroundEffects = createBackgroundEffects;
+  createBackgroundEffects = function() {
+    const canvas = document.getElementById('discoverCanvas');
+    if (!canvas) return;
     
-    function animate(currentTime) {
-      ambientFrame = requestAnimationFrame(animate);
-      
-      if (currentTime - lastFrameTime < frameInterval) return;
-      lastFrameTime = currentTime;
-      
-      if (isAnyCardHovered || selectedBubbleId || isDraggingCanvas) return;
-      
-      time += 0.006; // Slower increment
-      
-      // Only animate visible cards (performance optimization)
-      const visibleBubbles = bubbles.filter(bubble => {
-        const card = document.getElementById(`bubble-${bubble.bubbleId}`);
-        if (!card) return false;
-        const rect = card.getBoundingClientRect();
-        return rect.bottom > 0 && rect.top < window.innerHeight &&
-               rect.right > 0 && rect.left < window.innerWidth;
-      });
-      
-      visibleBubbles.forEach(bubble => {
-        const card = document.getElementById(`bubble-${bubble.bubbleId}`);
-        if (!card || card.classList.contains('selected') || card.classList.contains('related')) return;
-        
-        // Simplified animation - just subtle drift, no orbital mechanics
-        const driftX = Math.sin(time + bubble.breathDelay) * 2;
-        const driftY = Math.cos(time * 0.7 + bubble.breathDelay) * 2;
-        
-        const width = bubble.size || 180;
-        card.style.left = `${bubble.baseX + driftX - width / 2}px`;
-        card.style.top = `${bubble.baseY + driftY - (width * 0.7)}px`;
-      });
+    // Remove existing effects
+    canvas.querySelectorAll('.star-field, .ambient-particles').forEach(el => el.remove());
+    
+    // Reduced star field (40 instead of 100)
+    const starField = document.createElement('div');
+    starField.className = 'star-field';
+    
+    for (let i = 0; i < 40; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      star.style.setProperty('--duration', `${3 + Math.random() * 5}s`);
+      star.style.setProperty('--opacity', `${0.3 + Math.random() * 0.5}`);
+      starField.appendChild(star);
     }
     
-    ambientFrame = requestAnimationFrame(animate);
+    canvas.insertBefore(starField, canvas.firstChild);
+    
+    // Reduced ambient particles (8 instead of 20)
+    const particles = document.createElement('div');
+    particles.className = 'ambient-particles';
+    
+    const particleColors = ['#6366f1', '#8b5cf6', '#ec4899', '#06b6d4', '#10b981'];
+    
+    for (let i = 0; i < 8; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.top = `${Math.random() * 100}%`;
+      particle.style.width = `${4 + Math.random() * 8}px`;
+      particle.style.height = particle.style.width;
+      particle.style.background = particleColors[Math.floor(Math.random() * particleColors.length)];
+      particle.style.setProperty('--duration', `${15 + Math.random() * 25}s`);
+      particle.style.setProperty('--dx', `${(Math.random() - 0.5) * 80}px`);
+      particle.style.setProperty('--dy', `${(Math.random() - 0.5) * 80}px`);
+      particles.appendChild(particle);
+    }
+    
+    canvas.insertBefore(particles, canvas.firstChild);
   };
 }
 
-// Adjust bubble sizes for mobile
-if (isMobile) {
-  const originalGetCardSize = getCardSize;
-  getCardSize = function(card) {
-    const desktopSize = originalGetCardSize(card);
-    // Scale down by ~25% on mobile
-    return Math.max(140, desktopSize * 0.75);
+// Disable magnetic hover effect on touch devices
+if (isTouchDevice) {
+  handleBubbleHover = function(id, isEntering) {
+    isAnyCardHovered = isEntering;
+    hoveredBubbleId = isEntering ? id : null;
   };
 }
 
@@ -8237,58 +8175,17 @@ document.addEventListener('touchmove', function(e) {
   }
 }, { passive: false });
 
-// Handle virtual keyboard on mobile
-if (isMobile) {
-  const inputs = ['newCommentInput', 'editNotes', 'editLocation', 'newTag', 'searchBar', 'discoverSearchBar'];
-  
-  inputs.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('focus', () => {
-        // Scroll input into view when keyboard appears
-        setTimeout(() => {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 300);
-      });
-    }
-  });
-}
-
-// Close info panel when tapping outside on mobile
-if (isTouchDevice) {
-  document.getElementById('discoverCanvas')?.addEventListener('touchstart', (e) => {
-    const infoPanel = document.getElementById('discoverInfo');
-    if (infoPanel?.style.display !== 'none' && 
-        !e.target.closest('.discover-info') && 
-        !e.target.closest('.bubble-card')) {
-      closeDiscoverInfo();
-    }
-  }, { passive: true });
-}
-
-// Recalculate mobile state on resize/orientation change
-window.addEventListener('resize', () => {
-  const wasMobile = isMobile;
-  const nowMobile = window.innerWidth < 768;
-  
-  if (wasMobile !== nowMobile && document.getElementById('discoverView')?.classList.contains('active')) {
-    // Re-render bubbles with appropriate sizes
-    renderBubbles();
-  }
-});
-
 // Orientation change handler
-window.addEventListener('orientationchange', () => {
-  setTimeout(() => {
+window.addEventListener('orientationchange', function() {
+  setTimeout(function() {
     if (document.getElementById('discoverView')?.classList.contains('active')) {
-      // Recalculate layout after orientation settles
       layoutCelestialSystem();
       renderBubbles();
     }
   }, 100);
 });
 
-console.log(`📱 Mobile mode: ${isMobile}, Touch device: ${isTouchDevice}`);
+console.log('📱 Mobile mode:', isMobile, '| Touch device:', isTouchDevice);
 // ============== INIT ==============
 async function init() {
   await initDB();
