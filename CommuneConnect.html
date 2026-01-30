@@ -2916,6 +2916,244 @@
         height: 36px;
       }
       
+      /* ===== DISCOVER HEADER - SIMPLIFIED FOR MOBILE ===== */
+      .discover-header {
+        padding: 0.5rem 0.75rem;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      
+      /* First row: Title + Search */
+      .discover-header > div:first-child {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      
+      .discover-header > div:first-child > div:first-child {
+        flex-shrink: 0;
+      }
+      
+      .discover-header > div:first-child h2 {
+        font-size: 0.9rem;
+        margin: 0;
+      }
+      
+      .discover-header > div:first-child > span {
+        display: none !important; /* Hide "Community feed" subtitle */
+      }
+      
+      .discover-search-box {
+        flex: 1;
+        max-width: none;
+      }
+      
+      .discover-search-input {
+        padding: 0.4rem 0.6rem 0.4rem 1.8rem;
+        font-size: 16px !important;
+        height: 36px;
+      }
+      
+      .discover-search-icon {
+        left: 0.5rem;
+        font-size: 0.7rem;
+      }
+      
+      /* Second row: Filters + Actions - more compact */
+      .discover-header > div:last-child {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      
+      .discover-header .btn-secondary[onclick="closeDiscover()"] {
+        font-size: 0.65rem;
+        padding: 0.35rem 0.5rem;
+        white-space: nowrap;
+      }
+      
+      .discover-header .filter-select {
+        flex: 1;
+        max-width: 100px;
+        font-size: 0.7rem;
+        padding: 0.35rem 0.4rem;
+        height: 32px;
+      }
+      
+      /* Hide the header + button on mobile (use FAB instead) */
+      .discover-header .discover-add-btn {
+        display: none !important;
+      }
+      
+      .discover-header .btn-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+      }
+      
+      /* ===== HIDE STATS ON MOBILE ===== */
+      .discover-stats {
+        display: none !important;
+      }
+      
+      /* ===== SMALLER BUBBLE CARDS ===== */
+      .bubble-card {
+        width: 140px !important;
+        min-width: 140px !important;
+      }
+      
+      .bubble-card.center-card,
+      .bubble-card.celestial-star {
+        width: 160px !important;
+        min-width: 160px !important;
+      }
+      
+      .bubble-card.celestial-moon,
+      .bubble-card.celestial-asteroid {
+        width: 120px !important;
+        min-width: 120px !important;
+      }
+      
+      .bubble-card-image {
+        height: 70px;
+      }
+      
+      .bubble-card.celestial-star .bubble-card-image {
+        height: 80px;
+      }
+      
+      .bubble-card.celestial-moon .bubble-card-image,
+      .bubble-card.celestial-asteroid .bubble-card-image {
+        height: 55px;
+      }
+      
+      .bubble-card-content {
+        padding: 0.4rem;
+        gap: 0.2rem;
+      }
+      
+      .bubble-card-title {
+        font-size: 0.7rem;
+        -webkit-line-clamp: 2;
+        line-height: 1.2;
+      }
+      
+      .bubble-card-url {
+        font-size: 0.55rem;
+        display: none; /* Hide URL to save space */
+      }
+      
+      .bubble-card-tags {
+        display: none !important;
+      }
+      
+      .bubble-card-author {
+        font-size: 0.55rem;
+      }
+      
+      .bubble-card-footer {
+        padding: 0.25rem 0.4rem;
+      }
+      
+      .bubble-card-footer button {
+        padding: 0.25rem;
+        font-size: 0.65rem;
+        min-height: 28px;
+      }
+      
+      .bubble-badge {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.25rem;
+      }
+      
+      .bubble-star-btn {
+        width: 28px;
+        height: 28px;
+        padding: 0.25rem;
+        font-size: 0.7rem;
+      }
+      
+      /* ===== CONTROLS - SMALLER & REPOSITIONED ===== */
+      .discover-controls {
+        bottom: auto;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 0.35rem;
+        gap: 0.25rem;
+      }
+      
+      .discover-controls .btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
+        border-radius: 6px;
+        padding: 0;
+      }
+      
+      /* ===== FAB ===== */
+      .discover-fab {
+        width: 44px;
+        height: 44px;
+        bottom: calc(0.75rem + env(safe-area-inset-bottom));
+        right: 0.75rem;
+        font-size: 1.2rem;
+        border-radius: 10px;
+      }
+      
+      /* ===== INFO PANEL - BOTTOM SHEET ===== */
+      .discover-info {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+        padding: 0.75rem;
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+        max-height: 45vh;
+        animation: slideUpMobile 0.25s ease-out;
+      }
+      
+      .discover-info-header {
+        margin-bottom: 0.5rem;
+      }
+      
+      .discover-info-title {
+        font-size: 0.95rem;
+      }
+      
+      .discover-info-url {
+        font-size: 0.65rem;
+        margin-bottom: 0.5rem;
+      }
+      
+      .discover-info-tags {
+        margin-bottom: 0.5rem;
+      }
+      
+      .discover-info-tags .tag {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.35rem;
+      }
+      
+      .discover-info-notes {
+        font-size: 0.75rem;
+        max-height: 50px;
+        margin-bottom: 0.75rem;
+      }
+      
+      .discover-info-actions {
+        gap: 0.35rem;
+      }
+      
+      .discover-info-actions .btn {
+        padding: 0.6rem;
+        font-size: 0.8rem;
+      }
+      
       /* ===== BUBBLE CARDS MOBILE ===== */
       .bubble-card {
         width: 180px !important; /* Smaller cards on mobile */
@@ -4051,16 +4289,35 @@ function getCardSize(card) {
   const maxMass = CELESTIAL_CONFIG.thresholds.star * 2;
   const normalizedMass = Math.min(mass / maxMass, 1);
   
-  return sizes.min + (sizes.max - sizes.min) * normalizedMass;
+  let size = sizes.min + (sizes.max - sizes.min) * normalizedMass;
+  
+  // Scale down for mobile
+  if (isMobileDevice || window.innerWidth < 768) {
+    size = Math.max(120, size * 0.6); // 60% size, minimum 120px
+  }
+  
+  return size;
 }
 
 function openDiscover() {
   document.getElementById('discoverView').classList.add('active');
-  bubbleZoom = 1;
-  bubblePanX = 0;
-  bubblePanY = 0;
+  
+  // Reset view state
   isAnyCardHovered = false;
   hoveredBubbleId = null;
+  
+  // Set initial zoom based on screen size
+  const isMobileView = window.innerWidth < 768;
+  if (isMobileView) {
+    bubbleZoom = 0.6;  // Start zoomed out on mobile
+    bubblePanX = 0;
+    bubblePanY = 0;
+  } else {
+    bubbleZoom = 1;
+    bubblePanX = 0;
+    bubblePanY = 0;
+  }
+  
   initBubbleView();
 }
 
@@ -4354,8 +4611,7 @@ function identifyStarSystems() {
 }
 
 // ========== CELESTIAL LAYOUT SYSTEM ==========
-// Multi-cluster: Each tag community gets its own mini-spiral
-// Performant: Union-Find clustering + localized collision detection
+// Multi-cluster layout with mobile optimization
 
 function layoutCelestialSystem() {
   const canvas = document.getElementById('discoverCanvas');
@@ -4367,7 +4623,25 @@ function layoutCelestialSystem() {
   
   if (bubbles.length === 0) return;
   
-  // === STEP 1: Build connection map (O(n²) but necessary) ===
+  // ===== MOBILE VS DESKTOP CONFIG =====
+  const isMobileLayout = window.innerWidth < 768;
+  const config = isMobileLayout ? {
+    baseSpacing: 30,
+    spiralMultiplier: 45,
+    collisionPadding: 12,
+    maxIterations: 60,
+    margin: 60,
+    clusterGap: 60
+  } : {
+    baseSpacing: 70,
+    spiralMultiplier: 105,
+    collisionPadding: 25,
+    maxIterations: 40,
+    margin: 120,
+    clusterGap: 150
+  };
+  
+  // ===== STEP 1: Build connection map =====
   bubbles.forEach(bubble => {
     bubble.connections = {};
     bubble.totalConnections = 0;
@@ -4388,163 +4662,136 @@ function layoutCelestialSystem() {
     }
   }
   
-  // === STEP 2: Union-Find clustering (nearly O(n)) ===
-  const parent = {};
-  const rank = {};
+  // ===== STEP 2: Split into connected vs orphans =====
+  const connectedCards = bubbles.filter(b => b.totalConnections > 0);
+  const orphanCards = bubbles.filter(b => b.totalConnections === 0);
   
-  bubbles.forEach(b => {
-    parent[b.bubbleId] = b.bubbleId;
-    rank[b.bubbleId] = 0;
-  });
+  // ===== STEP 3: Sort connected cards by connectivity =====
+  const placed = [];
+  const unplaced = [...connectedCards];
   
-  function find(x) {
-    if (parent[x] !== x) {
-      parent[x] = find(parent[x]); // Path compression
-    }
-    return parent[x];
-  }
-  
-  function union(x, y) {
-    const px = find(x), py = find(y);
-    if (px === py) return;
-    // Union by rank
-    if (rank[px] < rank[py]) parent[px] = py;
-    else if (rank[px] > rank[py]) parent[py] = px;
-    else { parent[py] = px; rank[px]++; }
-  }
-  
-  // Union cards that share tags
-  bubbles.forEach(bubble => {
-    Object.keys(bubble.connections).forEach(otherId => {
-      union(bubble.bubbleId, otherId);
-    });
-  });
-  
-  // === STEP 3: Group bubbles by cluster ===
-  const clusters = {};
-  bubbles.forEach(bubble => {
-    const root = find(bubble.bubbleId);
-    if (!clusters[root]) clusters[root] = [];
-    clusters[root].push(bubble);
-  });
-  
-  const clusterList = Object.values(clusters);
-  
-  // Sort clusters: largest/most connected first
-  clusterList.sort((a, b) => {
-    const aTotal = a.reduce((sum, c) => sum + c.totalConnections, 0);
-    const bTotal = b.reduce((sum, c) => sum + c.totalConnections, 0);
-    return bTotal - aTotal;
-  });
-  
-  // === STEP 4: Calculate cluster zone positions ===
-  const clusterZones = [];
-  const minZoneRadius = 180; // Minimum space for a cluster
-  const zoneGap = 80; // Gap between clusters
-  
-  if (clusterList.length === 1) {
-    // Single cluster - center it
-    clusterZones.push({ x: centerX, y: centerY, radius: Math.min(width, height) * 0.4 });
-  } else {
-    // Multiple clusters - distribute around canvas
-    const totalCards = bubbles.length;
+  if (unplaced.length > 0) {
+    unplaced.sort((a, b) => b.totalConnections - a.totalConnections);
+    placed.push(unplaced.shift());
     
-    clusterList.forEach((cluster, i) => {
-      // Size zone proportional to cluster size
-      const clusterWeight = cluster.length / totalCards;
-      const zoneRadius = Math.max(minZoneRadius, Math.min(width, height) * 0.25 * Math.sqrt(clusterWeight) + 100);
+    while (unplaced.length > 0) {
+      let bestCard = null;
+      let bestScore = -Infinity;
       
-      if (i === 0 && cluster.length > bubbles.length * 0.4) {
-        // Dominant cluster (>40% of cards) gets center
-        clusterZones.push({ x: centerX, y: centerY, radius: zoneRadius });
-      } else {
-        // Distribute others around the canvas
-        // Use golden angle for even distribution
-        const angle = i * GOLDEN_ANGLE + Math.PI / 4;
-        const distanceFromCenter = Math.min(width, height) * 0.28 + (i * 40);
-        
-        clusterZones.push({
-          x: centerX + Math.cos(angle) * distanceFromCenter,
-          y: centerY + Math.sin(angle) * distanceFromCenter,
-          radius: zoneRadius
+      unplaced.forEach(candidate => {
+        let connectionScore = 0;
+        placed.forEach(placedCard => {
+          connectionScore += candidate.connections[placedCard.bubbleId] || 0;
         });
+        const score = connectionScore * 10 + (candidate.mass || 0) * 0.001;
+        if (score > bestScore) {
+          bestScore = score;
+          bestCard = candidate;
+        }
+      });
+      
+      const idx = unplaced.indexOf(bestCard);
+      if (idx > -1) {
+        unplaced.splice(idx, 1);
+        placed.push(bestCard);
       }
+    }
+  }
+  
+  // ===== STEP 4: Fibonacci spiral for connected cards =====
+  const spiralCenterX = centerX;
+  const spiralCenterY = centerY;
+  
+  placed.forEach((bubble, i) => {
+    // Get card size (already scaled for mobile via getCardSize)
+    const cardSize = bubble.size || 200;
+    
+    if (i === 0) {
+      bubble.x = spiralCenterX;
+      bubble.y = spiralCenterY;
+    } else {
+      const angle = i * GOLDEN_ANGLE;
+      const sizeMultiplier = 1 + (cardSize - 150) / 400;
+      const radius = config.baseSpacing + Math.sqrt(i) * (config.spiralMultiplier * sizeMultiplier);
+      
+      bubble.x = spiralCenterX + Math.cos(angle) * radius;
+      bubble.y = spiralCenterY + Math.sin(angle) * radius;
+    }
+    
+    bubble.baseX = bubble.x;
+    bubble.baseY = bubble.y;
+    bubble.orbitCenterX = spiralCenterX;
+    bubble.orbitCenterY = spiralCenterY;
+    bubble.orbitRadius = Math.sqrt((bubble.x - spiralCenterX) ** 2 + (bubble.y - spiralCenterY) ** 2);
+    bubble.orbitAngle = Math.atan2(bubble.y - spiralCenterY, bubble.x - spiralCenterX);
+    
+    // Animation speed
+    const distanceFactor = Math.max(0.2, 1 - (bubble.orbitRadius / 1000));
+    bubble.orbitSpeed = bubble.celestialType === 'star' ? 0 : 0.00005 * distanceFactor;
+  });
+  
+  // ===== STEP 5: Position orphans in outer ring =====
+  if (orphanCards.length > 0) {
+    let maxClusterRadius = 0;
+    placed.forEach(b => {
+      const dist = Math.sqrt((b.x - spiralCenterX) ** 2 + (b.y - spiralCenterY) ** 2);
+      const cardRadius = (b.size || 200) / 2;
+      maxClusterRadius = Math.max(maxClusterRadius, dist + cardRadius);
+    });
+    
+    const orphanZoneInnerRadius = maxClusterRadius + config.clusterGap;
+    const orphanZoneOuterRadius = Math.min(width, height) / 2 - config.margin;
+    
+    orphanCards.forEach((orphan, i) => {
+      const baseAngle = (i / orphanCards.length) * Math.PI * 2;
+      const angleVariation = (Math.random() - 0.5) * 0.8;
+      const angle = baseAngle + angleVariation;
+      
+      const radiusRange = Math.max(50, orphanZoneOuterRadius - orphanZoneInnerRadius);
+      const radius = orphanZoneInnerRadius + Math.random() * radiusRange;
+      
+      orphan.x = spiralCenterX + Math.cos(angle) * radius;
+      orphan.y = spiralCenterY + Math.sin(angle) * radius;
+      
+      orphan.baseX = orphan.x;
+      orphan.baseY = orphan.y;
+      orphan.orbitCenterX = spiralCenterX;
+      orphan.orbitCenterY = spiralCenterY;
+      orphan.orbitRadius = radius;
+      orphan.orbitAngle = angle;
+      orphan.orbitSpeed = 0.00003;
     });
   }
   
-  // === STEP 5: Layout each cluster with its own Fibonacci spiral ===
-  clusterList.forEach((cluster, clusterIndex) => {
-    const zone = clusterZones[clusterIndex];
-    
-    // Sort within cluster by connections (hub first)
-    cluster.sort((a, b) => b.totalConnections - a.totalConnections);
-    
-    // Fibonacci spiral within this cluster's zone
-    const baseSpacing = Math.max(40, 70 - cluster.length * 2); // Tighter for larger clusters
-    
-    cluster.forEach((bubble, i) => {
-      if (i === 0) {
-        // Hub at zone center
-        bubble.x = zone.x;
-        bubble.y = zone.y;
-      } else {
-        const angle = i * GOLDEN_ANGLE;
-        const sizeMultiplier = 1 + ((bubble.size || 200) - 200) / 600;
-        const radius = baseSpacing + Math.sqrt(i) * (75 * sizeMultiplier);
-        
-        // Clamp to zone radius
-        const clampedRadius = Math.min(radius, zone.radius - 50);
-        
-        bubble.x = zone.x + Math.cos(angle) * clampedRadius;
-        bubble.y = zone.y + Math.sin(angle) * clampedRadius;
-      }
-      
-      // Store animation data
-      bubble.baseX = bubble.x;
-      bubble.baseY = bubble.y;
-      bubble.orbitCenterX = zone.x;
-      bubble.orbitCenterY = zone.y;
-      bubble.orbitRadius = Math.sqrt((bubble.x - zone.x) ** 2 + (bubble.y - zone.y) ** 2);
-      bubble.orbitAngle = Math.atan2(bubble.y - zone.y, bubble.x - zone.x);
-      bubble.clusterIndex = clusterIndex;
-      
-      // Animation speed - varies by type and distance
-      const distanceFactor = Math.max(0.2, 1 - (bubble.orbitRadius / 500));
-      switch (bubble.celestialType) {
-        case 'star': bubble.orbitSpeed = 0; break;
-        case 'comet': bubble.orbitSpeed = 0.0001 * distanceFactor; break;
-        case 'planet': bubble.orbitSpeed = 0.00007 * distanceFactor; break;
-        case 'moon': bubble.orbitSpeed = 0.00009 * distanceFactor; break;
-        case 'asteroid': bubble.orbitSpeed = 0.00004 * distanceFactor; break;
-        default: bubble.orbitSpeed = 0.00005 * distanceFactor;
-      }
-    });
-    
-    // Collision resolution WITHIN this cluster only (performance!)
-    resolveClusterCollisions(cluster, zone);
+  // ===== STEP 6: Collision resolution =====
+  resolveCollisionsWithConfig(placed, config);
+  resolveCollisionsWithConfig(orphanCards, config);
+  
+  // ===== STEP 7: Ensure all visible =====
+  const margin = config.margin;
+  bubbles.forEach(b => {
+    const halfSize = (b.size || 200) / 2;
+    b.x = Math.max(margin, Math.min(width - margin - halfSize, b.x));
+    b.y = Math.max(margin, Math.min(height - margin - halfSize, b.y));
+    b.baseX = b.x;
+    b.baseY = b.y;
   });
-  
-  // === STEP 6: Resolve collisions BETWEEN clusters (lighter pass) ===
-  resolveCrossClusterCollisions(clusterList, clusterZones);
-  
-  // === STEP 7: Ensure all visible ===
-  ensureAllVisible(width, height);
 }
 
-// Collision resolution within a single cluster
-function resolveClusterCollisions(cluster, zone) {
-  if (cluster.length < 2) return;
+// Collision resolution with configurable padding
+function resolveCollisionsWithConfig(cardGroup, config) {
+  if (!cardGroup || cardGroup.length < 2) return;
   
-  const padding = 20;
-  const maxIterations = Math.min(30, 10 + cluster.length); // Scale iterations
+  const padding = config?.collisionPadding || 25;
+  const maxIterations = config?.maxIterations || 40;
   
   for (let iter = 0; iter < maxIterations; iter++) {
     let hadCollision = false;
     
-    for (let i = 0; i < cluster.length; i++) {
-      for (let j = i + 1; j < cluster.length; j++) {
-        const a = cluster[i];
-        const b = cluster[j];
+    for (let i = 0; i < cardGroup.length; i++) {
+      for (let j = i + 1; j < cardGroup.length; j++) {
+        const a = cardGroup[i];
+        const b = cardGroup[j];
         
         const dx = b.x - a.x;
         const dy = b.y - a.y;
@@ -4557,20 +4804,14 @@ function resolveClusterCollisions(cluster, zone) {
           const pushX = (dx / dist) * overlap;
           const pushY = (dy / dist) * overlap;
           
-          // Hub (index 0) is anchor
-          if (i === 0) {
-            b.x += pushX * 1.8;
-            b.y += pushY * 1.8;
-          } else {
-            const aWeight = (a.totalConnections || 1);
-            const bWeight = (b.totalConnections || 1);
-            const total = aWeight + bWeight;
-            
-            a.x -= pushX * (bWeight / total);
-            a.y -= pushY * (bWeight / total);
-            b.x += pushX * (aWeight / total);
-            b.y += pushY * (aWeight / total);
-          }
+          const aWeight = (a.totalConnections || 0) + 1;
+          const bWeight = (b.totalConnections || 0) + 1;
+          const totalWeight = aWeight + bWeight;
+          
+          a.x -= pushX * (bWeight / totalWeight);
+          a.y -= pushY * (bWeight / totalWeight);
+          b.x += pushX * (aWeight / totalWeight);
+          b.y += pushY * (aWeight / totalWeight);
         }
       }
     }
@@ -4578,8 +4819,7 @@ function resolveClusterCollisions(cluster, zone) {
     if (!hadCollision) break;
   }
   
-  // Update base positions
-  cluster.forEach(b => {
+  cardGroup.forEach(b => {
     b.baseX = b.x;
     b.baseY = b.y;
   });
@@ -4684,7 +4924,7 @@ function renderBubbles() {
     const v = b.votes || 0;
     const img = getCardThumbnail(b);
     const isStarred = b.starred;
-    const width = isMobileDevice ? Math.min(b.size || 180, 200) : (b.size || 200);
+    const width = b.size || (isMobileDevice ? 140 : 200);
     const type = b.celestialType || 'asteroid';
     
     // Visual classes based on celestial type
@@ -5245,235 +5485,6 @@ function resetBubbleView() {
   closeDiscoverInfo();
 }
 
-// ========== CELESTIAL LAYOUT SYSTEM ==========
-// Connected cards spiral at center, orphans float in outer void
-
-function layoutCelestialSystem() {
-  const canvas = document.getElementById('discoverCanvas');
-  const rect = canvas.getBoundingClientRect();
-  const width = rect.width || window.innerWidth;
-  const height = rect.height || window.innerHeight - 80;
-  const centerX = width / 2;
-  const centerY = height / 2;
-  
-  if (bubbles.length === 0) return;
-  
-  // === STEP 1: Build connection strength matrix ===
-  const connectionStrength = {};
-  
-  bubbles.forEach(bubble => {
-    connectionStrength[bubble.bubbleId] = {};
-    bubbles.forEach(other => {
-      if (bubble.bubbleId === other.bubbleId) return;
-      const shared = (bubble.tags || []).filter(t => (other.tags || []).includes(t));
-      connectionStrength[bubble.bubbleId][other.bubbleId] = shared.length;
-    });
-  });
-  
-  // === STEP 2: Calculate total connections for each card ===
-  bubbles.forEach(bubble => {
-    bubble.totalConnections = Object.values(connectionStrength[bubble.bubbleId] || {})
-      .reduce((sum, strength) => sum + strength, 0);
-  });
-  
-  // === STEP 3: Split into connected vs orphans ===
-  const connectedCards = bubbles.filter(b => b.totalConnections > 0);
-  const orphanCards = bubbles.filter(b => b.totalConnections === 0);
-  
-  // === STEP 4: Greedy placement for connected cards only ===
-  const placed = [];
-  const unplaced = [...connectedCards];
-  
-  if (unplaced.length > 0) {
-    // Start with the most globally connected card
-    unplaced.sort((a, b) => b.totalConnections - a.totalConnections);
-    placed.push(unplaced.shift());
-    
-    // Greedily add cards by connection strength to placed set
-    while (unplaced.length > 0) {
-      let bestCard = null;
-      let bestScore = -Infinity;
-      
-      unplaced.forEach(candidate => {
-        let connectionScore = 0;
-        placed.forEach(placedCard => {
-          connectionScore += connectionStrength[candidate.bubbleId]?.[placedCard.bubbleId] || 0;
-        });
-        
-        // Prioritize by connections, tiny mass tie-breaker
-        const score = connectionScore * 10 + (candidate.mass || 0) * 0.001;
-        
-        if (score > bestScore) {
-          bestScore = score;
-          bestCard = candidate;
-        }
-      });
-      
-      const idx = unplaced.indexOf(bestCard);
-      if (idx > -1) {
-        unplaced.splice(idx, 1);
-        placed.push(bestCard);
-      }
-    }
-  }
-  
-  // === STEP 5: Fibonacci spiral for connected cards (centered) ===
-  const baseSpacing = 70;
-  const spiralCenterX = centerX;
-  const spiralCenterY = centerY;
-  
-  placed.forEach((bubble, i) => {
-    if (i === 0) {
-      bubble.x = spiralCenterX;
-      bubble.y = spiralCenterY;
-    } else {
-      const angle = i * GOLDEN_ANGLE;
-      const sizeMultiplier = 1 + ((bubble.size || 200) - 200) / 500;
-      const radius = baseSpacing + Math.sqrt(i) * (105 * sizeMultiplier);
-      
-      bubble.x = spiralCenterX + Math.cos(angle) * radius;
-      bubble.y = spiralCenterY + Math.sin(angle) * radius;
-    }
-    
-    bubble.baseX = bubble.x;
-    bubble.baseY = bubble.y;
-    bubble.orbitCenterX = spiralCenterX;
-    bubble.orbitCenterY = spiralCenterY;
-    bubble.orbitRadius = Math.sqrt((bubble.x - spiralCenterX) ** 2 + (bubble.y - spiralCenterY) ** 2);
-    bubble.orbitAngle = Math.atan2(bubble.y - spiralCenterY, bubble.x - spiralCenterX);
-    
-    // Animation speed based on type and distance
-    const distanceFactor = Math.max(0.2, 1 - (bubble.orbitRadius / 1000));
-    switch (bubble.celestialType) {
-      case 'star': bubble.orbitSpeed = 0; break;
-      case 'comet': bubble.orbitSpeed = 0.00012 * distanceFactor; break;
-      case 'planet': bubble.orbitSpeed = 0.00008 * distanceFactor; break;
-      case 'moon': bubble.orbitSpeed = 0.0001 * distanceFactor; break;
-      default: bubble.orbitSpeed = 0.00006 * distanceFactor;
-    }
-  });
-  
-  // === STEP 6: Position orphans in the OUTER VOID ===
-  // They float in corners and edges, clearly separate from the main cluster
-  
-  if (orphanCards.length > 0) {
-    // Calculate the "safe zone" - area occupied by connected cards
-    let maxClusterRadius = 0;
-    placed.forEach(b => {
-      const dist = Math.sqrt((b.x - spiralCenterX) ** 2 + (b.y - spiralCenterY) ** 2);
-      const cardRadius = (b.size || 200) / 2;
-      maxClusterRadius = Math.max(maxClusterRadius, dist + cardRadius);
-    });
-    
-    // Orphan zone starts beyond the cluster with a gap
-    const orphanZoneInnerRadius = maxClusterRadius + 150; // 150px gap from cluster
-    const orphanZoneOuterRadius = Math.min(width, height) / 2 - 100;
-    
-    // Distribute orphans around the outer void
-    orphanCards.forEach((orphan, i) => {
-      // Spread around the circle with some randomness
-      const baseAngle = (i / orphanCards.length) * Math.PI * 2;
-      const angleVariation = (Math.random() - 0.5) * 0.8;
-      const angle = baseAngle + angleVariation;
-      
-      // Random radius within orphan zone
-      const radiusRange = Math.max(100, orphanZoneOuterRadius - orphanZoneInnerRadius);
-      const radius = orphanZoneInnerRadius + Math.random() * radiusRange;
-      
-      orphan.x = spiralCenterX + Math.cos(angle) * radius;
-      orphan.y = spiralCenterY + Math.sin(angle) * radius;
-      
-      orphan.baseX = orphan.x;
-      orphan.baseY = orphan.y;
-      orphan.orbitCenterX = spiralCenterX;
-      orphan.orbitCenterY = spiralCenterY;
-      orphan.orbitRadius = radius;
-      orphan.orbitAngle = angle;
-      
-      // Orphans drift very slowly - lonely in space
-      orphan.orbitSpeed = 0.00003 + Math.random() * 0.00002;
-    });
-  }
-  
-  // === STEP 7: Collision resolution (connected cards only, then orphans) ===
-  resolveCollisions(placed);
-  resolveCollisions(orphanCards);
-  
-  // === STEP 8: Ensure all visible ===
-  ensureAllVisible(width, height);
-}
-
-// Resolve overlapping cards within a group
-function resolveCollisions(cardGroup) {
-  if (!cardGroup || cardGroup.length < 2) return;
-  
-  const padding = 25;
-  const maxIterations = 40;
-  
-  for (let iter = 0; iter < maxIterations; iter++) {
-    let hadCollision = false;
-    
-    for (let i = 0; i < cardGroup.length; i++) {
-      for (let j = i + 1; j < cardGroup.length; j++) {
-        const a = cardGroup[i];
-        const b = cardGroup[j];
-        
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        
-        const minDist = ((a.size || 200) + (b.size || 200)) / 2 + padding;
-        
-        if (dist < minDist) {
-          hadCollision = true;
-          const overlap = (minDist - dist) / 2;
-          const pushX = (dx / dist) * overlap;
-          const pushY = (dy / dist) * overlap;
-          
-          // More connected cards are more anchored
-          const aWeight = (a.totalConnections || 0) + 1;
-          const bWeight = (b.totalConnections || 0) + 1;
-          const totalWeight = aWeight + bWeight;
-          
-          a.x -= pushX * (bWeight / totalWeight);
-          a.y -= pushY * (bWeight / totalWeight);
-          b.x += pushX * (aWeight / totalWeight);
-          b.y += pushY * (aWeight / totalWeight);
-        }
-      }
-    }
-    
-    if (!hadCollision) break;
-  }
-  
-  // Update base positions
-  cardGroup.forEach(b => {
-    b.baseX = b.x;
-    b.baseY = b.y;
-  });
-}
-
-// Keep all cards within visible bounds
-function ensureAllVisible(width, height) {
-  const margin = 120;
-  
-  bubbles.forEach(b => {
-    const halfSize = (b.size || 200) / 2;
-    b.x = Math.max(margin, Math.min(width - margin - halfSize, b.x));
-    b.y = Math.max(margin, Math.min(height - margin - halfSize, b.y));
-    b.baseX = b.x;
-    b.baseY = b.y;
-  });
-}
-
-function shuffleBubbles() {
-  buildBubbleData().then(() => {
-    layoutCelestialSystem();
-    renderBubbles();
-    closeDiscoverInfo();
-    showToast('🎲 Reshuffled!', 'default');
-  });
-}
 
 function filterDiscoverByTag() {
   const tag = document.getElementById('discoverFilter').value;
