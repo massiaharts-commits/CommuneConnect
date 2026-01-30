@@ -172,6 +172,78 @@
       overflow: hidden;
       transition: max-height 0.25s ease;
     }
+    
+    .btn-add {
+      width: 52px;
+      height: 52px;
+      font-size: 1.75rem;
+      padding: 0;
+      position: relative;
+      overflow: visible;
+      border-radius: 16px;
+      animation: addBtnFloat 3s ease-in-out infinite;
+    }
+    
+    .btn-add:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 8px 30px rgba(99, 102, 241, 0.5);
+    }
+    
+    .btn-add:active {
+      transform: scale(0.95);
+    }
+    
+    @keyframes addBtnFloat {
+      0%, 100% { box-shadow: 0 4px 16px var(--accent-glow); }
+      50% { box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5); }
+    }
+    
+    .add-btn-icon {
+      position: relative;
+      z-index: 2;
+      font-weight: 300;
+    }
+    
+    .add-btn-pulse {
+      position: absolute;
+      inset: -4px;
+      border-radius: 20px;
+      border: 2px solid var(--accent);
+      opacity: 0;
+      animation: addBtnPulse 2s ease-out infinite;
+    }
+    
+    @keyframes addBtnPulse {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      100% { transform: scale(1.3); opacity: 0; }
+    }
+    
+    /* Tooltip styling */
+    .btn-add::after {
+      content: 'Share something!';
+      position: absolute;
+      bottom: -35px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-medium);
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 500;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      z-index: 1000;
+    }
+    
+    .btn-add:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+      bottom: -40px;
+    }
+    
     .header-expand.collapsed { max-height: 0; }
     .header-expand-inner { padding: 1rem 0; display: flex; flex-direction: column; gap: 1rem; }
     .search-box { position: relative; }
@@ -1259,12 +1331,17 @@
       50% { opacity: 1; transform: scale(1.05); }
     }
 
+
+
     /* Star field background */
     .star-field {
       position: absolute;
-      inset: 0;
+      inset: -50%;
+      width: 200%;
+      height: 200%;
       pointer-events: none;
       overflow: hidden;
+      transition: transform 0.1s ease-out;
     }
 
     .star {
@@ -1285,9 +1362,12 @@
     /* Ambient particles */
     .ambient-particles {
       position: absolute;
-      inset: 0;
+      inset: -25%;
+      width: 150%;
+      height: 150%;
       pointer-events: none;
       overflow: hidden;
+      transition: transform 0.15s ease-out;
     }
 
     .particle {
@@ -1658,6 +1738,39 @@
       100% { stroke-dashoffset: 0; }
     }
 
+     .synapse-path {
+      filter: url(#synapseGlow);
+      animation: synapsePulse 3s ease-in-out infinite;
+    }
+    
+    @keyframes synapsePulse {
+      0%, 100% { opacity: 0.5; stroke-width: 1; }
+      50% { opacity: 0.8; stroke-width: 1.5; }
+    }
+    
+    .synapse-node {
+      filter: url(#synapseGlow);
+      animation: nodeGlow 2s ease-in-out infinite;
+    }
+    
+    @keyframes nodeGlow {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+    
+    .synapse-glow {
+      animation: glowPulse 2.5s ease-in-out infinite;
+    }
+    
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.3; r: attr(r); }
+      50% { opacity: 0.6; }
+    }
+    
+    .synapse-pulse {
+      filter: blur(1px);
+    }
+
     /* ========== INFO PANEL ========== */
     .discover-info {
       position: absolute;
@@ -1699,7 +1812,73 @@
       box-shadow: 0 0 15px currentColor;
       animation: topicPulse 2s ease-in-out infinite;
     }
-
+    
+    .discover-add-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .discover-add-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .discover-add-btn:hover::before {
+      opacity: 1;
+    }
+    
+    .discover-add-icon {
+      font-size: 1.1rem;
+      font-weight: 300;
+    }
+    
+    .discover-add-text {
+      font-weight: 600;
+    }
+    
+    /* Floating add button for Discover (mobile friendly) */
+    .discover-fab {
+      position: absolute;
+      bottom: 6rem;
+      right: 1.5rem;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--gradient);
+      border: none;
+      color: white;
+      font-size: 1.75rem;
+      cursor: pointer;
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      animation: fabPulse 3s ease-in-out infinite;
+    }
+    
+    .discover-fab:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 40px rgba(99, 102, 241, 0.6);
+    }
+    
+    @keyframes fabPulse {
+      0%, 100% { box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4); }
+      50% { box-shadow: 0 8px 40px rgba(99, 102, 241, 0.6); }
+    }
+    
     @keyframes topicPulse {
       0%, 100% { box-shadow: 0 0 10px currentColor; }
       50% { box-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
@@ -1934,7 +2113,10 @@
       <button class="btn btn-icon" onclick="openCollections()" title="Collections">📂</button>
       <button class="btn btn-icon" onclick="openCommunity()" title="Community">👥</button>
       <button class="btn btn-icon" onclick="openSettings()" title="Settings">⚙️</button>
-      <button class="btn btn-primary btn-add" onclick="openAddModal()">+</button>
+      <button class="btn btn-primary btn-add" onclick="openAddModal()" title="Share something new!" id="mainAddBtn">
+        <span class="add-btn-icon">+</span>
+        <span class="add-btn-pulse"></span>
+      </button>
     </div>
   </div>
   <div class="header-expand" id="headerExpand">
@@ -2322,6 +2504,10 @@
     <select class="filter-select" id="discoverFilter" onchange="filterDiscoverByTag()">
       <option value="">All tags</option>
     </select>
+    <button class="btn btn-primary discover-add-btn" onclick="openAddModal()" title="Share to community!">
+      <span class="discover-add-icon">+</span>
+      <span class="discover-add-text">Share</span>
+    </button>
     <button class="btn btn-icon" onclick="closeDiscover()">✕</button>
   </div>
 </div>
@@ -2332,6 +2518,7 @@
       <div class="discover-stat"><strong id="statNodes">0</strong> cards</div>
       <div class="discover-stat"><strong id="statConnections">0</strong> connections</div>
     </div>
+    <button class="discover-fab" onclick="openAddModal()" title="Share something new!">+</button>
     <div class="discover-controls">
       <button class="btn btn-secondary" onclick="zoomBubbles(1.2)" title="Zoom in">+</button>
       <button class="btn btn-secondary" onclick="zoomBubbles(0.8)" title="Zoom out">−</button>
@@ -2841,11 +3028,27 @@ function formatUrl(url) {
 function applyTransform() {
   const container = document.getElementById('bubbleContainer');
   const svg = document.getElementById('connectionsSvg');
+  const starField = document.querySelector('.discover-view .star-field');
+  const particles = document.querySelector('.discover-view .ambient-particles');
+  
   const transform = `translate(${bubblePanX}px, ${bubblePanY}px) scale(${bubbleZoom})`;
   container.style.transform = transform;
   container.style.transformOrigin = 'center center';
   svg.style.transform = transform;
   svg.style.transformOrigin = 'center center';
+  
+  // Parallax effect - background layers move slower
+  if (starField) {
+    const parallaxSlow = `translate(${bubblePanX * 0.1}px, ${bubblePanY * 0.1}px) scale(${1 + (bubbleZoom - 1) * 0.05})`;
+    starField.style.transform = parallaxSlow;
+    starField.style.transformOrigin = 'center center';
+  }
+  
+  if (particles) {
+    const parallaxMedium = `translate(${bubblePanX * 0.3}px, ${bubblePanY * 0.3}px) scale(${1 + (bubbleZoom - 1) * 0.15})`;
+    particles.style.transform = parallaxMedium;
+    particles.style.transformOrigin = 'center center';
+  }
 }
 
 // Handle hover with magnetic push effect
@@ -2956,36 +3159,129 @@ function showConnections(id) {
   const svg = document.getElementById('connectionsSvg');
   const related = bubbleConnections.filter(c => c.source === id || c.target === id);
   
-  const lines = related.map(conn => {
+  const connections = related.map((conn, index) => {
     const a = bubbles.find(b => b.bubbleId === conn.source);
     const b = bubbles.find(b => b.bubbleId === conn.target);
     if (!a || !b) return '';
     
-    const strokeWidth = 1.5 + conn.strength * 0.8;
-    const opacity = 0.4 + conn.strength * 0.15;
+    const strokeWidth = 1.5 + conn.strength * 0.5;
+    const opacity = 0.5 + conn.strength * 0.1;
+    
+    // Calculate control points for curved path
+    const midX = (a.x + b.x) / 2;
+    const midY = (a.y + b.y) / 2;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    
+    // Perpendicular offset for curve - alternate direction
+    const curveAmount = dist * 0.15 * (index % 2 === 0 ? 1 : -1);
+    const ctrlX = midX + (-dy / dist) * curveAmount;
+    const ctrlY = midY + (dx / dist) * curveAmount;
+    
+    const nodeRadius = 3 + conn.strength;
+    const pathId = `motionPath${index}`;
+    const duration = 1.5 + Math.random() * 1; // Vary speed slightly
+    const delay = index * 0.3;
     
     return `
-      <line 
-        x1="${a.x}" y1="${a.y}" 
-        x2="${b.x}" y2="${b.y}" 
-        stroke="url(#connectionGradient)" 
-        stroke-width="${strokeWidth}" 
-        opacity="${opacity}" 
-        stroke-dasharray="8 4"
-        class="connection-line visible active"
+      <!-- Glow layer (behind) -->
+      <path 
+        d="M ${a.x} ${a.y} Q ${ctrlX} ${ctrlY} ${b.x} ${b.y}"
+        fill="none"
+        stroke="rgba(139, 92, 246, 0.3)" 
+        stroke-width="${strokeWidth + 4}"
+        opacity="${opacity * 0.5}"
+        stroke-linecap="round"
       />
+      
+      <!-- Main curved path -->
+      <path 
+        d="M ${a.x} ${a.y} Q ${ctrlX} ${ctrlY} ${b.x} ${b.y}"
+        fill="none"
+        stroke="url(#synapseGrad)" 
+        stroke-width="${strokeWidth}"
+        opacity="${opacity}"
+        stroke-linecap="round"
+      />
+      
+      <!-- Hidden path for motion -->
+      <path 
+        id="${pathId}"
+        d="M ${a.x} ${a.y} Q ${ctrlX} ${ctrlY} ${b.x} ${b.y}"
+        fill="none"
+        stroke="none"
+      />
+      
+      <!-- Traveling light particle 1 -->
+      <circle r="4" fill="#ffffff" opacity="0.9">
+        <animateMotion 
+          dur="${duration}s" 
+          repeatCount="indefinite" 
+          begin="${delay}s"
+        >
+          <mpath href="#${pathId}"/>
+        </animateMotion>
+      </circle>
+      
+      <!-- Traveling light particle 1 - glow -->
+      <circle r="8" fill="rgba(167, 139, 250, 0.5)">
+        <animateMotion 
+          dur="${duration}s" 
+          repeatCount="indefinite" 
+          begin="${delay}s"
+        >
+          <mpath href="#${pathId}"/>
+        </animateMotion>
+      </circle>
+      
+      <!-- Traveling light particle 2 (offset timing) -->
+      <circle r="3" fill="#e0e7ff" opacity="0.8">
+        <animateMotion 
+          dur="${duration}s" 
+          repeatCount="indefinite" 
+          begin="${delay + duration/2}s"
+        >
+          <mpath href="#${pathId}"/>
+        </animateMotion>
+      </circle>
+      
+      <!-- Traveling light particle 2 - glow -->
+      <circle r="6" fill="rgba(99, 102, 241, 0.4)">
+        <animateMotion 
+          dur="${duration}s" 
+          repeatCount="indefinite" 
+          begin="${delay + duration/2}s"
+        >
+          <mpath href="#${pathId}"/>
+        </animateMotion>
+      </circle>
+      
+      <!-- End nodes -->
+      <circle cx="${a.x}" cy="${a.y}" r="${nodeRadius}" fill="url(#nodeGrad)" opacity="0.9"/>
+      <circle cx="${b.x}" cy="${b.y}" r="${nodeRadius}" fill="url(#nodeGrad)" opacity="0.9"/>
+      
+      <!-- Node glow -->
+      <circle cx="${a.x}" cy="${a.y}" r="${nodeRadius + 6}" fill="rgba(139, 92, 246, 0.25)"/>
+      <circle cx="${b.x}" cy="${b.y}" r="${nodeRadius + 6}" fill="rgba(139, 92, 246, 0.25)"/>
     `;
   }).join('');
   
   svg.innerHTML = `
     <defs>
-      <linearGradient id="connectionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <linearGradient id="synapseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
         <stop offset="0%" stop-color="#6366f1"/>
-        <stop offset="50%" stop-color="#8b5cf6"/>
-        <stop offset="100%" stop-color="#6366f1"/>
+        <stop offset="50%" stop-color="#a78bfa"/>
+        <stop offset="100%" stop-color="#8b5cf6"/>
       </linearGradient>
+      
+      <radialGradient id="nodeGrad" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#e0e7ff"/>
+        <stop offset="50%" stop-color="#a78bfa"/>
+        <stop offset="100%" stop-color="#6366f1"/>
+      </radialGradient>
     </defs>
-    ${lines}
+    ${connections}
   `;
 }
 
@@ -3864,14 +4160,56 @@ function saveCollections() {
 
 // ============== METADATA ==============
 async function fetchMetadata(url) {
+  // First, try to extract info from the URL itself (works without CORS)
+  const urlBasedMeta = extractMetadataFromURL(url);
+  
+  // Check for YouTube - we can get thumbnail directly without API
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    const videoId = extractYouTubeId(url);
+    if (videoId) {
+      return { 
+        title: urlBasedMeta.title || 'YouTube Video', 
+        description: '', 
+        icon: 'https://www.youtube.com/favicon.ico',
+        image: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        hasMetadata: true 
+      };
+    }
+  }
+  
+  // Try the API (will fail on local files due to CORS, but works when hosted)
   try {
-    const res = await fetch(`https://jsonlink.io/api/extract?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
+    const res = await fetch(`https://jsonlink.io/api/extract?url=${encodeURIComponent(url)}`, { 
+      signal: AbortSignal.timeout(5000) 
+    });
     if (res.ok) {
       const d = await res.json();
-      return { title: d.title || new URL(url).hostname, description: d.description || '', icon: d.images?.[0] || '', hasMetadata: true };
+      return { 
+        title: d.title || urlBasedMeta.title, 
+        description: d.description || '', 
+        icon: d.favicon || urlBasedMeta.icon,
+        image: d.images?.[0] || null,
+        hasMetadata: true 
+      };
     }
-  } catch(e) {}
-  return extractMetadataFromURL(url);
+  } catch(e) {
+    // CORS error or timeout - use URL-based metadata
+    console.log('Metadata API unavailable, using URL-based fallback');
+  }
+  
+  return urlBasedMeta;
+}
+
+function extractYouTubeId(url) {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/shorts\/([^&\n?#]+)/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
 }
 
 function extractMetadataFromURL(url) {
@@ -4148,31 +4486,34 @@ async function addLink() {
     return;
   }
   
+  // Fetch metadata first to check for thumbnails
+  const metadata = await fetchMetadata(url);
+  
   // Check if site blocks previews
   const restrictedSites = ['twitter.com', 'x.com', 'instagram.com', 'facebook.com', 'linkedin.com', 'tiktok.com'];
   const isRestricted = restrictedSites.some(site => url.includes(site));
   
-  let screenshotResult, metadata;
+  let screenshotResult;
   
-  if (isRestricted && !pendingLinkScreenshot) {
+  // Priority: 1) User uploaded screenshot, 2) OpenGraph/YouTube thumbnail, 3) Screenshot service, 4) Generated
+  if (pendingLinkScreenshot) {
+    // User uploaded a screenshot
+    screenshotResult = { url: pendingLinkScreenshot, isReal: true, success: true };
+    pendingLinkScreenshot = null;
+  } else if (metadata.image) {
+    // Use OpenGraph/YouTube thumbnail
+    screenshotResult = { url: metadata.image, isReal: true, success: true };
+  } else if (isRestricted) {
     // Use generated placeholder for restricted sites
-    metadata = await fetchMetadata(url);
     const placeholderCard = { title: metadata.title || url, topic: topic, url: url };
     screenshotResult = { 
       url: generatePlaceholderThumbnail(placeholderCard), 
       isReal: false, 
       success: true 
     };
-  } else if (pendingLinkScreenshot) {
-    // User uploaded a screenshot
-    metadata = await fetchMetadata(url);
-    screenshotResult = { url: pendingLinkScreenshot, isReal: true, success: true };
-    pendingLinkScreenshot = null;
   } else {
-    [screenshotResult, metadata] = await Promise.all([
-      generateScreenshot(url),
-      fetchMetadata(url)
-    ]);
+    // Try screenshot service
+    screenshotResult = await generateScreenshot(url);
   }
   
   const newCard = {
@@ -4239,6 +4580,15 @@ function openEditModal(id) {
   
   // Basic fields
   document.getElementById('editTitle').value = card.title;
+  // Basic fields
+  document.getElementById('editTitle').value = card.title;
+
+  // URL Link - ADD THIS LINE
+  const urlLink = document.getElementById('editUrlLink');
+  if (urlLink) {
+    urlLink.href = card.url;
+    urlLink.textContent = card.url;
+  }
   document.getElementById('editTitle').disabled = isGuideCard;
   document.getElementById('editTitle').style.opacity = isGuideCard ? '0.6' : '1';
   
@@ -5336,8 +5686,14 @@ async function initSupabase() {
       currentUser = session.user; 
       onUserLoggedIn(); 
     } else { 
-      // Show auth modal after a brief delay
-      setTimeout(() => document.getElementById('authModal')?.classList.add('active'), 500); 
+      // Only show auth modal on first visit, not every time
+      const hasSeenAuthPrompt = localStorage.getItem('linkgrid-seen-auth');
+      if (!hasSeenAuthPrompt) {
+        setTimeout(() => {
+          document.getElementById('authModal')?.classList.add('active');
+          localStorage.setItem('linkgrid-seen-auth', 'true');
+        }, 1000);
+      }
     }
     
     // Listen for auth state changes
