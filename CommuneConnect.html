@@ -4776,6 +4776,19 @@ function layoutCelestialSystem() {
   resolveCollisionsWithConfig(placed, config);
   resolveCollisionsWithConfig(orphanCards, config);
   
+  // ===== STEP 6.5: Tag proximity - pull cards with shared tags closer =====
+  const allCards = [...placed, ...orphanCards];
+  enforceTagProximity(allCards, config);
+  
+  // ===== STEP 6.6: Re-resolve collisions after pulling together =====
+  // (cards may overlap after being pulled toward each other)
+  resolveCollisionsWithConfig(allCards, { 
+    ...config, 
+    collisionPadding: config.collisionPadding * 0.8, // Slightly tighter packing allowed
+    maxIterations: 20 
+  });
+  
+  
   // ===== STEP 7: Ensure all visible =====
   const margin = config.margin;
   bubbles.forEach(b => {
@@ -4828,6 +4841,72 @@ function resolveCollisionsWithConfig(cardGroup, config) {
     if (!hadCollision) break;
   }
   
+  cardGroup.forEach(b => {
+    b.baseX = b.x;
+    b.baseY = b.y;
+  });
+}
+
+// Enforce that cards sharing tags stay within a maximum distance
+function enforceTagProximity(cardGroup, config) {
+  if (!cardGroup || cardGroup.length < 2) return;
+  
+  const isMobileLayout = window.innerWidth < 768;
+  const MAX_TAG_DISTANCE = isMobileLayout ? 250 : 400; // Max pixels apart for cards sharing tags
+  const PULL_STRENGTH = 0.4; // How aggressively to pull together (0-1)
+  const maxIterations = 25;
+  
+  for (let iter = 0; iter < maxIterations; iter++) {
+    let hadAdjustment = false;
+    
+    for (let i = 0; i < cardGroup.length; i++) {
+      for (let j = i + 1; j < cardGroup.length; j++) {
+        const a = cardGroup[i];
+        const b = cardGroup[j];
+        
+        // Check if they share any tags
+        const aTags = (a.tags || []).map(t => t.toLowerCase());
+        const bTags = (b.tags || []).map(t => t.toLowerCase());
+        const sharedTags = aTags.filter(t => bTags.includes(t));
+        
+        if (sharedTags.length === 0) continue;
+        
+        // Calculate distance
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        // More shared tags = should be closer together
+        // 1 tag = MAX_TAG_DISTANCE, 2 tags = 70%, 3+ tags = 50%
+        const proximityMultiplier = 1 / (1 + (sharedTags.length - 1) * 0.3);
+        const adjustedMaxDist = MAX_TAG_DISTANCE * proximityMultiplier;
+        
+        if (dist > adjustedMaxDist) {
+          hadAdjustment = true;
+          
+          // Calculate how much to pull them together
+          const pullDistance = (dist - adjustedMaxDist) * PULL_STRENGTH;
+          const pullX = (dx / dist) * pullDistance;
+          const pullY = (dy / dist) * pullDistance;
+          
+          // Weight by connection count (more connected cards move less)
+          const aWeight = (a.totalConnections || 0) + (a.mass || 0) + 1;
+          const bWeight = (b.totalConnections || 0) + (b.mass || 0) + 1;
+          const totalWeight = aWeight + bWeight;
+          
+          // Move both cards toward each other
+          a.x += pullX * (bWeight / totalWeight);
+          a.y += pullY * (bWeight / totalWeight);
+          b.x -= pullX * (aWeight / totalWeight);
+          b.y -= pullY * (aWeight / totalWeight);
+        }
+      }
+    }
+    
+    if (!hadAdjustment) break;
+  }
+  
+  // Update base positions
   cardGroup.forEach(b => {
     b.baseX = b.x;
     b.baseY = b.y;
@@ -5150,15 +5229,37 @@ function updateInfoPanel(bubble) {
 
 function showConnections(id) {
   const svg = document.getElementById('connectionsSvg');
-  const related = bubbleConnections.filter(c => c.source === id || c.target === id);
+  const bubble = bubbles.find(b => b.bubbleId === id);
+  if (!bubble) return;
+  
+  // Find all cards that share tags with the selected card
+  const selectedTags = (bubble.tags || []).map(t => t.toLowerCase());
+  
+  // Build connections with shared tag info
+  const related = [];
+  bubbles.forEach(other => {
+    if (other.bubbleId === id) return;
+    
+    const otherTags = (other.tags || []).map(t => t.toLowerCase());
+    const sharedTags = selectedTags.filter(t => otherTags.includes(t));
+    
+    if (sharedTags.length > 0) {
+      related.push({
+        source: bubble,
+        target: other,
+        sharedTags: sharedTags,
+        strength: sharedTags.length
+      });
+    }
+  });
   
   const connections = related.map((conn, index) => {
-    const a = bubbles.find(b => b.bubbleId === conn.source);
-    const b = bubbles.find(b => b.bubbleId === conn.target);
-    if (!a || !b) return '';
+    const a = conn.source;
+    const b = conn.target;
     
-    const strokeWidth = 1.5 + conn.strength * 0.5;
-    const opacity = 0.5 + conn.strength * 0.1;
+    // Scale visuals by connection strength
+    const strokeWidth = 1.5 + conn.strength * 0.7;
+    const opacity = 0.5 + conn.strength * 0.12;
     
     // Calculate control points for curved path
     const midX = (a.x + b.x) / 2;
@@ -5174,8 +5275,11 @@ function showConnections(id) {
     
     const nodeRadius = 3 + conn.strength;
     const pathId = `motionPath${index}`;
-    const duration = 1.5 + Math.random() * 1; // Vary speed slightly
+    const duration = 1.5 + Math.random() * 1;
     const delay = index * 0.3;
+    
+    // Gradient ID based on strength (stronger = different color)
+    const gradId = conn.strength >= 3 ? 'strongGrad' : conn.strength >= 2 ? 'mediumGrad' : 'synapseGrad';
     
     return `
       <!-- Glow layer (behind) -->
@@ -5192,7 +5296,7 @@ function showConnections(id) {
       <path 
         d="M ${a.x} ${a.y} Q ${ctrlX} ${ctrlY} ${b.x} ${b.y}"
         fill="none"
-        stroke="url(#synapseGrad)" 
+        stroke="url(#${gradId})" 
         stroke-width="${strokeWidth}"
         opacity="${opacity}"
         stroke-linecap="round"
@@ -5257,15 +5361,54 @@ function showConnections(id) {
       <!-- Node glow -->
       <circle cx="${a.x}" cy="${a.y}" r="${nodeRadius + 6}" fill="rgba(139, 92, 246, 0.25)"/>
       <circle cx="${b.x}" cy="${b.y}" r="${nodeRadius + 6}" fill="rgba(139, 92, 246, 0.25)"/>
+      
+      <!-- Shared tags label (shows on 2+ shared tags) -->
+      ${conn.strength >= 2 ? `
+        <rect 
+          x="${midX - (conn.sharedTags.slice(0, 3).join(', ').length * 3.5)}" 
+          y="${midY - 18}" 
+          width="${conn.sharedTags.slice(0, 3).join(', ').length * 7 + 12}" 
+          height="16" 
+          rx="4" 
+          fill="rgba(0,0,0,0.7)"
+          opacity="0.9"
+        />
+        <text 
+          x="${midX}" 
+          y="${midY - 6}" 
+          fill="white" 
+          font-size="10" 
+          font-family="Inter, sans-serif"
+          text-anchor="middle" 
+          opacity="0.9"
+          style="pointer-events:none;">
+          ${conn.sharedTags.slice(0, 3).join(', ')}${conn.sharedTags.length > 3 ? '...' : ''}
+        </text>
+      ` : ''}
     `;
   }).join('');
   
   svg.innerHTML = `
     <defs>
+      <!-- Default gradient (1 shared tag) -->
       <linearGradient id="synapseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
         <stop offset="0%" stop-color="#6366f1"/>
         <stop offset="50%" stop-color="#a78bfa"/>
         <stop offset="100%" stop-color="#8b5cf6"/>
+      </linearGradient>
+      
+      <!-- Medium gradient (2 shared tags) -->
+      <linearGradient id="mediumGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#8b5cf6"/>
+        <stop offset="50%" stop-color="#c084fc"/>
+        <stop offset="100%" stop-color="#e879f9"/>
+      </linearGradient>
+      
+      <!-- Strong gradient (3+ shared tags) -->
+      <linearGradient id="strongGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#f472b6"/>
+        <stop offset="50%" stop-color="#fb7185"/>
+        <stop offset="100%" stop-color="#f59e0b"/>
       </linearGradient>
       
       <radialGradient id="nodeGrad" cx="50%" cy="50%" r="50%">
