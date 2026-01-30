@@ -3840,9 +3840,13 @@
     
     <div class="form-group">
       <label class="form-label">👤 Display Name</label>
-      <input type="text" class="form-input" id="usernameInput" placeholder="Choose a display name">
-      <p style="font-size:0.7rem;color:var(--text-3);margin-top:0.5rem">This is how others see you. Your email is never shown.</p>
-      <button class="btn btn-secondary" style="width:100%;margin-top:0.5rem" onclick="updateAllCardsUsername()">🔄 Update all my cards with this name</button>
+      <div style="position:relative;">
+        <input type="text" class="form-input" id="usernameInput" placeholder="Choose a display name" 
+               oninput="validateUsernameInput()" maxlength="30" style="padding-right:40px;">
+        <span id="usernameStatus" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:1rem;"></span>
+      </div>
+      <p id="usernameHint" style="font-size:0.7rem;color:var(--text-3);margin-top:0.5rem">This is how others see you. Your email is never shown.</p>
+      <button class="btn btn-secondary" style="width:100%;margin-top:0.5rem" onclick="updateAllCardsUsername()" id="updateUsernameBtn">🔄 Update all my cards with this name</button>
     </div>
     
     <div class="form-group">
@@ -5981,32 +5985,69 @@ function setupRealtimeSubscriptions() {
   if (!supabaseClient || realtimeSubscription) return;
   
   realtimeSubscription = supabaseClient
-    .channel('public-cards')
+    .channel('public-updates')
+    // Listen for new cards
     .on('postgres_changes', 
       { event: 'INSERT', schema: 'public', table: 'cards', filter: 'is_private=eq.false' },
       (payload) => {
         handleNewCardFromCloud(payload.new);
       }
     )
+    // Listen for card updates
     .on('postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'cards' },
       (payload) => {
         handleCardUpdateFromCloud(payload.new);
       }
     )
+    // Listen for card deletions
     .on('postgres_changes',
       { event: 'DELETE', schema: 'public', table: 'cards' },
       (payload) => {
         handleCardDeleteFromCloud(payload.old);
       }
     )
+    // Listen for new comments
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'comments' },
       (payload) => {
         handleNewCommentFromCloud(payload.new);
       }
     )
+    // Listen for profile/username changes (for current user)
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${currentUser?.id}` },
+      (payload) => {
+        handleUsernameChangeFromCloud(payload.new);
+      }
+    )
     .subscribe();
+}
+
+function handleUsernameChangeFromCloud(profile) {
+  if (!profile || !profile.username) return;
+  
+  // If username changed from another device
+  if (profile.username !== username) {
+    console.log('📡 Username updated from another device:', profile.username);
+    
+    const oldUsername = username;
+    username = profile.username;
+    localStorage.setItem('linkgrid-username', username);
+    
+    // Update local cards that had the old name
+    cards.forEach(card => {
+      if (card.addedBy === oldUsername || card.isOwnCard) {
+        card.addedBy = username;
+        card.editedBy = username;
+      }
+    });
+    
+    saveCards();
+    renderGrid();
+    
+    showToast(`👤 Username synced: ${username}`, 'success');
+  }
 }
 
 // Handle new card from another user
@@ -8044,14 +8085,104 @@ function saveSettings() {
   showToast('Saved!', 'success');
 }
 
-function updateAllCardsUsername() {
+async function updateAllCardsUsername() {
   const newName = document.getElementById('usernameInput').value.trim();
+  
   if (!newName) {
     showToast('Enter a display name first', 'error');
     return;
   }
   
+  if (newName.length < 2) {
+    showToast('Name must be at least 2 characters', 'error');
+    return;
+  }
+  
+  if (newName.length > 30) {
+    showToast('Name must be 30 characters or less', 'error');
+    return;
+  }
+  
   const sanitizedName = sanitizeUsername(newName);
+  
+  // Check if it's different from current
+  if (sanitizedName.toLowerCase() === username.toLowerCase()) {
+    // Same name, just update cards
+    updateCardsWithUsername(sanitizedName);
+    return;
+  }
+  
+  // Check availability
+  showToast('🔍 Checking availability...', 'default');
+  const available = await checkUsernameAvailable(sanitizedName);
+  
+  if (!available) {
+    showToast(`❌ "${sanitizedName}" is already taken`, 'error');
+    return;
+  }
+  
+  // Warn about other sessions if logged in
+  if (supabaseClient && currentUser) {
+    const confirmChange = confirm(
+      `Change your display name to "${sanitizedName}"?\n\n` +
+      `⚠️ This will sign you out on all other devices to ensure your new name syncs correctly.\n\n` +
+      `You'll stay signed in on this device.`
+    );
+    
+    if (!confirmChange) {
+      showToast('Cancelled', 'default');
+      return;
+    }
+  }
+  
+  // Save to cloud first
+  const saved = await saveUsernameToCloud(sanitizedName);
+  if (!saved && supabaseClient && currentUser) {
+    showToast('❌ Could not save username', 'error');
+    return;
+  }
+  
+  // Sign out other sessions (but keep this one)
+  if (supabaseClient && currentUser) {
+    await signOutOtherSessions();
+  }
+  
+  // Update local
+  updateCardsWithUsername(sanitizedName);
+}
+
+async function signOutOtherSessions() {
+  if (!supabaseClient) return;
+  
+  try {
+    // Get current session token before signing out others
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) return;
+    
+    // Sign out all sessions globally
+    await supabaseClient.auth.signOut({ scope: 'global' });
+    
+    // Immediately re-authenticate this session using the refresh token
+    // We stored the session, so we can restore it
+    const { error } = await supabaseClient.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token
+    });
+    
+    if (error) {
+      console.warn('Could not restore session, user may need to sign in again:', error);
+      // Don't throw - the username change still succeeded
+    } else {
+      console.log('✅ Other sessions signed out, current session preserved');
+    }
+    
+  } catch (e) {
+    console.error('Sign out other sessions error:', e);
+    // Don't block the username change for this
+  }
+}
+
+function updateCardsWithUsername(newName) {
   let updatedCount = 0;
   
   cards.forEach(card => {
@@ -8061,20 +8192,88 @@ function updateAllCardsUsername() {
         card.addedBy === currentUser?.email?.split('@')[0] ||
         card.cloudUserId === currentUser?.id ||
         card.isOwnCard) {
-      card.addedBy = sanitizedName;
-      card.editedBy = sanitizedName;
+      card.addedBy = newName;
+      card.editedBy = newName;
       updatedCount++;
     }
   });
   
   // Update the global username
-  username = sanitizedName;
+  const oldName = username;
+  username = newName;
   localStorage.setItem('linkgrid-username', username);
   
   saveCards();
   renderGrid();
   
-  showToast(`✅ Updated ${updatedCount} cards to "${sanitizedName}"`, 'success');
+  showToast(`✅ Updated ${updatedCount} cards to "${newName}"`, 'success');
+}
+
+
+let usernameCheckTimeout = null;
+
+function validateUsernameInput() {
+  const input = document.getElementById('usernameInput');
+  const status = document.getElementById('usernameStatus');
+  const hint = document.getElementById('usernameHint');
+  const btn = document.getElementById('updateUsernameBtn');
+  const value = input.value.trim();
+  
+  // Clear previous timeout
+  if (usernameCheckTimeout) {
+    clearTimeout(usernameCheckTimeout);
+  }
+  
+  // Reset state
+  status.textContent = '';
+  hint.style.color = 'var(--text-3)';
+  if (btn) btn.disabled = false;
+  
+  if (!value) {
+    hint.textContent = 'This is how others see you. Your email is never shown.';
+    return;
+  }
+  
+  if (value.length < 2) {
+    status.textContent = '⚠️';
+    hint.textContent = 'Must be at least 2 characters';
+    hint.style.color = 'var(--warning)';
+    if (btn) btn.disabled = true;
+    return;
+  }
+  
+  // Same as current username
+  if (value.toLowerCase() === username.toLowerCase()) {
+    status.textContent = '✓';
+    hint.textContent = 'This is your current name';
+    hint.style.color = 'var(--success)';
+    return;
+  }
+  
+  // Show checking status
+  status.textContent = '⏳';
+  hint.textContent = 'Checking availability...';
+  if (btn) btn.disabled = true;
+  
+  // Debounce the check
+  usernameCheckTimeout = setTimeout(async () => {
+    const available = await checkUsernameAvailable(value);
+    
+    // Make sure input hasn't changed
+    if (input.value.trim() !== value) return;
+    
+    if (available) {
+      status.textContent = '✅';
+      hint.textContent = `"${value}" is available!`;
+      hint.style.color = 'var(--success)';
+      if (btn) btn.disabled = false;
+    } else {
+      status.textContent = '❌';
+      hint.textContent = `"${value}" is already taken`;
+      hint.style.color = 'var(--danger)';
+      if (btn) btn.disabled = true;
+    }
+  }, 500);
 }
 
 function toggleShowContributors() {
@@ -8335,6 +8534,8 @@ function onUserLoggedIn() {
     }, 500);
   } else {
     username = savedUsername;
+    // Verify username is still ours in cloud
+    verifyUsernameOwnership();
   }
   
   showToast('✅ Signed in!', 'success');
@@ -8343,21 +8544,151 @@ function onUserLoggedIn() {
   initCloudSync();
 }
 
-function showUsernameSetupPrompt() {
+async function showUsernameSetupPrompt() {
   const suggestedName = currentUser.email.split('@')[0];
-  const displayName = prompt(
-    '👤 Choose your display name\n\nThis is how others will see you. You can change it anytime in Settings.\n\nYour email will never be shown publicly.',
-    suggestedName
-  );
+  let displayName = null;
+  let isValid = false;
   
-  if (displayName && displayName.trim()) {
-    username = sanitizeUsername(displayName.trim());
-  } else {
-    username = sanitizeUsername(suggestedName);
+  while (!isValid) {
+    displayName = prompt(
+      '👤 Choose your display name\n\nThis is how others will see you. Must be unique.\nYour email will never be shown publicly.',
+      displayName || suggestedName
+    );
+    
+    // User cancelled
+    if (displayName === null) {
+      displayName = suggestedName;
+      break;
+    }
+    
+    displayName = displayName.trim();
+    
+    if (!displayName) {
+      alert('❌ Display name cannot be empty');
+      continue;
+    }
+    
+    if (displayName.length < 2) {
+      alert('❌ Display name must be at least 2 characters');
+      continue;
+    }
+    
+    if (displayName.length > 30) {
+      alert('❌ Display name must be 30 characters or less');
+      continue;
+    }
+    
+    // Check if username is available
+    const available = await checkUsernameAvailable(displayName);
+    
+    if (!available) {
+      alert(`❌ "${displayName}" is already taken. Please choose another name.`);
+      continue;
+    }
+    
+    isValid = true;
   }
   
+  username = sanitizeUsername(displayName);
   localStorage.setItem('linkgrid-username', username);
+  
+  // Save to cloud
+  await saveUsernameToCloud(username);
+  
   renderGrid();
+  showToast(`👤 Welcome, ${username}!`, 'success');
+}
+
+async function checkUsernameAvailable(desiredUsername) {
+  if (!supabaseClient || !currentUser) {
+    // Offline mode - allow any username
+    return true;
+  }
+  
+  try {
+    const normalizedName = desiredUsername.toLowerCase().trim();
+    
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('id, username')
+      .ilike('username', normalizedName)
+      .limit(1);
+    
+    if (error) {
+      console.error('Username check error:', error);
+      // If table doesn't exist yet, allow the username
+      if (error.code === '42P01') return true;
+      return true; // Fail open for other errors
+    }
+    
+    // Available if no results, or if the result is our own profile
+    if (!data || data.length === 0) return true;
+    if (data[0].id === currentUser.id) return true;
+    
+    return false;
+    
+  } catch (e) {
+    console.error('Username check exception:', e);
+    return true; // Fail open
+  }
+}
+
+async function saveUsernameToCloud(newUsername) {
+  if (!supabaseClient || !currentUser) return false;
+  
+  try {
+    const { error } = await supabaseClient
+      .from('profiles')
+      .upsert({
+        id: currentUser.id,
+        username: newUsername,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+    
+    if (error) {
+      console.error('Save username error:', error);
+      return false;
+    }
+    
+    console.log('✅ Username saved to cloud:', newUsername);
+    return true;
+    
+  } catch (e) {
+    console.error('Save username exception:', e);
+    return false;
+  }
+}
+
+async function verifyUsernameOwnership() {
+  if (!supabaseClient || !currentUser) return;
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('username')
+      .eq('id', currentUser.id)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Verify username error:', error);
+      return;
+    }
+    
+    if (data && data.username) {
+      // Cloud username takes precedence
+      if (data.username !== username) {
+        username = data.username;
+        localStorage.setItem('linkgrid-username', username);
+        renderGrid();
+      }
+    } else {
+      // No cloud profile yet, save current username
+      await saveUsernameToCloud(username);
+    }
+    
+  } catch (e) {
+    console.error('Verify username exception:', e);
+  }
 }
 
 async function signOut() {
