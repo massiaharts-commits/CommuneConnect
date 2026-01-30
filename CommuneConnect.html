@@ -4958,7 +4958,7 @@ function renderBubbles() {
         ${isStar ? '<div class="star-corona"></div>' : ''}
         
         <div class="bubble-card-image">
-          <img src="${img}" alt="${sanitizeHTML(b.title)}" onerror="this.src='${generatePlaceholderThumbnail(b)}'">
+          <img src="${img}" alt="${sanitizeHTML(b.title)}" onerror="this.onerror=null;this.src='${generatePlaceholderThumbnail(b).replace(/'/g, "\\'")}'">
           <div class="bubble-card-image-overlay">
             <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
               <span class="bubble-badge">${emoji}</span>
@@ -6177,6 +6177,86 @@ async function loadCards() {
       seen.add(card.url);
       return true;
     });
+    
+    // Fix cards that have broken/missing thumbnails
+    cards.forEach(card => {
+      // Skip if already has a valid real screenshot
+      if (card.screenshotReal && card.screenshot && 
+          (card.screenshot.startsWith('http') || card.screenshot.startsWith('data:image/'))) {
+        return;
+      }
+      
+      // YouTube / youtu.be - always use direct thumbnail
+      if (card.url && (card.url.includes('youtube.com') || card.url.includes('youtu.be'))) {
+        const videoId = extractYouTubeId(card.url);
+        if (videoId) {
+          card.screenshot = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+          card.screenshotReal = true;
+          // Fix title if it's just the video ID
+          if (card.title === videoId || card.title.includes(videoId) || card.title.length < 5) {
+            card.title = 'YouTube Video';
+          }
+        }
+        return;
+      }
+      
+      // Vimeo - use thumbnail API format
+      if (card.url && card.url.includes('vimeo.com')) {
+        const vimeoMatch = card.url.match(/vimeo\.com\/(\d+)/);
+        if (vimeoMatch) {
+          // Vimeo thumbnails need API call, so mark for retry
+          if (!card.screenshot || !card.screenshot.startsWith('http')) {
+            card.screenshot = generatePlaceholderThumbnail(card);
+            card.screenshotReal = false;
+          }
+        }
+        return;
+      }
+      
+      // GitHub - use opengraph image pattern
+      if (card.url && card.url.includes('github.com')) {
+        try {
+          const ghUrl = new URL(card.url);
+          const pathParts = ghUrl.pathname.split('/').filter(Boolean);
+          if (pathParts.length >= 2) {
+            // GitHub's OpenGraph image format
+            card.screenshot = `https://opengraph.githubassets.com/1/${pathParts[0]}/${pathParts[1]}`;
+            card.screenshotReal = true;
+          }
+        } catch (e) {}
+        return;
+      }
+      
+      // Reddit - use preview image if available in URL
+      if (card.url && (card.url.includes('reddit.com') || card.url.includes('redd.it'))) {
+        // Reddit previews need API, mark for retry
+        if (!card.screenshot || !card.screenshot.startsWith('http')) {
+          card.screenshot = generatePlaceholderThumbnail(card);
+          card.screenshotReal = false;
+        }
+        return;
+      }
+      
+      // Restricted sites - use placeholder (don't retry)
+      const restrictedSites = ['twitter.com', 'x.com', 'instagram.com', 'facebook.com', 'linkedin.com', 'tiktok.com'];
+      if (restrictedSites.some(site => card.url?.includes(site))) {
+        if (!card.screenshot || card.screenshot.length < 100) {
+          card.screenshot = generatePlaceholderThumbnail(card);
+          card.screenshotReal = false;
+        }
+        return;
+      }
+      
+      // All other URLs - check if screenshot is broken/missing
+      if (!card.screenshot || 
+          card.screenshot === 'null' || 
+          card.screenshot === 'undefined' ||
+          card.screenshot.length < 50) {
+        // Generate placeholder and add to retry queue on next render
+        card.screenshot = generatePlaceholderThumbnail(card);
+        card.screenshotReal = false;
+      }
+    });
   }
   
   userVotes = JSON.parse(localStorage.getItem('linkgrid-votes') || '{}');
@@ -6294,7 +6374,7 @@ function extractMetadataFromURL(url) {
       if (last.length > 3 && last.length < 60) title = last.charAt(0).toUpperCase() + last.slice(1);
     }
     if (u.hostname.includes('twitter.com') || u.hostname.includes('x.com')) title = 'Post on X';
-    else if (u.hostname.includes('youtube.com')) title = 'YouTube Video';
+    else if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) title = 'YouTube Video';
     else if (u.hostname.includes('github.com')) title = 'GitHub Repository';
     return { title, description: url, icon: `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=64`, hasMetadata: true };
   } catch(e) {
@@ -6461,12 +6541,19 @@ function generatePlaceholderThumbnail(card) {
 }
 
 // Get valid thumbnail or generate placeholder
-// Get valid thumbnail or generate placeholder
 function getCardThumbnail(card) {
-  // Check if screenshot exists and is valid
+  // 1. Try YouTube thumbnail first (most reliable)
+  if (card.url && (card.url.includes('youtube.com') || card.url.includes('youtu.be'))) {
+    const videoId = extractYouTubeId(card.url);
+    if (videoId) {
+      return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    }
+  }
+  
+  // 2. Check if screenshot exists and is valid
   if (card.screenshot) {
     // Valid URL
-    if (card.screenshot.startsWith('http')) {
+    if (card.screenshot.startsWith('http') && card.screenshot.length > 20) {
       return card.screenshot;
     }
     // Valid base64
@@ -6475,7 +6562,7 @@ function getCardThumbnail(card) {
     }
   }
   
-  // Try to get from photos
+  // 3. Try to get from photos
   if (card.photos && card.photos.length > 0) {
     const photo = card.photos[0];
     if (photo && (photo.startsWith('http') || photo.startsWith('data:image/'))) {
@@ -6483,20 +6570,202 @@ function getCardThumbnail(card) {
     }
   }
   
-  // Try to generate from URL for known services
-  if (card.url) {
-    // YouTube
-    if (card.url.includes('youtube.com') || card.url.includes('youtu.be')) {
-      const videoId = extractYouTubeId(card.url);
-      if (videoId) {
-        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-      }
-    }
-  }
-  
-  // Generate placeholder as last resort
+  // 4. Generate placeholder as last resort
   return generatePlaceholderThumbnail(card);
 }
+  
+  // ============== THUMBNAIL RETRY SYSTEM ==============
+  let thumbnailRetryQueue = new Set();
+  let thumbnailRetryInterval = null;
+
+  function handleThumbnailError(imgElement, cardId) {
+    // Prevent infinite loop
+    imgElement.onerror = null;
+    
+    const card = cards.find(c => c.id === cardId);
+    if (!card) {
+      imgElement.src = generateMockScreenshot('broken-link');
+      return;
+    }
+    
+    // Try YouTube thumbnail directly if it's a YouTube URL
+    if (card.url && (card.url.includes('youtube.com') || card.url.includes('youtu.be'))) {
+      const videoId = extractYouTubeId(card.url);
+      if (videoId) {
+        // Try different quality thumbnails
+        const currentSrc = imgElement.src;
+        if (currentSrc.includes('hqdefault')) {
+          imgElement.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+          imgElement.onerror = () => {
+            imgElement.onerror = null;
+            imgElement.src = generatePlaceholderThumbnail(card);
+          };
+          return;
+        }
+      }
+    }
+    
+    // Use generated placeholder
+    imgElement.src = generatePlaceholderThumbnail(card);
+    
+    // Add to retry queue if not already there
+    if (!card.screenshotReal && !thumbnailRetryQueue.has(cardId)) {
+      thumbnailRetryQueue.add(cardId);
+      startThumbnailRetryTimer();
+    }
+  }
+
+  function startThumbnailRetryTimer() {
+    if (thumbnailRetryInterval) return;
+    
+    // Retry every 30 seconds
+    thumbnailRetryInterval = setInterval(async () => {
+      if (thumbnailRetryQueue.size === 0) {
+        clearInterval(thumbnailRetryInterval);
+        thumbnailRetryInterval = null;
+        return;
+      }
+      
+      // Process up to 3 cards per cycle
+      const toRetry = [...thumbnailRetryQueue].slice(0, 3);
+      
+      for (const cardId of toRetry) {
+        const card = cards.find(c => c.id === cardId);
+        if (!card) {
+          thumbnailRetryQueue.delete(cardId);
+          continue;
+        }
+        
+        // Skip if already has real screenshot
+        if (card.screenshotReal) {
+          thumbnailRetryQueue.delete(cardId);
+          continue;
+        }
+        
+        // Try to fetch a real thumbnail
+        const newThumbnail = await tryFetchThumbnail(card);
+        if (newThumbnail) {
+          card.screenshot = newThumbnail;
+          card.screenshotReal = true;
+          thumbnailRetryQueue.delete(cardId);
+          saveCards();
+          renderGrid();
+          
+          // Also update Discover if open
+          if (document.getElementById('discoverView').classList.contains('active')) {
+            const bubble = bubbles.find(b => b.bubbleId === String(cardId));
+            if (bubble) {
+              bubble.screenshot = newThumbnail;
+              bubble.screenshotReal = true;
+            }
+            const bubbleImg = document.querySelector(`#bubble-${cardId} .bubble-card-image img`);
+            if (bubbleImg) bubbleImg.src = newThumbnail;
+          }
+          
+          console.log(`✅ Thumbnail updated for: ${card.title}`);
+        }
+      }
+    }, 30000);
+  }
+
+  async function tryFetchThumbnail(card) {
+    if (!card.url) return null;
+    
+    try {
+      const url = new URL(card.url);
+      const hostname = url.hostname.toLowerCase();
+      
+      // YouTube - always use direct thumbnail URL
+      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+        const videoId = extractYouTubeId(card.url);
+        if (videoId) {
+          const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+          if (await testImageUrl(thumbUrl)) return thumbUrl;
+          const mqUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+          if (await testImageUrl(mqUrl)) return mqUrl;
+        }
+        return null;
+      }
+      
+      // GitHub - use opengraph image
+      if (hostname.includes('github.com')) {
+        const pathParts = url.pathname.split('/').filter(Boolean);
+        if (pathParts.length >= 2) {
+          const ghThumb = `https://opengraph.githubassets.com/1/${pathParts[0]}/${pathParts[1]}`;
+          if (await testImageUrl(ghThumb)) return ghThumb;
+        }
+        return null;
+      }
+      
+      // Medium - use miro.medium.com pattern
+      if (hostname.includes('medium.com')) {
+        // Medium uses dynamic OG images, try screenshot service
+        const result = await generateScreenshot(card.url);
+        if (result.isReal) return result.url;
+        return null;
+      }
+      
+      // Wikipedia - use page image API
+      if (hostname.includes('wikipedia.org')) {
+        const pageTitle = url.pathname.split('/wiki/')[1];
+        if (pageTitle) {
+          const wikiThumb = `https://en.wikipedia.org/wiki/Special:FilePath/${decodeURIComponent(pageTitle)}?width=400`;
+          // Wikipedia redirects, so test with fetch
+          try {
+            const resp = await fetch(wikiThumb, { method: 'HEAD', mode: 'no-cors' });
+            // If no error, URL is likely valid
+            return wikiThumb;
+          } catch (e) {}
+        }
+      }
+      
+      // News sites & blogs - try metadata fetch first
+      const newsSites = ['nytimes.com', 'bbc.com', 'cnn.com', 'theverge.com', 'techcrunch.com', 'wired.com', 'arstechnica.com'];
+      if (newsSites.some(site => hostname.includes(site))) {
+        const metadata = await fetchMetadata(card.url);
+        if (metadata.image && await testImageUrl(metadata.image)) {
+          return metadata.image;
+        }
+      }
+      
+      // Restricted sites - don't retry
+      const restrictedSites = ['twitter.com', 'x.com', 'instagram.com', 'facebook.com', 'linkedin.com', 'tiktok.com'];
+      if (restrictedSites.some(site => hostname.includes(site))) {
+        return null;
+      }
+      
+      // Generic: try metadata fetch first (for OpenGraph images)
+      const metadata = await fetchMetadata(card.url);
+      if (metadata.image) {
+        if (await testImageUrl(metadata.image)) {
+          return metadata.image;
+        }
+      }
+      
+      // Last resort: try screenshot service
+      const result = await generateScreenshot(card.url);
+      if (result.isReal) {
+        return result.url;
+      }
+      
+    } catch (e) {
+      console.warn('Thumbnail fetch failed for:', card.url, e);
+    }
+    
+    return null;
+  }
+
+  function testImageUrl(url) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = url;
+      // Timeout after 5 seconds
+      setTimeout(() => resolve(false), 5000);
+    });
+  }
+  
 
 async function retryScreenshot(cardId) {
   const card = cards.find(c => c.id === cardId);
@@ -7099,7 +7368,7 @@ function renderGrid() {
         ${bulkSelectMode ? `<input type="checkbox" ${selectedCards.has(card.id)?'checked':''} onclick="toggleCardSelection(${card.id},event)" style="position:absolute;top:0.75rem;left:0.75rem;width:20px;height:20px;z-index:10">` : ''}
         ${!compact ? `<button class="card-star ${card.starred?'active':''}" onclick="event.stopPropagation();toggleStar(${card.id})">${card.starred?'⭐':'☆'}</button>` : ''}
         <div class="card-image">
-          <img src="${card.screenshot || card.photos?.[0] || ''}" alt="${card.title}" loading="lazy">
+          <img src="${getCardThumbnail(card)}" alt="${sanitizeHTML(card.title)}" loading="lazy" onerror="handleThumbnailError(this, ${card.id})">
           <div class="card-badges">
             <span class="badge">${emoji}</span>
             ${v ? `<span class="badge badge-vote ${v<0?'negative':''}">${v>0?'+':''}${v}</span>` : ''}
