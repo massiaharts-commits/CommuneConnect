@@ -8493,18 +8493,36 @@ function toggleCollectionPrivacy(collectionId) {
 
 // ============== SUPABASE AUTH ==============
 async function initSupabase() {
-  if (typeof supabase === 'undefined' || !SUPABASE_URL || !SUPABASE_ANON_KEY) return false;
+  if (typeof supabase === 'undefined' || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.log('❌ Supabase not available');
+    return false;
+  }
   
   try {
-    // Initialize with explicit persistence settings
+    console.log('🔧 Initializing Supabase...');
+    
+    // Initialize with explicit persistence settings (Supabase v2 format)
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
-        persistSession: true,           // Keep session in localStorage
-        storageKey: 'communecollab-auth', // Unique key for this app
-        autoRefreshToken: true,         // Automatically refresh expired tokens
-        detectSessionInUrl: true        // Handle magic link redirects
+        persistSession: true,
+        storage: window.localStorage,
+        storageKey: 'communecollab-auth-token',
+        autoRefreshToken: true,
+        detectSessionInUrl: true
       }
     });
+    
+    // Debug: Check what's in localStorage
+    const storedAuth = localStorage.getItem('communecollab-auth-token');
+    console.log('📦 Stored auth data exists:', !!storedAuth);
+    if (storedAuth) {
+      try {
+        const parsed = JSON.parse(storedAuth);
+        console.log('📦 Stored session expires:', parsed?.expires_at ? new Date(parsed.expires_at * 1000).toLocaleString() : 'unknown');
+      } catch(e) {
+        console.log('📦 Could not parse stored auth');
+      }
+    }
     
     // Check for auth callback in URL (magic link redirect)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -8514,18 +8532,16 @@ async function initSupabase() {
     if (accessToken && refreshToken) {
       console.log('🔐 Processing magic link callback...');
       
-      // Set the session from the URL tokens
       const { data, error } = await supabaseClient.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken
       });
       
       if (error) {
-        console.error('Auth callback error:', error);
+        console.error('❌ Auth callback error:', error);
         showToast('Sign in failed: ' + error.message, 'error');
       } else if (data.session) {
         currentUser = data.session.user;
-        // Clear the hash from URL
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
         console.log('✅ Signed in via magic link:', currentUser.email);
         onUserLoggedIn();
@@ -8533,29 +8549,49 @@ async function initSupabase() {
       }
     }
     
-    // Check for error in URL (expired link, etc.)
+    // Check for error in URL
     const errorCode = hashParams.get('error_code');
     const errorDesc = hashParams.get('error_description');
     if (errorCode) {
-      console.error('Auth error:', errorCode, errorDesc);
+      console.error('❌ Auth error in URL:', errorCode, errorDesc);
       showToast('Sign in failed: ' + (errorDesc?.replace(/\+/g, ' ') || errorCode), 'error');
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     }
     
-    // Check for existing session (THIS IS KEY FOR PERSISTENCE)
+    // Check for existing session
     console.log('🔍 Checking for existing session...');
-    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+    const { data, error: sessionError } = await supabaseClient.auth.getSession();
     
     if (sessionError) {
-      console.error('Session retrieval error:', sessionError);
+      console.error('❌ Session retrieval error:', sessionError);
     }
     
-    if (session) {
-      currentUser = session.user;
+    console.log('📋 getSession result:', { 
+      hasSession: !!data?.session, 
+      user: data?.session?.user?.email || 'none',
+      expiresAt: data?.session?.expires_at ? new Date(data.session.expires_at * 1000).toLocaleString() : 'none'
+    });
+    
+    if (data?.session) {
+      currentUser = data.session.user;
       console.log('✅ Restored existing session:', currentUser.email);
-      onUserLoggedIn(true); // true = silent login (don't show toast)
+      onUserLoggedIn(true);
     } else {
       console.log('ℹ️ No existing session found');
+      
+      // Try to refresh the session in case it just needs a token refresh
+      console.log('🔄 Attempting token refresh...');
+      const { data: refreshData, error: refreshError } = await supabaseClient.auth.refreshSession();
+      
+      if (refreshError) {
+        console.log('ℹ️ Refresh failed (expected if no session):', refreshError.message);
+      } else if (refreshData?.session) {
+        currentUser = refreshData.session.user;
+        console.log('✅ Session restored via refresh:', currentUser.email);
+        onUserLoggedIn(true);
+        return true;
+      }
+      
       // Only show auth modal on first visit
       const hasSeenAuthPrompt = localStorage.getItem('linkgrid-seen-auth');
       if (!hasSeenAuthPrompt) {
@@ -8566,9 +8602,9 @@ async function initSupabase() {
       }
     }
     
-    // Listen for auth state changes (handles token refresh, sign out, etc.)
+    // Listen for auth state changes
     supabaseClient.auth.onAuthStateChange((event, session) => {
-      console.log('🔄 Auth state changed:', event);
+      console.log('🔄 Auth state changed:', event, session?.user?.email || 'no user');
       
       if (event === 'SIGNED_IN' && session) {
         currentUser = session.user;
@@ -8585,17 +8621,19 @@ async function initSupabase() {
         if (session) {
           currentUser = session.user;
         }
-      } else if (event === 'USER_UPDATED') {
-        console.log('👤 User updated');
-        if (session) {
+      } else if (event === 'INITIAL_SESSION') {
+        // This fires on page load with the restored session
+        console.log('📋 Initial session event:', session?.user?.email || 'no session');
+        if (session && !currentUser) {
           currentUser = session.user;
+          onUserLoggedIn(true);
         }
       }
     });
     
     return true;
   } catch (e) {
-    console.error('Supabase init error:', e);
+    console.error('❌ Supabase init error:', e);
     return false;
   }
 }
