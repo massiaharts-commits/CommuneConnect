@@ -43,10 +43,55 @@
       content: '';
       position: fixed;
       inset: 0;
-      background: radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+      background: 
+        radial-gradient(ellipse 60% 40% at 20% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 50% at 80% 30%, rgba(236, 72, 153, 0.08) 0%, transparent 40%),
+        radial-gradient(ellipse 70% 50% at 70% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 40% at 10% 70%, rgba(245, 158, 11, 0.06) 0%, transparent 40%);
       pointer-events: none;
       z-index: 0;
+      animation: bodyGradientShift 20s ease-in-out infinite;
+    }
+    
+    @keyframes bodyGradientShift {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
+    }
+    
+    /* Personal star field for main view */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: 
+        radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.4) 50%, transparent 50%),
+        radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.3) 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 40% 10%, rgba(255,255,255,0.5) 50%, transparent 50%),
+        radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,0.25) 50%, transparent 50%),
+        radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.35) 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 85% 55%, rgba(255,255,255,0.4) 50%, transparent 50%),
+        radial-gradient(1px 1px at 15% 65%, rgba(255,255,255,0.3) 50%, transparent 50%),
+        radial-gradient(1px 1px at 30% 80%, rgba(255,255,255,0.25) 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 50% 70%, rgba(255,255,255,0.35) 50%, transparent 50%),
+        radial-gradient(1px 1px at 65% 85%, rgba(255,255,255,0.3) 50%, transparent 50%),
+        radial-gradient(1px 1px at 80% 75%, rgba(255,255,255,0.4) 50%, transparent 50%),
+        radial-gradient(1px 1px at 95% 40%, rgba(255,255,255,0.25) 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 5% 90%, rgba(255,255,255,0.3) 50%, transparent 50%),
+        radial-gradient(1px 1px at 45% 25%, rgba(255,255,255,0.35) 50%, transparent 50%),
+        radial-gradient(1px 1px at 75% 5%, rgba(255,255,255,0.3) 50%, transparent 50%),
+        radial-gradient(2px 2px at 20% 50%, rgba(245, 158, 11, 0.4) 50%, transparent 50%),
+        radial-gradient(2px 2px at 60% 60%, rgba(236, 72, 153, 0.3) 50%, transparent 50%),
+        radial-gradient(2px 2px at 90% 25%, rgba(99, 102, 241, 0.35) 50%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+      animation: starsTwinkle 8s ease-in-out infinite;
+    }
+    
+    @keyframes starsTwinkle {
+      0%, 100% { opacity: 0.6; }
+      25% { opacity: 0.8; }
+      50% { opacity: 0.5; }
+      75% { opacity: 0.9; }
     }
     .header {
       position: sticky;
@@ -164,6 +209,11 @@
       font-family: inherit;
       cursor: pointer;
     }
+    .filter-select option {
+      background: #1a1a1f;
+      color: #f4f4f5;
+      padding: 0.5rem;
+    }
     .chips { display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.25rem 0; scrollbar-width: none; }
     .chips::-webkit-scrollbar { display: none; }
     .chip {
@@ -216,17 +266,17 @@
       cursor: pointer;
       width: 100%;
     }
-    .grid {
-	  max-width: 1400px;
-	  margin: 0 auto;
-	  padding: 1.5rem 1.25rem;
-	  display: grid;
-	  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-	  gap: 1.25rem;
-	  position: relative;
-	  z-index: 1;
-	  align-items: start;
-	}
+   .grid {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.25rem;
+      position: relative;
+      z-index: 2;
+      align-items: start;
+    }
     @media (max-width: 640px) { .grid { grid-template-columns: 1fr; padding: 1rem; } }
     .card {
 	  background: var(--bg-card);
@@ -365,7 +415,6 @@
     .card-footer .btn { flex: 1; padding: 0.5rem; font-size: 0.7rem; }
     .card.compact { display: flex; align-items: center; padding: 0.75rem 1rem; }
     .card.compact .card-image,
-    .card.compact .card-footer,
     .card.compact .card-notes,
     .card.compact .card-tags,
     .card.compact .card-location,
@@ -1154,7 +1203,37 @@
       z-index: 10;
       position: relative;
     }
-
+    .discover-search-box {
+      position: relative;
+      flex: 1;
+      max-width: 400px;
+    }
+    .discover-search-input {
+      width: 100%;
+      padding: 0.6rem 1rem 0.6rem 2.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      color: var(--text-1);
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+    .discover-search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+    .discover-search-input::placeholder {
+      color: var(--text-3);
+    }
+    .discover-search-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-3);
+      font-size: 0.85rem;
+    }
     .discover-canvas {
       flex: 1;
       overflow: hidden;
@@ -1241,6 +1320,7 @@
       position: absolute;
       inset: 0;
       overflow: visible;
+      z-index: 10;
     }
 
     /* ========== BUBBLE CARD STYLES ========== */
@@ -1845,7 +1925,7 @@
 <body>
 <header class="header">
   <div class="header-main">
-    <div class="logo">
+    <div class="logo" onclick="openDiscover()" style="cursor:pointer;" title="Open Discover">
       <h1>CommuneCollab</h1>
       <span class="logo-sub"><span id="link-count">0</span> links · <span id="contributor-count">1</span> contributors</span>
     </div>
@@ -2225,9 +2305,15 @@
 <!-- DISCOVER VIEW -->
 <div class="discover-view" id="discoverView">
   <div class="discover-header">
-  <div>
-    <h2 style="font-size:1.25rem;font-weight:700;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🧭 Discover</h2>
-    <span style="font-size:0.75rem;color:var(--text-3)">Community feed</span>
+  <div style="display:flex;align-items:center;gap:1.5rem;flex:1;">
+    <div>
+      <h2 style="font-size:1.25rem;font-weight:700;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🧭 Discover</h2>
+      <span style="font-size:0.75rem;color:var(--text-3)">Community feed</span>
+    </div>
+    <div class="discover-search-box">
+      <span class="discover-search-icon">🔍</span>
+      <input type="text" class="discover-search-input" id="discoverSearchBar" placeholder="Search tags..." oninput="handleDiscoverSearch()">
+    </div>
   </div>
   <div style="display:flex;gap:0.5rem;align-items:center">
     <button class="btn btn-secondary" onclick="closeDiscover()" style="font-size:0.8rem;padding:0.5rem 1rem;">
@@ -2240,7 +2326,7 @@
   </div>
 </div>
   <div class="discover-canvas" id="discoverCanvas">
-    <svg id="connectionsSvg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1"></svg>
+    <svg id="connectionsSvg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5"></svg>
     <div class="bubble-container" id="bubbleContainer"></div>
     <div class="discover-stats">
       <div class="discover-stat"><strong id="statNodes">0</strong> cards</div>
@@ -2574,9 +2660,9 @@ async function buildBubbleData() {
 
 // Fibonacci spiral layout
 function layoutFibonacciSpiral() {
-  const container = document.getElementById('bubbleContainer');
-  const width = container.offsetWidth || window.innerWidth;
-  const height = (container.offsetHeight || window.innerHeight) - 80;
+  const canvas = document.getElementById('discoverCanvas');
+  const width = canvas.offsetWidth || window.innerWidth;
+  const height = (canvas.offsetHeight || window.innerHeight) - 80;
   const centerX = width / 2;
   const centerY = height / 2;
   
@@ -3122,7 +3208,28 @@ function filterDiscoverByTag() {
     }
   });
 }
-
+function handleDiscoverSearch() {
+  const query = document.getElementById('discoverSearchBar').value.toLowerCase().trim();
+  
+  document.querySelectorAll('.bubble-card').forEach(el => {
+    const bubble = bubbles.find(b => b.bubbleId === el.dataset.id);
+    if (!bubble) return;
+    
+    const tags = (bubble.tags || []).join(' ').toLowerCase();
+    const title = (bubble.title || '').toLowerCase();
+    const matches = !query || tags.includes(query) || title.includes(query);
+    
+    if (matches) {
+      el.style.opacity = '';
+      el.style.pointerEvents = 'auto';
+      el.style.filter = '';
+    } else {
+      el.style.opacity = '0.15';
+      el.style.pointerEvents = 'none';
+      el.style.filter = 'blur(2px)';
+    }
+  });
+}
 // Canvas drag and zoom
 function setupCanvasDrag() {
   const canvas = document.getElementById('discoverCanvas');
@@ -3963,6 +4070,11 @@ function getCardThumbnail(card) {
 async function retryScreenshot(cardId) {
   const card = cards.find(c => c.id === cardId);
   if (!card || card.screenshotReal) return;
+  
+  // Skip retry for restricted sites
+  const restrictedSites = ['twitter.com', 'x.com', 'instagram.com', 'facebook.com', 'linkedin.com', 'tiktok.com'];
+  if (restrictedSites.some(site => card.url?.includes(site))) return;
+  
   const result = await generateScreenshot(card.url);
   card.screenshot = result.url;
   card.screenshotReal = result.isReal;
@@ -4036,10 +4148,32 @@ async function addLink() {
     return;
   }
   
-  const [screenshotResult, metadata] = await Promise.all([
-    generateScreenshot(url),
-    fetchMetadata(url)
-  ]);
+  // Check if site blocks previews
+  const restrictedSites = ['twitter.com', 'x.com', 'instagram.com', 'facebook.com', 'linkedin.com', 'tiktok.com'];
+  const isRestricted = restrictedSites.some(site => url.includes(site));
+  
+  let screenshotResult, metadata;
+  
+  if (isRestricted && !pendingLinkScreenshot) {
+    // Use generated placeholder for restricted sites
+    metadata = await fetchMetadata(url);
+    const placeholderCard = { title: metadata.title || url, topic: topic, url: url };
+    screenshotResult = { 
+      url: generatePlaceholderThumbnail(placeholderCard), 
+      isReal: false, 
+      success: true 
+    };
+  } else if (pendingLinkScreenshot) {
+    // User uploaded a screenshot
+    metadata = await fetchMetadata(url);
+    screenshotResult = { url: pendingLinkScreenshot, isReal: true, success: true };
+    pendingLinkScreenshot = null;
+  } else {
+    [screenshotResult, metadata] = await Promise.all([
+      generateScreenshot(url),
+      fetchMetadata(url)
+    ]);
+  }
   
   const newCard = {
     id: Date.now(),
@@ -4078,7 +4212,7 @@ function openEditModal(id) {
   currentCardId = id;
   const card = cards.find(c => c.id === id);
   if (!card) return;
-  
+  const isGuideCard = card.isGuide || (card.url?.startsWith('thought://') && card.url?.includes('-guide'));
   document.getElementById('editModal').classList.add('active');
   
   // Image
@@ -4102,13 +4236,27 @@ function openEditModal(id) {
     removeBtn.style.display = 'none';
   }
   
+  
   // Basic fields
   document.getElementById('editTitle').value = card.title;
-  const urlLink = document.getElementById('editUrlLink');
-  urlLink.href = card.url;
-  urlLink.textContent = card.url + ' ↗';
-  document.getElementById('editLocation').value = card.location || '';
-  document.getElementById('editNotes').value = card.notes || '';
+  document.getElementById('editTitle').disabled = isGuideCard;
+  document.getElementById('editTitle').style.opacity = isGuideCard ? '0.6' : '1';
+  
+  document.getElementById('editLocation').disabled = isGuideCard;
+  document.getElementById('editLocation').style.opacity = isGuideCard ? '0.6' : '1';
+  
+  document.getElementById('editNotes').disabled = isGuideCard;
+  document.getElementById('editNotes').style.opacity = isGuideCard ? '0.6' : '1';
+  
+  // Hide delete button and image change for guide cards
+  const deleteBtn = document.querySelector('.edit-modal-footer .btn-danger');
+  if (deleteBtn) deleteBtn.style.display = isGuideCard ? 'none' : 'block';
+  
+  const imageActions = document.querySelector('.edit-image-actions');
+  if (imageActions) imageActions.style.display = isGuideCard ? 'none' : 'flex';
+  
+  const imageContainer = document.querySelector('.edit-image-container');
+  if (imageContainer) imageContainer.style.pointerEvents = isGuideCard ? 'none' : 'auto';
   
   // Info footer
   document.getElementById('editInfo').innerHTML = `Created: ${new Date(card.createdAt).toLocaleDateString()} · Edited: ${new Date(card.lastEdited).toLocaleDateString()} by ${card.editedBy}`;
@@ -4145,6 +4293,12 @@ function updateCard() {
 
 function deleteCard() {
   const card = cards.find(c => c.id === currentCardId);
+  
+  // Prevent deleting guide cards
+  if (card?.isGuide || (card?.url?.startsWith('thought://') && card?.url?.includes('-guide'))) {
+    showToast('Guide cards cannot be deleted', 'error');
+    return;
+  }
   
   // Check ownership for cloud cards
   if (card?.cloudUserId && currentUser && card.cloudUserId !== currentUser.id) {
@@ -4212,9 +4366,20 @@ function renderEditTags() {
   const card = cards.find(c => c.id === currentCardId);
   const container = document.getElementById('tagsContainer');
   if (!card || !container) return;
+  
+  const isGuideCard = card.isGuide || (card.url?.startsWith('thought://') && card.url?.includes('-guide'));
+  
   container.innerHTML = card.tags.map(tag => `
-    <span class="tag" onclick="removeTag('${tag}')" title="Click to remove">${tag}</span>
+    <span class="tag" ${!isGuideCard ? `onclick="removeTag('${tag}')" title="Click to remove" style="cursor:pointer"` : ''}>
+      ${tag}${!isGuideCard ? ' ×' : ''}
+    </span>
   `).join('');
+  
+  // Hide tag input for guide cards
+  const tagInput = document.getElementById('newTag');
+  if (tagInput) {
+    tagInput.style.display = isGuideCard ? 'none' : 'block';
+  }
 }
 
 // Render photos in new grid format
@@ -4478,11 +4643,11 @@ function renderGrid() {
           ${card.tags?.length ? `<div class="card-tags">${card.tags.map(t=>`<span class="tag">${sanitizeHTML(t)}</span>`).join('')}</div>` : ''}
           <div class="card-meta"><span>👤 ${showContributors ? sanitizeHTML(card.addedBy||'Unknown') : 'Anonymous'}</span></div>
         </div>
-        ${!compact ? `<div class="card-footer">
-          <button class="btn btn-ghost" onclick="event.stopPropagation();toggleCard(${card.id})">▲</button>
-          <button class="btn btn-ghost" onclick="event.stopPropagation();openAddToCollection(${card.id})">📁</button>
-          <button class="btn btn-ghost" onclick="event.stopPropagation();showQuickActions(${card.id})">⋮</button>
-        </div>` : ''}
+        <div class="card-footer" ${compact ? 'style="padding:0.5rem"' : ''}>
+          <button class="btn btn-ghost" onclick="event.stopPropagation();toggleCard(${card.id})">${compact ? '▼' : '▲'}</button>
+          ${!compact ? `<button class="btn btn-ghost" onclick="event.stopPropagation();openAddToCollection(${card.id})">📁</button>
+          <button class="btn btn-ghost" onclick="event.stopPropagation();showQuickActions(${card.id})">⋮</button>` : ''}
+        </div>
       </div>
     `;
   }).join('');
