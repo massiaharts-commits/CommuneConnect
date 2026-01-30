@@ -5855,12 +5855,12 @@ async function performInitialSync() {
 
 // Get a screenshot that's safe to store in the database
 function getStorableScreenshot(card) {
-  // If it's already a URL (not base64), store it directly
+  // If it's already a URL (including Supabase storage), store it directly
   if (card.screenshot && card.screenshot.startsWith('http')) {
     return card.screenshot;
   }
   
-  // For YouTube, always use the thumbnail URL (small and reliable)
+  // For YouTube, always use the thumbnail URL
   if (card.url && (card.url.includes('youtube.com') || card.url.includes('youtu.be'))) {
     const videoId = extractYouTubeId(card.url);
     if (videoId) {
@@ -5868,16 +5868,122 @@ function getStorableScreenshot(card) {
     }
   }
   
-  // For base64 images, only store if under 50KB (Supabase limit)
+  // For base64 images, only store if very small (most won't be)
+  // Larger images should have been uploaded to storage already
   if (card.screenshot && card.screenshot.startsWith('data:')) {
-    if (card.screenshot.length < 50000) {
+    if (card.screenshot.length < 30000) { // ~22KB
       return card.screenshot;
     }
-    // Too large - return null, will regenerate on display
+    // Too large - return null, the image is in local storage only
+    console.log('⚠️ Screenshot too large to sync, stored locally only');
     return null;
   }
   
   return null;
+}
+
+// Upload image to Supabase Storage and return public URL
+async function uploadImageToStorage(base64Data, cardId, imageType = 'screenshot') {
+  if (!supabaseClient || !currentUser) {
+    console.log('⚠️ Cannot upload image: not authenticated');
+    return null;
+  }
+  
+  if (!base64Data || !base64Data.startsWith('data:image/')) {
+    return null;
+  }
+  
+  try {
+    // Convert base64 to blob
+    const response = await fetch(base64Data);
+    const blob = await response.blob();
+    
+    // Check file size (max 5MB)
+    if (blob.size > 5 * 1024 * 1024) {
+      console.warn('⚠️ Image too large, compressing...');
+      // Compress the image
+      const compressedBase64 = await compressImage(base64Data, 800, 0.7);
+      const compressedResponse = await fetch(compressedBase64);
+      const compressedBlob = await compressedResponse.blob();
+      
+      if (compressedBlob.size > 5 * 1024 * 1024) {
+        console.error('❌ Image still too large after compression');
+        return null;
+      }
+      
+      return uploadBlobToStorage(compressedBlob, cardId, imageType);
+    }
+    
+    return uploadBlobToStorage(blob, cardId, imageType);
+    
+  } catch (e) {
+    console.error('❌ Image upload error:', e);
+    return null;
+  }
+}
+
+async function uploadBlobToStorage(blob, cardId, imageType) {
+  if (!supabaseClient || !currentUser) return null;
+  
+  try {
+    // Create unique filename: userId/cardId/type_timestamp.jpg
+    const ext = blob.type.split('/')[1] || 'jpg';
+    const fileName = `${currentUser.id}/${cardId}/${imageType}_${Date.now()}.${ext}`;
+    
+    console.log('📤 Uploading image:', fileName);
+    
+    const { data, error } = await supabaseClient.storage
+      .from('card-images')
+      .upload(fileName, blob, {
+        cacheControl: '3600',
+        upsert: true
+      });
+    
+    if (error) {
+      console.error('❌ Storage upload error:', error);
+      return null;
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabaseClient.storage
+      .from('card-images')
+      .getPublicUrl(fileName);
+    
+    console.log('✅ Image uploaded:', urlData.publicUrl);
+    return urlData.publicUrl;
+    
+  } catch (e) {
+    console.error('❌ Blob upload error:', e);
+    return null;
+  }
+}
+
+// Delete image from storage when card is deleted
+async function deleteImageFromStorage(imageUrl) {
+  if (!supabaseClient || !currentUser || !imageUrl) return;
+  
+  // Only delete if it's our storage URL
+  if (!imageUrl.includes('supabase.co/storage')) return;
+  
+  try {
+    // Extract path from URL
+    const urlParts = imageUrl.split('/card-images/');
+    if (urlParts.length < 2) return;
+    
+    const filePath = urlParts[1];
+    
+    const { error } = await supabaseClient.storage
+      .from('card-images')
+      .remove([filePath]);
+    
+    if (error) {
+      console.warn('⚠️ Could not delete image:', error);
+    } else {
+      console.log('🗑️ Image deleted from storage');
+    }
+  } catch (e) {
+    console.error('❌ Delete image error:', e);
+  }
 }
 
 // Upload a single card to cloud
@@ -7238,7 +7344,19 @@ function deleteCard() {
   
   if (!confirm('Delete this link?')) return;
   
-  // Delete from cloud first
+  // Delete images from cloud storage
+  if (card?.screenshot?.includes('supabase.co/storage')) {
+    deleteImageFromStorage(card.screenshot);
+  }
+  if (card?.photos?.length) {
+    card.photos.forEach(photo => {
+      if (photo.includes('supabase.co/storage')) {
+        deleteImageFromStorage(photo);
+      }
+    });
+  }
+  
+  // Delete from cloud
   deleteCardFromCloud(currentCardId);
   
   // Delete locally
@@ -7253,6 +7371,8 @@ function deleteCard() {
   closeEditModal();
   showToast('Deleted', 'success');
 }
+
+
 // ============== TAGS ==============
 function renderTags() {
   const card = cards.find(c => c.id === currentCardId);
@@ -7439,26 +7559,52 @@ function getRelativeTime(timestamp) {
 }
 
 // ============== PHOTOS ==============
-function addPhotos(event) {
+async function addPhotos(event) {
   const files = Array.from(event.target.files);
   const card = cards.find(c => c.id === currentCardId);
   if (!card) return;
   if (!card.photos) card.photos = [];
   
-  let loaded = 0;
-  files.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      card.photos.push(e.target.result);
-      loaded++;
-      if (loaded === files.length) {
-        saveCards();
-        renderPhotoGallery();
-        renderGrid();
-      }
-    };
-    reader.readAsDataURL(file);
-  });
+  showToast(`📤 Uploading ${files.length} photo(s)...`, 'default');
+  
+  let uploadedCount = 0;
+  let localCount = 0;
+  
+  for (const file of files) {
+    const base64 = await new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.readAsDataURL(file);
+    });
+    
+    // Compress
+    const compressed = await compressImage(base64, 1200, 0.8);
+    
+    // Try cloud upload
+    let photoUrl = null;
+    if (supabaseClient && currentUser) {
+      photoUrl = await uploadImageToStorage(compressed, card.id, `photo_${Date.now()}`);
+    }
+    
+    if (photoUrl) {
+      card.photos.push(photoUrl);
+      uploadedCount++;
+    } else {
+      card.photos.push(compressed);
+      localCount++;
+    }
+  }
+  
+  saveCards();
+  renderEditPhotos();
+  renderGrid();
+  
+  if (uploadedCount > 0 && localCount === 0) {
+    showToast(`✅ ${uploadedCount} photo(s) uploaded!`, 'success');
+  } else if (localCount > 0) {
+    showToast(`📷 ${uploadedCount} uploaded, ${localCount} saved locally`, 'default');
+  }
+  
   event.target.value = '';
 }
 
@@ -8048,22 +8194,53 @@ function handleUploadZoneClick(e) {
 async function handleScreenshotUpload(e) {
   const file = e.target.files[0];
   if (!file || !file.type.startsWith('image/')) return;
+  
   const reader = new FileReader();
   reader.onload = async (ev) => {
     const card = cards.find(c => c.id === currentCardId);
     if (!card) return;
-    const compressed = await compressImage(ev.target.result);
-    card.screenshot = compressed;
-    card.screenshotReal = true;
-    card.customScreenshot = true;
-    document.getElementById('detailImage').src = compressed;
-    document.getElementById('detailImage').style.display = 'block';
-    document.getElementById('uploadPrompt').style.display = 'none';
-    document.getElementById('uploadZone').classList.add('has-image');
-    document.getElementById('removeImageBtn').style.display = 'block';
+    
+    // Show loading state
+    const detailImage = document.getElementById('detailImage');
+    detailImage.style.opacity = '0.5';
+    showToast('📤 Uploading image...', 'default');
+    
+    // Compress the image
+    const compressed = await compressImage(ev.target.result, 800, 0.8);
+    
+    // Try to upload to cloud storage
+    let imageUrl = null;
+    if (supabaseClient && currentUser) {
+      imageUrl = await uploadImageToStorage(compressed, card.id, 'screenshot');
+    }
+    
+    if (imageUrl) {
+      // Success - use cloud URL
+      card.screenshot = imageUrl;
+      card.screenshotReal = true;
+      card.customScreenshot = true;
+      console.log('✅ Screenshot uploaded to cloud:', imageUrl);
+    } else {
+      // Fallback - store locally
+      card.screenshot = compressed;
+      card.screenshotReal = true;
+      card.customScreenshot = true;
+      console.log('⚠️ Screenshot saved locally (not synced)');
+    }
+    
+    // Update UI
+    detailImage.src = card.screenshot;
+    detailImage.style.opacity = '1';
+    detailImage.style.display = 'block';
+    
     saveCards();
     renderGrid();
-    showToast('Screenshot uploaded', 'success');
+    
+    if (imageUrl) {
+      showToast('✅ Screenshot uploaded!', 'success');
+    } else {
+      showToast('📷 Screenshot saved locally', 'default');
+    }
   };
   reader.readAsDataURL(file);
   e.target.value = '';
