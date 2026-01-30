@@ -3838,7 +3838,12 @@
       <button class="btn btn-danger" style="width:100%" onclick="signOut()">🚪 Sign Out</button>
     </div>
     
-    <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="usernameInput" placeholder="Anonymous"><p style="font-size:0.7rem;color:var(--text-3);margin-top:0.5rem">Shown on your cards, votes, and comments</p></div>
+    <div class="form-group">
+      <label class="form-label">👤 Display Name</label>
+      <input type="text" class="form-input" id="usernameInput" placeholder="Choose a display name">
+      <p style="font-size:0.7rem;color:var(--text-3);margin-top:0.5rem">This is how others see you. Your email is never shown.</p>
+      <button class="btn btn-secondary" style="width:100%;margin-top:0.5rem" onclick="updateAllCardsUsername()">🔄 Update all my cards with this name</button>
+    </div>
     
     <div class="form-group">
       <label class="form-label">🔒 Privacy</label>
@@ -5795,7 +5800,7 @@ function cloudCardToLocal(cloudCard) {
     photos: [],
     comments: [],
     starred: false,
-    addedBy: cloudCard.added_by,
+    addedBy: cloudCard.added_by || 'Anonymous',
     createdAt: cloudCard.created_at,
     lastEdited: cloudCard.updated_at,
     editedBy: cloudCard.added_by,
@@ -7382,7 +7387,7 @@ function renderGrid() {
           ${card.location ? `<div class="card-location">📍 ${sanitizeHTML(card.location)}</div>` : ''}
           ${card.notes ? `<p class="card-notes">${sanitizeHTML(card.notes)}</p>` : ''}
           ${card.tags?.length ? `<div class="card-tags">${card.tags.map(t=>`<span class="tag">${sanitizeHTML(t)}</span>`).join('')}</div>` : ''}
-          <div class="card-meta"><span>👤 ${showContributors ? sanitizeHTML(card.addedBy||'Unknown') : 'Anonymous'}</span></div>
+          <div class="card-meta"><span>👤 ${showContributors ? sanitizeHTML(card.addedBy||'Anonymous') : 'Anonymous'}</span></div>
         </div>
         <div class="card-footer" ${compact ? 'style="padding:0.5rem"' : ''}>
           <button class="btn btn-ghost" onclick="event.stopPropagation();toggleCard(${card.id})">${compact ? '▼' : '▲'}</button>
@@ -8039,6 +8044,39 @@ function saveSettings() {
   showToast('Saved!', 'success');
 }
 
+function updateAllCardsUsername() {
+  const newName = document.getElementById('usernameInput').value.trim();
+  if (!newName) {
+    showToast('Enter a display name first', 'error');
+    return;
+  }
+  
+  const sanitizedName = sanitizeUsername(newName);
+  let updatedCount = 0;
+  
+  cards.forEach(card => {
+    // Only update cards that belong to this user
+    if (card.addedBy === username || 
+        card.addedBy === 'You' || 
+        card.addedBy === currentUser?.email?.split('@')[0] ||
+        card.cloudUserId === currentUser?.id ||
+        card.isOwnCard) {
+      card.addedBy = sanitizedName;
+      card.editedBy = sanitizedName;
+      updatedCount++;
+    }
+  });
+  
+  // Update the global username
+  username = sanitizedName;
+  localStorage.setItem('linkgrid-username', username);
+  
+  saveCards();
+  renderGrid();
+  
+  showToast(`✅ Updated ${updatedCount} cards to "${sanitizedName}"`, 'success');
+}
+
 function toggleShowContributors() {
   showContributors = document.getElementById('showContributorsToggle').checked;
   localStorage.setItem('linkgrid-show-contributors', showContributors);
@@ -8286,15 +8324,40 @@ async function sendMagicLinkFromSettings() {
 function onUserLoggedIn() {
   document.getElementById('authModal')?.classList.remove('active');
   
-  if (!username || username === 'You') {
-    username = currentUser.email.split('@')[0];
-    localStorage.setItem('linkgrid-username', username);
+  // Check if this is first login (no custom username set)
+  const savedUsername = localStorage.getItem('linkgrid-username');
+  const isFirstLogin = !savedUsername || savedUsername === 'You' || savedUsername === currentUser.email.split('@')[0];
+  
+  if (isFirstLogin) {
+    // Prompt for display name
+    setTimeout(() => {
+      showUsernameSetupPrompt();
+    }, 500);
+  } else {
+    username = savedUsername;
   }
   
   showToast('✅ Signed in!', 'success');
   
   // Initialize cloud sync
   initCloudSync();
+}
+
+function showUsernameSetupPrompt() {
+  const suggestedName = currentUser.email.split('@')[0];
+  const displayName = prompt(
+    '👤 Choose your display name\n\nThis is how others will see you. You can change it anytime in Settings.\n\nYour email will never be shown publicly.',
+    suggestedName
+  );
+  
+  if (displayName && displayName.trim()) {
+    username = sanitizeUsername(displayName.trim());
+  } else {
+    username = sanitizeUsername(suggestedName);
+  }
+  
+  localStorage.setItem('linkgrid-username', username);
+  renderGrid();
 }
 
 async function signOut() {
