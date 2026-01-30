@@ -5666,6 +5666,33 @@ async function performInitialSync() {
   }
 }
 
+// Get a screenshot that's safe to store in the database
+function getStorableScreenshot(card) {
+  // If it's already a URL (not base64), store it directly
+  if (card.screenshot && card.screenshot.startsWith('http')) {
+    return card.screenshot;
+  }
+  
+  // For YouTube, always use the thumbnail URL (small and reliable)
+  if (card.url && (card.url.includes('youtube.com') || card.url.includes('youtu.be'))) {
+    const videoId = extractYouTubeId(card.url);
+    if (videoId) {
+      return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    }
+  }
+  
+  // For base64 images, only store if under 50KB (Supabase limit)
+  if (card.screenshot && card.screenshot.startsWith('data:')) {
+    if (card.screenshot.length < 50000) {
+      return card.screenshot;
+    }
+    // Too large - return null, will regenerate on display
+    return null;
+  }
+  
+  return null;
+}
+
 // Upload a single card to cloud
 async function uploadCardToCloud(card) {
   if (!cloudSyncEnabled || !currentUser) return null;
@@ -5683,7 +5710,7 @@ async function uploadCardToCloud(card) {
       location: card.location || '',
       topic: card.topic || 'other',
       tags: card.tags || [],
-      screenshot: card.screenshot?.substring(0, 50000) || null, // Limit screenshot size
+      screenshot: getStorableScreenshot(card), // Smart screenshot handling
       screenshot_real: card.screenshotReal || false,
       is_private: false,
       added_by: card.addedBy || username,
@@ -5727,16 +5754,31 @@ async function deleteCardFromCloud(cardId) {
 
 // Convert cloud card format to local format
 function cloudCardToLocal(cloudCard) {
-  return {
-    id: Number(cloudCard.id) || cloudCard.id,  // Convert back to number if possible
+  // Regenerate screenshot if missing
+  let screenshot = cloudCard.screenshot;
+  
+  // If no screenshot, try to generate one from URL
+  if (!screenshot || screenshot === 'null') {
+    // YouTube - use thumbnail URL
+    if (cloudCard.url && (cloudCard.url.includes('youtube.com') || cloudCard.url.includes('youtu.be'))) {
+      const videoId = extractYouTubeId(cloudCard.url);
+      if (videoId) {
+        screenshot = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      }
+    }
+  }
+  
+  // Build the local card object
+  const localCard = {
+    id: cloudCard.id,
     url: cloudCard.url,
     title: cloudCard.title,
     notes: cloudCard.notes || '',
     location: cloudCard.location || '',
     topic: cloudCard.topic || 'other',
     tags: cloudCard.tags || [],
-    screenshot: cloudCard.screenshot,
-    screenshotReal: cloudCard.screenshot_real,
+    screenshot: screenshot,
+    screenshotReal: !!screenshot && screenshot.startsWith('http'),
     isPrivate: cloudCard.is_private,
     votes: cloudCard.vote_total || 0,
     photos: [],
@@ -5748,8 +5790,17 @@ function cloudCardToLocal(cloudCard) {
     editedBy: cloudCard.added_by,
     cloudSynced: true,
     cloudUserId: cloudCard.user_id,
-    isOwnCard: cloudCard.user_id === currentUser?.id
+    isOwnCard: cloudCard.user_id === currentUser?.id,
+    isCommunity: cloudCard.user_id !== currentUser?.id
   };
+  
+  // If still no screenshot, generate a placeholder
+  if (!localCard.screenshot) {
+    localCard.screenshot = generatePlaceholderThumbnail(localCard);
+    localCard.screenshotReal = false;
+  }
+  
+  return localCard;
 }
 
 // Sync votes from cloud
@@ -6399,19 +6450,40 @@ function generatePlaceholderThumbnail(card) {
 }
 
 // Get valid thumbnail or generate placeholder
+// Get valid thumbnail or generate placeholder
 function getCardThumbnail(card) {
   // Check if screenshot exists and is valid
-  if (card.screenshot && card.screenshot.startsWith('data:') && card.screenshotReal) {
-    return card.screenshot;
+  if (card.screenshot) {
+    // Valid URL
+    if (card.screenshot.startsWith('http')) {
+      return card.screenshot;
+    }
+    // Valid base64
+    if (card.screenshot.startsWith('data:image/') && card.screenshot.length > 100) {
+      return card.screenshot;
+    }
   }
-  if (card.screenshot && card.screenshot.startsWith('http')) {
-    return card.screenshot;
+  
+  // Try to get from photos
+  if (card.photos && card.photos.length > 0) {
+    const photo = card.photos[0];
+    if (photo && (photo.startsWith('http') || photo.startsWith('data:image/'))) {
+      return photo;
+    }
   }
-  // Check photos
-  if (card.photos && card.photos.length > 0 && card.photos[0].startsWith('data:')) {
-    return card.photos[0];
+  
+  // Try to generate from URL for known services
+  if (card.url) {
+    // YouTube
+    if (card.url.includes('youtube.com') || card.url.includes('youtu.be')) {
+      const videoId = extractYouTubeId(card.url);
+      if (videoId) {
+        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      }
+    }
   }
-  // Generate placeholder
+  
+  // Generate placeholder as last resort
   return generatePlaceholderThumbnail(card);
 }
 
