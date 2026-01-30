@@ -4776,16 +4776,16 @@ function layoutCelestialSystem() {
   resolveCollisionsWithConfig(placed, config);
   resolveCollisionsWithConfig(orphanCards, config);
   
-  // ===== STEP 6.5: Tag proximity - pull cards with shared tags closer =====
+  // ===== STEP 6.5: Tag proximity - pull related cards closer, push unrelated apart =====
   const allCards = [...placed, ...orphanCards];
   enforceTagProximity(allCards, config);
   
-  // ===== STEP 6.6: Re-resolve collisions after pulling together =====
-  // (cards may overlap after being pulled toward each other)
+  // ===== STEP 6.6: Re-resolve collisions with MORE padding =====
+  // (ensure cards don't overlap after adjustments)
   resolveCollisionsWithConfig(allCards, { 
     ...config, 
-    collisionPadding: config.collisionPadding * 0.8, // Slightly tighter packing allowed
-    maxIterations: 20 
+    collisionPadding: config.collisionPadding * 1.2, // More spacing between all cards
+    maxIterations: 30 
   });
   
   
@@ -4847,14 +4847,19 @@ function resolveCollisionsWithConfig(cardGroup, config) {
   });
 }
 
-// Enforce that cards sharing tags stay within a maximum distance
+// Enforce that cards sharing tags stay within a reasonable distance
+// while also pushing apart cards that DON'T share tags
 function enforceTagProximity(cardGroup, config) {
   if (!cardGroup || cardGroup.length < 2) return;
   
   const isMobileLayout = window.innerWidth < 768;
-  const MAX_TAG_DISTANCE = isMobileLayout ? 250 : 400; // Max pixels apart for cards sharing tags
-  const PULL_STRENGTH = 0.4; // How aggressively to pull together (0-1)
-  const maxIterations = 25;
+  
+  // Distance settings - more generous
+  const MAX_TAG_DISTANCE = isMobileLayout ? 400 : 600; // Max pixels for cards sharing tags
+  const MIN_NO_TAG_DISTANCE = isMobileLayout ? 180 : 280; // Min pixels for cards NOT sharing tags
+  const PULL_STRENGTH = 0.15; // Gentle pull (was 0.4)
+  const PUSH_STRENGTH = 0.1; // Gentle push for unrelated cards
+  const maxIterations = 15;
   
   for (let iter = 0; iter < maxIterations; iter++) {
     let hadAdjustment = false;
@@ -4864,41 +4869,60 @@ function enforceTagProximity(cardGroup, config) {
         const a = cardGroup[i];
         const b = cardGroup[j];
         
-        // Check if they share any tags
+        // Check shared tags
         const aTags = (a.tags || []).map(t => t.toLowerCase());
         const bTags = (b.tags || []).map(t => t.toLowerCase());
         const sharedTags = aTags.filter(t => bTags.includes(t));
         
-        if (sharedTags.length === 0) continue;
-        
         // Calculate distance
         const dx = b.x - a.x;
         const dy = b.y - a.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
         
-        // More shared tags = should be closer together
-        // 1 tag = MAX_TAG_DISTANCE, 2 tags = 70%, 3+ tags = 50%
-        const proximityMultiplier = 1 / (1 + (sharedTags.length - 1) * 0.3);
-        const adjustedMaxDist = MAX_TAG_DISTANCE * proximityMultiplier;
+        // Weight by connection count (more connected cards are "heavier")
+        const aWeight = (a.totalConnections || 0) + (a.mass || 1) + 1;
+        const bWeight = (b.totalConnections || 0) + (b.mass || 1) + 1;
+        const totalWeight = aWeight + bWeight;
         
-        if (dist > adjustedMaxDist) {
-          hadAdjustment = true;
+        if (sharedTags.length > 0) {
+          // PULL together cards that share tags (if too far apart)
           
-          // Calculate how much to pull them together
-          const pullDistance = (dist - adjustedMaxDist) * PULL_STRENGTH;
-          const pullX = (dx / dist) * pullDistance;
-          const pullY = (dy / dist) * pullDistance;
+          // More shared tags = closer together
+          const proximityMultiplier = 1 / (1 + (sharedTags.length - 1) * 0.2);
+          const adjustedMaxDist = MAX_TAG_DISTANCE * proximityMultiplier;
           
-          // Weight by connection count (more connected cards move less)
-          const aWeight = (a.totalConnections || 0) + (a.mass || 0) + 1;
-          const bWeight = (b.totalConnections || 0) + (b.mass || 0) + 1;
-          const totalWeight = aWeight + bWeight;
+          if (dist > adjustedMaxDist) {
+            hadAdjustment = true;
+            
+            const pullDistance = (dist - adjustedMaxDist) * PULL_STRENGTH;
+            const pullX = (dx / dist) * pullDistance;
+            const pullY = (dy / dist) * pullDistance;
+            
+            // Move toward each other
+            a.x += pullX * (bWeight / totalWeight);
+            a.y += pullY * (bWeight / totalWeight);
+            b.x -= pullX * (aWeight / totalWeight);
+            b.y -= pullY * (aWeight / totalWeight);
+          }
+        } else {
+          // PUSH apart cards that don't share any tags (if too close)
           
-          // Move both cards toward each other
-          a.x += pullX * (bWeight / totalWeight);
-          a.y += pullY * (bWeight / totalWeight);
-          b.x -= pullX * (aWeight / totalWeight);
-          b.y -= pullY * (aWeight / totalWeight);
+          // Calculate minimum distance based on card sizes
+          const minDist = MIN_NO_TAG_DISTANCE + ((a.size || 200) + (b.size || 200)) / 4;
+          
+          if (dist < minDist) {
+            hadAdjustment = true;
+            
+            const pushDistance = (minDist - dist) * PUSH_STRENGTH;
+            const pushX = (dx / dist) * pushDistance;
+            const pushY = (dy / dist) * pushDistance;
+            
+            // Move away from each other
+            a.x -= pushX * (bWeight / totalWeight);
+            a.y -= pushY * (bWeight / totalWeight);
+            b.x += pushX * (aWeight / totalWeight);
+            b.y += pushY * (aWeight / totalWeight);
+          }
         }
       }
     }
@@ -8264,12 +8288,11 @@ async function updateAllCardsUsername() {
     return;
   }
   
-  // Warn about other sessions if logged in
+  // Confirm the change
   if (supabaseClient && currentUser) {
     const confirmChange = confirm(
       `Change your display name to "${sanitizedName}"?\n\n` +
-      `⚠️ This will sign you out on all other devices to ensure your new name syncs correctly.\n\n` +
-      `You'll stay signed in on this device.`
+      `Your new name will sync to all your devices automatically.`
     );
     
     if (!confirmChange) {
@@ -8295,34 +8318,15 @@ async function updateAllCardsUsername() {
 }
 
 async function signOutOtherSessions() {
-  if (!supabaseClient) return;
+  // NOTE: Supabase doesn't support "sign out others but keep me"
+  // Instead, we rely on username sync via the profiles table
+  // Other devices will get the new username when they next refresh
   
-  try {
-    // Get current session token before signing out others
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) return;
-    
-    // Sign out all sessions globally
-    await supabaseClient.auth.signOut({ scope: 'global' });
-    
-    // Immediately re-authenticate this session using the refresh token
-    // We stored the session, so we can restore it
-    const { error } = await supabaseClient.auth.setSession({
-      access_token: session.access_token,
-      refresh_token: session.refresh_token
-    });
-    
-    if (error) {
-      console.warn('Could not restore session, user may need to sign in again:', error);
-      // Don't throw - the username change still succeeded
-    } else {
-      console.log('✅ Other sessions signed out, current session preserved');
-    }
-    
-  } catch (e) {
-    console.error('Sign out other sessions error:', e);
-    // Don't block the username change for this
-  }
+  console.log('ℹ️ Username change will sync to other devices automatically');
+  
+  // We could implement a custom "force refresh" flag in the profiles table
+  // that other devices check, but for now just let it sync naturally
+  return true;
 }
 
 function updateCardsWithUsername(newName) {
@@ -8492,7 +8496,15 @@ async function initSupabase() {
   if (typeof supabase === 'undefined' || !SUPABASE_URL || !SUPABASE_ANON_KEY) return false;
   
   try {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Initialize with explicit persistence settings
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,           // Keep session in localStorage
+        storageKey: 'communecollab-auth', // Unique key for this app
+        autoRefreshToken: true,         // Automatically refresh expired tokens
+        detectSessionInUrl: true        // Handle magic link redirects
+      }
+    });
     
     // Check for auth callback in URL (magic link redirect)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -8500,6 +8512,8 @@ async function initSupabase() {
     const refreshToken = hashParams.get('refresh_token');
     
     if (accessToken && refreshToken) {
+      console.log('🔐 Processing magic link callback...');
+      
       // Set the session from the URL tokens
       const { data, error } = await supabaseClient.auth.setSession({
         access_token: accessToken,
@@ -8513,6 +8527,7 @@ async function initSupabase() {
         currentUser = data.session.user;
         // Clear the hash from URL
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        console.log('✅ Signed in via magic link:', currentUser.email);
         onUserLoggedIn();
         return true;
       }
@@ -8524,17 +8539,24 @@ async function initSupabase() {
     if (errorCode) {
       console.error('Auth error:', errorCode, errorDesc);
       showToast('Sign in failed: ' + (errorDesc?.replace(/\+/g, ' ') || errorCode), 'error');
-      // Clear the hash
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     }
     
-    // Check for existing session
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) { 
-      currentUser = session.user; 
-      onUserLoggedIn(); 
-    } else { 
-      // Only show auth modal on first visit, not every time
+    // Check for existing session (THIS IS KEY FOR PERSISTENCE)
+    console.log('🔍 Checking for existing session...');
+    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Session retrieval error:', sessionError);
+    }
+    
+    if (session) {
+      currentUser = session.user;
+      console.log('✅ Restored existing session:', currentUser.email);
+      onUserLoggedIn(true); // true = silent login (don't show toast)
+    } else {
+      console.log('ℹ️ No existing session found');
+      // Only show auth modal on first visit
       const hasSeenAuthPrompt = localStorage.getItem('linkgrid-seen-auth');
       if (!hasSeenAuthPrompt) {
         setTimeout(() => {
@@ -8544,22 +8566,37 @@ async function initSupabase() {
       }
     }
     
-    // Listen for auth state changes
+    // Listen for auth state changes (handles token refresh, sign out, etc.)
     supabaseClient.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event);
-      if (event === 'SIGNED_IN' && session) { 
-        currentUser = session.user; 
-        onUserLoggedIn(); 
-      } else if (event === 'SIGNED_OUT') { 
+      console.log('🔄 Auth state changed:', event);
+      
+      if (event === 'SIGNED_IN' && session) {
+        currentUser = session.user;
+        if (!cloudSyncEnabled) {
+          onUserLoggedIn(true);
+        }
+      } else if (event === 'SIGNED_OUT') {
         currentUser = null;
         cloudSyncEnabled = false;
+        cleanupRealtimeSubscription();
+        console.log('👋 Signed out');
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('🔄 Token refreshed successfully');
+        if (session) {
+          currentUser = session.user;
+        }
+      } else if (event === 'USER_UPDATED') {
+        console.log('👤 User updated');
+        if (session) {
+          currentUser = session.user;
+        }
       }
     });
     
     return true;
-  } catch (e) { 
-    console.error('Supabase init error:', e); 
-    return false; 
+  } catch (e) {
+    console.error('Supabase init error:', e);
+    return false;
   }
 }
 
@@ -8663,29 +8700,34 @@ async function sendMagicLinkFromSettings() {
   }
 }
 
-function onUserLoggedIn() {
+function onUserLoggedIn(silent = false) {
   document.getElementById('authModal')?.classList.remove('active');
   
   // Check if this is first login (no custom username set)
   const savedUsername = localStorage.getItem('linkgrid-username');
   const isFirstLogin = !savedUsername || savedUsername === 'You' || savedUsername === currentUser.email.split('@')[0];
   
-  if (isFirstLogin) {
-    // Prompt for display name
+  if (isFirstLogin && !silent) {
+    // Prompt for display name only on explicit login
     setTimeout(() => {
       showUsernameSetupPrompt();
     }, 500);
-  } else {
+  } else if (savedUsername) {
     username = savedUsername;
     // Verify username is still ours in cloud
     verifyUsernameOwnership();
   }
   
-  showToast('✅ Signed in!', 'success');
+  if (!silent) {
+    showToast('✅ Signed in!', 'success');
+  } else {
+    console.log('✅ Session restored for:', currentUser.email);
+  }
   
   // Initialize cloud sync
   initCloudSync();
 }
+
 
 async function showUsernameSetupPrompt() {
   const suggestedName = currentUser.email.split('@')[0];
@@ -9013,6 +9055,28 @@ async function init() {
   setTimeout(() => {
     openDiscover();
   }, 300);
+  
+  // Refresh session when user returns to the tab
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && supabaseClient) {
+      console.log('👀 Tab became visible, checking session...');
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      
+      if (session && !currentUser) {
+        // Session exists but we lost the user reference
+        currentUser = session.user;
+        if (!cloudSyncEnabled) {
+          initCloudSync();
+        }
+        console.log('✅ Session restored on tab focus');
+      } else if (!session && currentUser) {
+        // Session was invalidated elsewhere
+        currentUser = null;
+        cloudSyncEnabled = false;
+        console.log('⚠️ Session expired');
+      }
+    }
+  });
 }
 init();
 </script>
