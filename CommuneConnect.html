@@ -571,9 +571,9 @@
       align-items: center;
       justify-content: center;
     }
-    /* ========== REDESIGNED EDIT MODAL - COMMUNITY FOCUSED ========== */
+    /* ========== EDIT MODAL - MEDIA FOCUSED LAYOUT ========== */
     .modal-content.edit-modal {
-      max-width: 900px;
+      max-width: 1100px;
       max-height: 90vh;
       padding: 0;
       display: flex;
@@ -584,81 +584,139 @@
     }
 
     .edit-modal .modal-header {
-      padding: 1.25rem 1.5rem;
+      padding: 1rem 1.5rem;
       border-bottom: 1px solid var(--border-subtle);
       flex-shrink: 0;
       background: rgba(0, 0, 0, 0.2);
     }
 
-    /* Top Section - Image, Title, Votes, Tags */
-    .edit-top-section {
+    /* Main Layout - Side by side like YouTube */
+    .edit-media-layout {
       display: flex;
-      gap: 1.5rem;
-      padding: 1.5rem;
-      border-bottom: 1px solid var(--border-subtle);
-      background: rgba(0, 0, 0, 0.15);
+      flex: 1;
+      overflow: hidden;
     }
 
-    .edit-image-container {
-      width: 200px;
-      height: 140px;
-      flex-shrink: 0;
-      border-radius: var(--radius-lg);
+    /* Left Column - Media Player */
+    .edit-media-column {
+      flex: 1.4;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-subtle);
+      overflow-y: auto;
+    }
+
+    /* Media Container */
+    .edit-media-container {
+      position: relative;
+      background: #000;
+      width: 100%;
+    }
+
+    .edit-media-player {
+      width: 100%;
+      aspect-ratio: 16/9;
+      display: none;
+    }
+
+    .edit-media-player.active {
+      display: block;
+    }
+
+    .edit-media-player iframe,
+    .edit-media-player video,
+    .edit-media-player audio {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .edit-media-player audio {
+      height: 60px;
+      margin-top: 40%;
+    }
+
+    .edit-media-thumbnail {
+      width: 100%;
+      aspect-ratio: 16/9;
+      position: relative;
+      cursor: pointer;
       overflow: hidden;
       background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      cursor: pointer;
-      position: relative;
-      transition: all 0.2s ease;
     }
 
-    .edit-image-container:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
-    }
-
-    .edit-image-container img {
+    .edit-media-thumbnail img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transition: transform 0.3s ease;
     }
 
-    .edit-image-overlay {
+    .edit-media-thumbnail:hover img {
+      transform: scale(1.02);
+    }
+
+    .edit-media-overlay {
       position: absolute;
       inset: 0;
       background: rgba(0, 0, 0, 0.6);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       opacity: 0;
       transition: opacity 0.2s ease;
       color: white;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       gap: 0.5rem;
     }
 
-    .edit-image-container:hover .edit-image-overlay {
+    .edit-media-thumbnail:hover .edit-media-overlay {
       opacity: 1;
     }
 
-    .edit-top-info {
-      flex: 1;
+    .edit-media-play-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 72px;
+      height: 72px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid white;
+      border-radius: 50%;
+      color: white;
+      font-size: 1.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
       display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      min-width: 0;
+      align-items: center;
+      justify-content: center;
+      padding-left: 4px;
+    }
+
+    .edit-media-play-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    /* Media Info Section */
+    .edit-media-info {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .edit-title-input {
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: 600;
       background: transparent;
       border: none;
       color: var(--text-1);
-      padding: 0.5rem 0;
+      padding: 0.25rem 0;
+      width: 100%;
       border-bottom: 2px solid transparent;
       transition: border-color 0.2s ease;
-      width: 100%;
     }
 
     .edit-title-input:focus {
@@ -667,37 +725,38 @@
     }
 
     .edit-url-display {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       font-size: 0.8rem;
       color: var(--accent);
       text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      opacity: 0.8;
-      transition: opacity 0.2s ease;
+      margin-top: 0.5rem;
+      word-break: break-all;
     }
 
     .edit-url-display:hover {
-      opacity: 1;
       text-decoration: underline;
     }
 
-    /* Votes Row - BIG and satisfying */
+    /* Votes Row */
     .edit-votes-row {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      margin: 0.5rem 0;
+      gap: 0.75rem;
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(0, 0, 0, 0.1);
     }
 
     .edit-vote-btn {
-      width: 52px;
-      height: 52px;
+      width: 44px;
+      height: 44px;
       border-radius: var(--radius-md);
-      border: 2px solid var(--border-subtle);
       background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
       color: var(--text-2);
-      font-size: 1.4rem;
+      font-size: 1.1rem;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
@@ -706,159 +765,125 @@
     }
 
     .edit-vote-btn:hover {
-      transform: scale(1.1);
-      border-color: var(--border-medium);
+      border-color: var(--accent);
+      color: var(--text-1);
+      transform: scale(1.05);
     }
 
-    .edit-vote-btn.upvoted {
+    .edit-vote-btn.upvote:hover,
+    .edit-vote-btn.upvote.active {
       background: rgba(16, 185, 129, 0.2);
       border-color: var(--success);
       color: var(--success);
-      animation: votePop 0.3s ease;
     }
 
-    .edit-vote-btn.downvoted {
+    .edit-vote-btn.downvote:hover,
+    .edit-vote-btn.downvote.active {
       background: rgba(239, 68, 68, 0.2);
       border-color: var(--danger);
       color: var(--danger);
-      animation: votePop 0.3s ease;
-    }
-
-    @keyframes votePop {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.2); }
-      100% { transform: scale(1); }
     }
 
     .edit-vote-score {
-      font-size: 2rem;
+      font-size: 1.5rem;
       font-weight: 700;
-      min-width: 60px;
+      color: var(--text-1);
+      min-width: 50px;
       text-align: center;
-      background: linear-gradient(135deg, var(--text-1) 0%, var(--text-2) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .edit-vote-score.positive {
-      background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-      -webkit-background-clip: text;
-    }
-
-    .edit-vote-score.negative {
-      background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
-      -webkit-background-clip: text;
     }
 
     .edit-actions-quick {
-      display: flex;
-      gap: 0.25rem;
       margin-left: auto;
+      display: flex;
+      gap: 0.5rem;
     }
 
     .edit-actions-quick .btn-icon {
       width: 38px;
       height: 38px;
       font-size: 1rem;
-      border-radius: var(--radius-sm);
     }
 
-    /* Tags Bar - Prominent */
+    /* Tags Bar */
     .edit-tags-bar {
       display: flex;
-      align-items: center;
       flex-wrap: wrap;
       gap: 0.5rem;
-      padding: 1rem 1.5rem;
-      background: rgba(99, 102, 241, 0.05);
+      padding: 0.875rem 1.25rem;
+      align-items: center;
       border-bottom: 1px solid var(--border-subtle);
     }
 
     .edit-tags-bar .tag {
-      padding: 0.4rem 0.75rem;
-      font-size: 0.85rem;
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 0.35rem 0.6rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      font-size: 0.75rem;
+      color: var(--text-2);
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.2s ease;
     }
 
     .edit-tags-bar .tag:hover {
       background: rgba(239, 68, 68, 0.2);
-      border-color: rgba(239, 68, 68, 0.5);
+      border-color: var(--danger);
       color: var(--danger);
     }
 
-    .edit-tags-bar .tag:hover::after {
-      content: ' ×';
-    }
-
     .edit-tag-input {
-      flex: 1;
-      min-width: 120px;
-      max-width: 200px;
-      padding: 0.4rem 0.75rem;
-      background: var(--bg-elevated);
-      border: 1px dashed var(--border-medium);
+      padding: 0.35rem 0.6rem;
+      background: transparent;
+      border: 1px dashed var(--border-subtle);
       border-radius: var(--radius-xl);
-      color: var(--text-1);
-      font-size: 0.85rem;
+      color: var(--text-2);
+      font-size: 0.75rem;
+      min-width: 100px;
+      transition: all 0.2s ease;
     }
 
     .edit-tag-input:focus {
       outline: none;
-      border-style: solid;
       border-color: var(--accent);
+      border-style: solid;
+      background: var(--bg-elevated);
     }
 
-    .edit-tag-input::placeholder {
-      color: var(--text-3);
-    }
-
-    /* Main Content - Two Columns */
-    .edit-main-content {
-      display: flex;
+    /* Right Column - Info & Comments */
+    .edit-info-column {
       flex: 1;
-      min-height: 0;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
+      min-width: 320px;
     }
 
-    /* Left Column - Personal Stuff (Collapsible) */
-    .edit-left-column {
-      width: 280px;
-      flex-shrink: 0;
-      border-right: 1px solid var(--border-subtle);
-      overflow-y: auto;
-      background: rgba(0, 0, 0, 0.1);
-    }
-
+    /* Sections */
     .edit-section {
       border-bottom: 1px solid var(--border-subtle);
     }
 
     .edit-section-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      padding: 0.875rem 1rem;
+      align-items: center;
+      padding: 0.75rem 1.25rem;
       cursor: pointer;
-      transition: background 0.15s ease;
-      user-select: none;
+      transition: background 0.2s ease;
     }
 
     .edit-section-header:hover {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .edit-section-header.collapsed .edit-section-toggle {
+      transform: rotate(-90deg);
     }
 
     .edit-section-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       font-weight: 600;
-      color: var(--text-2);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      color: var(--text-1);
     }
 
     .edit-section-toggle {
@@ -867,21 +892,12 @@
       transition: transform 0.2s ease;
     }
 
-    .edit-section-header.collapsed .edit-section-toggle {
-      transform: rotate(-90deg);
-    }
-
     .edit-section-content {
-      padding: 0 1rem 1rem;
-      max-height: 300px;
-      overflow: hidden;
-      transition: all 0.25s ease;
+      padding: 0 1.25rem 1rem;
     }
 
     .edit-section-content.collapsed {
-      max-height: 0;
-      padding-bottom: 0;
-      opacity: 0;
+      display: none;
     }
 
     .edit-section-content textarea {
@@ -892,7 +908,7 @@
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       color: var(--text-1);
-      font-size: 0.85rem;
+      font-size: 0.875rem;
       font-family: inherit;
       resize: vertical;
       line-height: 1.5;
@@ -903,38 +919,10 @@
       border-color: var(--accent);
     }
 
-    .edit-section-content textarea::placeholder {
-      color: var(--text-3);
-    }
-
-    .edit-location-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .edit-location-row input {
-      flex: 1;
-      padding: 0.6rem 0.75rem;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      color: var(--text-1);
-      font-size: 0.85rem;
-    }
-
-    .edit-location-row input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .edit-location-row .btn {
-      padding: 0.6rem 0.75rem;
-    }
-
     /* Photo Grid */
     .edit-photo-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
       gap: 0.5rem;
     }
 
@@ -943,7 +931,6 @@
       border-radius: var(--radius-sm);
       overflow: hidden;
       position: relative;
-      border: 1px solid var(--border-subtle);
     }
 
     .edit-photo-item img {
@@ -958,17 +945,14 @@
       right: 4px;
       width: 20px;
       height: 20px;
-      background: var(--danger);
+      background: rgba(0, 0, 0, 0.7);
       border: none;
-      border-radius: 4px;
+      border-radius: 50%;
       color: white;
       font-size: 0.7rem;
       cursor: pointer;
       opacity: 0;
-      transition: opacity 0.15s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      transition: opacity 0.2s ease;
     }
 
     .edit-photo-item:hover .edit-photo-delete {
@@ -977,77 +961,86 @@
 
     .edit-photo-add {
       aspect-ratio: 1;
-      border: 2px dashed var(--border-medium);
+      border: 2px dashed var(--border-subtle);
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--text-3);
       font-size: 1.5rem;
+      color: var(--text-3);
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.2s ease;
     }
 
     .edit-photo-add:hover {
       border-color: var(--accent);
       color: var(--accent);
-      background: rgba(99, 102, 241, 0.05);
+      background: rgba(99, 102, 241, 0.1);
     }
 
-    /* Right Column - Comments (Community!) */
-    .edit-right-column {
+    /* Location Row */
+    .edit-location-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .edit-location-row input {
+      flex: 1;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-1);
+      font-size: 0.875rem;
+    }
+
+    .edit-location-row input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Comments Section */
+    .edit-comments-section {
       flex: 1;
       display: flex;
       flex-direction: column;
-      min-width: 0;
-      background: rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      min-height: 200px;
     }
 
     .edit-comments-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 1.25rem;
+      padding: 0.75rem 1.25rem;
       border-bottom: 1px solid var(--border-subtle);
-      background: rgba(99, 102, 241, 0.03);
+      background: rgba(0, 0, 0, 0.1);
     }
 
     .edit-comments-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
       font-size: 0.9rem;
       font-weight: 600;
       color: var(--text-1);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .edit-comments-count {
       background: var(--accent);
       color: white;
+      font-size: 0.7rem;
       padding: 0.15rem 0.5rem;
       border-radius: var(--radius-xl);
-      font-size: 0.75rem;
-      font-weight: 600;
     }
 
     .edit-comments-list {
       flex: 1;
       overflow-y: auto;
       padding: 1rem 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.875rem;
     }
 
     .edit-comments-empty {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-3);
       text-align: center;
-      padding: 2rem;
+      padding: 2rem 1rem;
+      color: var(--text-3);
     }
 
     .edit-comments-empty-icon {
@@ -1056,27 +1049,21 @@
       opacity: 0.5;
     }
 
-    .edit-comments-empty p {
-      font-size: 0.85rem;
-    }
-
     .edit-comment {
+      padding: 0.75rem;
       background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 0.875rem;
-      transition: all 0.15s ease;
+      margin-bottom: 0.75rem;
     }
 
-    .edit-comment:hover {
-      border-color: var(--border-medium);
-      background: var(--bg-card-hover);
+    .edit-comment:last-child {
+      margin-bottom: 0;
     }
 
     .edit-comment-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       margin-bottom: 0.5rem;
     }
 
@@ -1087,28 +1074,22 @@
     }
 
     .edit-comment-avatar {
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       background: var(--gradient);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.7rem;
-      color: white;
+      font-size: 0.75rem;
       font-weight: 600;
+      color: white;
     }
 
     .edit-comment-name {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
-      color: var(--accent);
-    }
-
-    .edit-comment-meta {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      color: var(--text-1);
     }
 
     .edit-comment-time {
@@ -1123,7 +1104,7 @@
       font-size: 0.8rem;
       cursor: pointer;
       padding: 0.25rem;
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
       opacity: 0;
       transition: all 0.15s ease;
     }
@@ -1138,7 +1119,7 @@
     }
 
     .edit-comment-text {
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       color: var(--text-2);
       line-height: 1.5;
     }
@@ -1172,10 +1153,6 @@
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
     }
 
-    .edit-comment-input::placeholder {
-      color: var(--text-3);
-    }
-
     .edit-comment-submit {
       padding: 0.75rem 1.25rem;
       background: var(--gradient);
@@ -1200,6 +1177,7 @@
       padding: 0.875rem 1.5rem;
       border-top: 1px solid var(--border-subtle);
       background: rgba(0, 0, 0, 0.3);
+      flex-shrink: 0;
     }
 
     .edit-footer-left {
@@ -1228,389 +1206,85 @@
       color: var(--text-3);
     }
 
-    .edit-footer-right {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 700px) {
+    /* ========== MOBILE RESPONSIVE - EDIT MODAL ========== */
+    @media (max-width: 768px) {
       .modal-content.edit-modal {
-        max-height: 95vh;
+        max-height: 100vh;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
       }
       
-      .edit-top-section {
-        flex-direction: column;
-        gap: 1rem;
-      }
-      
-      .edit-image-container {
-        width: 100%;
-        height: 160px;
-      }
-      
-      .edit-main-content {
+      .edit-media-layout {
         flex-direction: column;
       }
       
-      .edit-left-column {
-        width: 100%;
+      .edit-media-column {
         border-right: none;
         border-bottom: 1px solid var(--border-subtle);
-        max-height: 200px;
       }
       
-      .edit-right-column {
-        min-height: 250px;
+      .edit-media-thumbnail {
+        aspect-ratio: 16/10;
+      }
+      
+      .edit-media-info {
+        padding: 0.875rem 1rem;
+      }
+      
+      .edit-title-input {
+        font-size: 1.05rem;
       }
       
       .edit-votes-row {
+        padding: 0.75rem 1rem;
         flex-wrap: wrap;
       }
       
+      .edit-vote-btn {
+        width: 48px;
+        height: 48px;
+      }
+      
       .edit-actions-quick {
-        margin-left: 0;
+        width: 100%;
+        justify-content: flex-end;
         margin-top: 0.5rem;
-        width: 100%;
-        justify-content: flex-start;
       }
-    }
-    /* Location with inline button */
-    .location-input-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-    
-    .location-input-row .form-input {
-      flex: 1;
-    }
-    
-    .location-input-row .btn {
-      padding: 0.6rem 0.75rem;
-      font-size: 0.8rem;
-      white-space: nowrap;
-    }
-    
-    /* Compact Vote Row */
-    .edit-vote-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0;
-    }
-    
-    .edit-vote-row .vote-btn {
-      width: 44px;
-      height: 44px;
-      font-size: 1.1rem;
-    }
-    
-    .edit-vote-row .vote-score {
-      font-size: 1.5rem;
-      font-weight: 700;
-      min-width: 60px;
-      text-align: center;
-    }
-    
-    /* Tags Section */
-    .edit-tags-section {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    
-    .edit-tags-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.375rem;
-      align-items: center;
-    }
-    
-    .edit-tags-row .tag {
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    
-    .edit-tags-row .tag:hover {
-      background: rgba(239, 68, 68, 0.2);
-      color: var(--danger);
-    }
-    
-    .edit-tags-input {
-      flex: 1;
-      min-width: 100px;
-      padding: 0.3rem 0.5rem;
-      font-size: 0.75rem;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      color: var(--text-1);
-    }
-    
-    .edit-tags-input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    
-    /* Privacy & Share Row */
-    .edit-actions-row {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.5rem 0;
-      flex-wrap: wrap;
-    }
-    
-    .privacy-toggle {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8rem;
-      color: var(--text-2);
-      cursor: pointer;
-    }
-    
-    .privacy-toggle input {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--accent);
-    }
-    
-    .share-buttons {
-      display: flex;
-      gap: 0.25rem;
-      margin-left: auto;
-    }
-    
-    .share-buttons .btn {
-      width: 36px;
-      height: 36px;
-      padding: 0;
-      font-size: 0.9rem;
-    }
-    
-    /* Compact Collapsible Sections */
-    .edit-collapsible {
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-    }
-    
-    .edit-collapsible-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.6rem 0.75rem;
-      background: var(--bg-elevated);
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 500;
-      transition: background 0.15s ease;
-    }
-    
-    .edit-collapsible-header:hover {
-      background: var(--bg-card-hover);
-    }
-    
-    .edit-collapsible-header .count {
-      color: var(--text-3);
-      font-weight: 400;
-    }
-    
-    .edit-collapsible-header .toggle-icon {
-      color: var(--text-3);
-      font-size: 0.7rem;
-      transition: transform 0.2s ease;
-    }
-    
-    .edit-collapsible-header.collapsed .toggle-icon {
-      transform: rotate(-90deg);
-    }
-    
-    .edit-collapsible-content {
-      max-height: 200px;
-      overflow-y: auto;
-      padding: 0.75rem;
-      border-top: 1px solid var(--border-subtle);
-      transition: max-height 0.25s ease, padding 0.25s ease;
-    }
-    
-    .edit-collapsible-content.collapsed {
-      max-height: 0;
-      padding: 0 0.75rem;
-      border-top: none;
-      overflow: hidden;
-    }
-    
-    /* Photo Grid in Collapsible */
-    .edit-photo-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-      gap: 0.5rem;
-    }
-    
-    .edit-photo-item {
-      aspect-ratio: 1;
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-      position: relative;
-      border: 1px solid var(--border-subtle);
-    }
-    
-    .edit-photo-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
-    .edit-photo-item .delete-btn {
-      position: absolute;
-      top: 2px;
-      right: 2px;
-      width: 18px;
-      height: 18px;
-      background: var(--danger);
-      border: none;
-      border-radius: 3px;
-      color: white;
-      font-size: 0.65rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.15s ease;
-    }
-    
-    .edit-photo-item:hover .delete-btn {
-      opacity: 1;
-    }
-    
-    .edit-photo-add {
-      aspect-ratio: 1;
-      border: 2px dashed var(--border-medium);
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-3);
-      font-size: 1.25rem;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    
-    .edit-photo-add:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(99, 102, 241, 0.05);
-    }
-    
-    /* Comments in Collapsible */
-    .edit-comment {
-      padding: 0.5rem;
-      background: var(--bg-card);
-      border-radius: var(--radius-sm);
-      margin-bottom: 0.5rem;
-    }
-    
-    .edit-comment:last-of-type {
-      margin-bottom: 0;
-    }
-    
-    .edit-comment-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.25rem;
-    }
-    
-    .edit-comment-author {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: var(--accent);
-    }
-    
-    .edit-comment-time {
-      font-size: 0.6rem;
-      color: var(--text-3);
-    }
-    
-    .edit-comment-text {
-      font-size: 0.75rem;
-      color: var(--text-2);
-      line-height: 1.4;
-    }
-    
-    .edit-comment-delete {
-      background: transparent;
-      border: none;
-      color: var(--danger);
-      font-size: 0.65rem;
-      cursor: pointer;
-      padding: 0;
-      margin-left: 0.5rem;
-    }
-    
-    .edit-comment-input-row {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-      padding-top: 0.5rem;
-      border-top: 1px solid var(--border-subtle);
-    }
-    
-    .edit-comment-input-row input {
-      flex: 1;
-      padding: 0.4rem 0.6rem;
-      font-size: 0.75rem;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      color: var(--text-1);
-    }
-    
-    .edit-comment-input-row .btn {
-      padding: 0.4rem 0.75rem;
-      font-size: 0.7rem;
-    }
-    
-    /* URL Link Style */
-    .edit-url-link {
-      display: block;
-      font-size: 0.8rem;
-      color: var(--accent);
-      text-decoration: none;
-      word-break: break-all;
-      padding: 0.4rem 0;
-    }
-    
-    .edit-url-link:hover {
-      text-decoration: underline;
-    }
-    
-    /* Mobile Responsive */
-    @media (max-width: 700px) {
-      .edit-modal-body {
+      
+      .edit-tags-bar {
+        padding: 0.75rem 1rem;
+      }
+      
+      .edit-info-column {
+        min-width: unset;
+        max-height: 50vh;
+        overflow-y: auto;
+      }
+      
+      .edit-section-content textarea {
+        min-height: 80px;
+        font-size: 16px !important;
+      }
+      
+      .edit-comment-input {
+        font-size: 16px !important;
+      }
+      
+      .edit-modal-footer {
         flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
       }
       
-      .edit-modal-left,
-      .edit-modal-right {
+      .edit-footer-left,
+      .edit-footer-right {
         width: 100%;
-        border-right: none;
+        justify-content: space-between;
       }
       
-      .edit-modal-left {
-        border-bottom: 1px solid var(--border-subtle);
-      }
-      
-      .edit-image-container {
-        aspect-ratio: 16/9;
-      }
-      
-      .modal-content.edit-modal {
-        max-height: 95vh;
+      /* Always show delete buttons on touch */
+      .edit-photo-delete,
+      .edit-comment-delete {
+        opacity: 1 !important;
       }
     }
     .form-group { margin-bottom: 1.25rem; }
@@ -1940,6 +1614,75 @@
 
     .bubble-card:hover::before {
       opacity: 1;
+    }
+    
+    /* ========== UPDATED DRAGGABLE CARD STYLES ========== */
+    /* Find and replace the existing drag-related CSS */
+
+    .bubble-card {
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .bubble-card.dragging {
+      cursor: grabbing;
+      z-index: 100 !important;
+      transition: none !important;
+      animation: none !important;
+      /* Lift effect while dragging */
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 40px rgba(99, 102, 241, 0.2);
+      transform: scale(1.02);
+    }
+
+    /* At drag limit - subtle visual feedback */
+    .bubble-card.at-limit {
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 50px rgba(239, 68, 68, 0.3);
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    /* Smooth spring-back animation */
+    .bubble-card.returning {
+      transition: 
+        left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+        top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.3s ease,
+        border-color 0.3s ease,
+        transform 0.3s ease;
+    }
+
+    .bubble-card .drag-indicator {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+
+    .bubble-card:hover .drag-indicator {
+      opacity: 1;
+    }
+
+    .bubble-card.dragging .drag-indicator {
+      opacity: 1;
+      background: var(--accent);
+    }
+
+
+    /* Resistance visual feedback */
+    .bubble-card.resisting {
+      filter: brightness(1.1);
+      box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
     }
 
     /* Breathing animation */
@@ -3697,7 +3440,7 @@
   </div>
 </div>
 
-<!-- EDIT MODAL - COMMUNITY FOCUSED -->
+<!-- EDIT MODAL - MEDIA FOCUSED -->
 <div class="modal" id="editModal">
   <div class="modal-content edit-modal">
     <div class="modal-header">
@@ -3705,40 +3448,135 @@
       <button class="modal-close" onclick="closeEditModal()">×</button>
     </div>
     
-    <!-- Top Section: Image, Title, Votes -->
-    <div class="edit-top-section">
-      <div class="edit-image-container" onclick="document.getElementById('screenshotUpload').click()">
-        <input type="file" id="screenshotUpload" accept="image/*" onchange="handleScreenshotUpload(event)" style="display:none">
-        <img id="detailImage" src="" alt="">
-        <div class="edit-image-overlay">
-          <span>📷</span>
-          <span>Change</span>
+    <!-- Main Layout: Media Left, Info Right (YouTube style) -->
+    <div class="edit-media-layout">
+      <!-- Left: Media Player / Thumbnail -->
+      <div class="edit-media-column">
+        <div class="edit-media-container" id="editMediaContainer">
+          <div class="edit-media-player" id="editMediaPlayer">
+            <!-- Media content injected here -->
+          </div>
+          <div class="edit-media-thumbnail" id="editMediaThumbnail" onclick="document.getElementById('screenshotUpload').click()">
+            <input type="file" id="screenshotUpload" accept="image/*" onchange="handleScreenshotUpload(event)" style="display:none">
+            <img id="detailImage" src="" alt="">
+            <div class="edit-media-overlay">
+              <span>📷</span>
+              <span>Change thumbnail</span>
+            </div>
+            <button class="edit-media-play-btn" id="editPlayBtn" onclick="playMedia(event)" style="display:none">
+              ▶
+            </button>
+          </div>
+        </div>
+        
+        <!-- Title & URL under media -->
+        <div class="edit-media-info">
+          <input type="text" class="edit-title-input" id="editTitle" placeholder="Title...">
+          <a class="edit-url-display" id="editUrlLink" href="#" target="_blank" rel="noopener">
+            <span>🔗</span>
+            <span id="editUrlText"></span>
+          </a>
+        </div>
+        
+        <!-- Votes Row -->
+        <div class="edit-votes-row">
+          <button class="edit-vote-btn upvote" id="editUpvoteBtn" onclick="voteCard(1)" title="Upvote">👍</button>
+          <span class="edit-vote-score" id="editVoteScore">0</span>
+          <button class="edit-vote-btn downvote" id="editDownvoteBtn" onclick="voteCard(-1)" title="Downvote">👎</button>
+          
+          <div class="edit-actions-quick">
+            <button class="btn btn-icon" id="editStarBtn" onclick="toggleStar(currentCardId)" title="Star">☆</button>
+            <button class="btn btn-icon" id="editSyncBtn" onclick="syncCardData(currentCardId)" title="Sync to cloud" style="display:none">☁️</button>
+            <button class="btn btn-icon" onclick="window.open(document.getElementById('editUrlLink').href)" title="Open Link">🌐</button>
+            <button class="btn btn-icon" onclick="navigator.clipboard.writeText(document.getElementById('editUrlLink').href);showToast('Copied!','success')" title="Copy Link">📋</button>
+            <button class="btn btn-icon" onclick="shareLink()" title="Share">↗️</button>
+          </div>
+        </div>
+        
+        <!-- Tags -->
+        <div class="edit-tags-bar" id="editTagsBar">
+          <div id="tagsContainer"></div>
+          <input type="text" class="edit-tag-input" id="newTag" placeholder="+ Add tag..." onkeypress="if(event.key==='Enter'){addTag();event.preventDefault()}">
         </div>
       </div>
       
-      <div class="edit-top-info">
-        <input type="text" class="edit-title-input" id="editTitle" placeholder="Title...">
-        <a class="edit-url-display" id="editUrlLink" href="" target="_blank">
-          <span>🔗</span>
-          <span id="editUrlText"></span>
-        </a>
+      <!-- Right: Notes & Comments -->
+      <div class="edit-info-column">
+        <!-- Notes Section (expanded by default) -->
+        <div class="edit-section expanded">
+          <div class="edit-section-header" onclick="toggleEditSection('notes')">
+            <span class="edit-section-title">📝 Notes</span>
+            <span class="edit-section-toggle">▼</span>
+          </div>
+          <div class="edit-section-content" id="editNotesSection">
+            <textarea id="editNotes" placeholder="Add personal notes about this link..."></textarea>
+          </div>
+        </div>
         
-        <div class="edit-votes-row">
-          <button class="edit-vote-btn" id="upvoteBtn" onclick="vote(currentCardId, 1)">👍</button>
-          <div class="edit-vote-score" id="voteScore">0</div>
-          <button class="edit-vote-btn" id="downvoteBtn" onclick="vote(currentCardId, -1)">👎</button>
+        <!-- Photos Section -->
+        <div class="edit-section">
+          <div class="edit-section-header collapsed" onclick="toggleEditSection('photos')">
+            <span class="edit-section-title">📸 Photos <span id="editPhotoCount"></span></span>
+            <span class="edit-section-toggle">▼</span>
+          </div>
+          <div class="edit-section-content collapsed" id="editPhotosSection">
+            <div class="edit-photo-grid" id="editPhotoGrid"></div>
+            <input type="file" id="addPhoto" accept="image/*" multiple onchange="addPhotos(event)" style="display:none">
+          </div>
+        </div>
+        
+        <!-- Location Section -->
+        <div class="edit-section">
+          <div class="edit-section-header collapsed" onclick="toggleEditSection('location')">
+            <span class="edit-section-title">📍 Location</span>
+            <span class="edit-section-toggle">▼</span>
+          </div>
+          <div class="edit-section-content collapsed" id="editLocationSection">
+            <div class="edit-location-row">
+              <input type="text" id="editLocation" placeholder="Add location...">
+              <button class="btn btn-secondary" onclick="getMyLocation()">📍</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Comments Section (always visible) -->
+        <div class="edit-comments-section">
+          <div class="edit-comments-header">
+            <span class="edit-comments-title">
+              💬 Comments
+              <span class="edit-comments-count" id="editCommentsCount">0</span>
+            </span>
+          </div>
           
-          <div class="edit-actions-quick">
-            <button class="btn btn-icon" onclick="toggleStar(currentCardId)" id="editStarBtn" title="Star">☆</button>
-            <button class="btn btn-icon" onclick="syncCardImages(currentCardId)" id="editSyncBtn" title="Sync images to cloud" style="display:none;">☁️</button>
-            <button class="btn btn-icon" onclick="shareToX()" title="Share to X">𝕏</button>
-            <button class="btn btn-icon" onclick="navigator.clipboard.writeText(cards.find(c=>c.id===currentCardId)?.url);showToast('Copied!','success')" title="Copy Link">📋</button>
-            <button class="btn btn-icon" onclick="shareLink()" title="Share">↗</button>
-            <button class="btn btn-icon" onclick="shareToEmail()" title="Email">✉️</button>
+          <div class="edit-comments-list" id="editCommentsList">
+            <!-- Comments rendered here -->
+          </div>
+          
+          <div class="edit-comment-input-area">
+            <div class="edit-comment-input-row">
+              <input type="text" class="edit-comment-input" id="newCommentInput" placeholder="Join the conversation..." onkeypress="if(event.key==='Enter'){addCommentFromInput();event.preventDefault()}">
+              <button class="edit-comment-submit" onclick="addCommentFromInput()">Post</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    
+    <!-- Footer -->
+    <div class="edit-modal-footer">
+      <div class="edit-footer-left">
+        <label class="edit-privacy-toggle">
+          <input type="checkbox" id="editPrivate" onchange="toggleCardPrivacy(currentCardId)">
+          <span>🔒 Private</span>
+        </label>
+        <span class="edit-footer-meta" id="editFooterMeta"></span>
+      </div>
+      <div class="edit-footer-right">
+        <button class="btn btn-danger" onclick="deleteCard()">🗑️ Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
     
     <!-- Tags Bar -->
     <div class="edit-tags-bar" id="editTagsBar">
@@ -5061,59 +4899,51 @@ function renderBubbles() {
     const img = getCardThumbnail(b);
     const isStarred = b.starred;
     const width = b.size || (isMobileDevice ? 140 : 200);
-    const type = b.celestialType || 'asteroid';
+    const celestialClass = b.celestialType ? `celestial-${b.celestialType}` : '';
+    const communityClass = b.isCommunity ? 'community-card' : '';
+    const delay = Math.min(index, 10);
     
-    // Visual classes based on celestial type
-    const typeClasses = {
-      star: 'celestial-star',
-      planet: 'celestial-planet',
-      moon: 'celestial-moon',
-      comet: 'celestial-comet',
-      asteroid: 'celestial-asteroid'
-    };
+    // Celestial-specific elements
+    let extraElements = '';
+    if (b.celestialType === 'star') {
+      extraElements = '<div class="star-corona"></div>';
+    } else if (b.celestialType === 'comet') {
+      extraElements = '<div class="comet-tail"></div>';
+    }
     
-    const typeClass = typeClasses[type] || '';
-    const isComet = type === 'comet';
-    const isStar = type === 'star';
-    
-    // Entry animation delay
-    const delayClass = index < 15 ? `entering-delay-${Math.min(index, 10)}` : '';
+    // Single clean badge based on type (NOT multiple badges)
+    let badge = '';
+    if (b.celestialType === 'star') {
+      badge = '<span class="bubble-badge" style="background:linear-gradient(135deg,#facc15,#f59e0b)">⭐ Hub</span>';
+    } else if (b.celestialType === 'comet') {
+      badge = '<span class="bubble-badge" style="background:linear-gradient(135deg,#22d3ee,#06b6d4)">🆕 New</span>';
+    } else if (b.isCommunity) {
+      badge = '<span class="bubble-badge community-badge">🌐 Community</span>';
+    }
     
     return `
-      <div class="bubble-card ${typeClass} ${b.isGuide ? 'guide-card' : ''} entering ${delayClass}"
+      <div class="bubble-card ${celestialClass} ${communityClass} entering entering-delay-${delay}"
            id="bubble-${b.bubbleId}"
            data-id="${b.bubbleId}"
-           data-type="${type}"
-           data-is-guide="${b.isGuide}"
-           style="left:${b.x - width / 2}px; top:${b.y - (width * 0.7)}px; width:${width}px; --breath-delay:${b.breathDelay}s;"
-           onclick="handleBubbleClick('${b.bubbleId}', event)"
+           data-base-x="${b.baseX || b.x}"
+           data-base-y="${b.baseY || b.y}"
+           style="left:${b.x}px;top:${b.y}px;width:${width}px"
            onmouseenter="handleBubbleHover('${b.bubbleId}', true)"
-           onmouseleave="handleBubbleHover('${b.bubbleId}', false)">
-        
-        ${isComet ? '<div class="comet-tail"></div>' : ''}
-        ${isStar ? '<div class="star-corona"></div>' : ''}
-        
-        <div class="bubble-card-image">
-          <img src="${img}" alt="${sanitizeHTML(b.title)}" onerror="this.onerror=null;this.src='${generatePlaceholderThumbnail(b).replace(/'/g, "\\'")}'">
-          <div class="bubble-card-image-overlay">
-            <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
-              <span class="bubble-badge">${emoji}</span>
-              ${v ? `<span class="bubble-badge" style="color:${v > 0 ? 'var(--success)' : 'var(--danger)'}">${v > 0 ? '+' : ''}${v}</span>` : ''}
-              ${b.isGuide ? `<span class="bubble-badge guide-badge">Guide</span>` : ''}
-              ${isComet ? `<span class="bubble-badge comet-badge">NEW</span>` : ''}
-            </div>
-            <button class="bubble-star-btn ${isStarred ? 'active' : ''}" onclick="handleBubbleStar('${b.bubbleId}', event)">
-              ${isStarred ? '⭐' : '☆'}
-            </button>
-          </div>
-        </div>
-        
+           onmouseleave="handleBubbleHover('${b.bubbleId}', false)"
+           onclick="selectBubble('${b.bubbleId}')">
+        ${extraElements}
+        <div class="drag-indicator"></div>
+        <button class="bubble-star-btn ${isStarred ? 'starred' : ''}" onclick="toggleBubbleStar('${b.bubbleId}', event)">
+          ${isStarred ? '⭐' : '☆'}
+        </button>
+        ${badge}
+        <div class="bubble-card-image" style="background-image:url('${img}')"></div>
         <div class="bubble-card-content">
-          <h3 class="bubble-card-title">${sanitizeHTML(b.title)}</h3>
-          <p class="bubble-card-url">${sanitizeHTML(formatUrl(b.url))}</p>
+          <div class="bubble-card-title">${sanitizeHTML(b.title)}</div>
+          <div class="bubble-card-url">${formatUrl(b.url)}</div>
           ${tags.length ? `<div class="bubble-card-tags">${tags.map(t => `<span class="tag">${sanitizeHTML(t)}</span>`).join('')}</div>` : ''}
           <span class="bubble-card-author">
-            ${b.isCommunity ? '🌍' : '👤'} ${sanitizeHTML(b.addedBy || 'Anonymous')}
+            ${b.isCommunity ? '🌐' : '👤'} ${sanitizeHTML(b.addedBy || 'Anonymous')}
           </span>
         </div>
         
@@ -5128,12 +4958,247 @@ function renderBubbles() {
   
   applyTransform();
   
+  // Setup drag handlers for each card
+  setupCardDragHandlers();
+  
   // Remove entering class after animation
   setTimeout(() => {
     document.querySelectorAll('.bubble-card.entering').forEach(el => {
       el.classList.remove('entering');
     });
   }, 1200);
+}
+// ============== CARD DRAG WITH IMPROVED CLICK/DRAG DETECTION ==============
+// Replace the entire drag section with this code
+
+let draggedCard = null;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+let cardOriginalX = 0;
+let cardOriginalY = 0;
+let dragStartClientX = 0;
+let dragStartClientY = 0;
+let isDragging = false;
+let hasDragStarted = false;
+
+const MAX_DRAG_DISTANCE = 120; // Max pixels from original position (hard limit)
+const DRAG_THRESHOLD = 8; // Pixels of movement before it counts as a drag (not a click)
+
+function setupCardDragHandlers() {
+  document.querySelectorAll('.bubble-card').forEach(card => {
+    // Mouse events
+    card.addEventListener('mousedown', startCardDrag);
+    
+    // Touch events
+    card.addEventListener('touchstart', startCardDrag, { passive: false });
+  });
+  
+  // Global move and end handlers (only add once)
+  document.removeEventListener('mousemove', moveCardDrag);
+  document.removeEventListener('mouseup', endCardDrag);
+  document.removeEventListener('touchmove', moveCardDrag);
+  document.removeEventListener('touchend', endCardDrag);
+  
+  document.addEventListener('mousemove', moveCardDrag);
+  document.addEventListener('mouseup', endCardDrag);
+  document.addEventListener('touchmove', moveCardDrag, { passive: false });
+  document.addEventListener('touchend', endCardDrag);
+}
+
+function startCardDrag(e) {
+  // Don't drag if clicking buttons or interactive elements
+  if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) {
+    return;
+  }
+  
+  const card = e.currentTarget;
+  const bubbleId = card.dataset.id;
+  const bubble = bubbles.find(b => b.bubbleId === bubbleId);
+  if (!bubble) return;
+  
+  // Prevent canvas drag and text selection
+  e.stopPropagation();
+  
+  // Get touch or mouse position
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  
+  // Store starting position for threshold check
+  dragStartClientX = clientX;
+  dragStartClientY = clientY;
+  
+  // Store original card position
+  cardOriginalX = bubble.baseX || bubble.x;
+  cardOriginalY = bubble.baseY || bubble.y;
+  
+  // Calculate offset from card center
+  const containerRect = document.getElementById('bubbleContainer').getBoundingClientRect();
+  dragOffsetX = (clientX - containerRect.left) / bubbleZoom - bubblePanX / bubbleZoom - bubble.x;
+  dragOffsetY = (clientY - containerRect.top) / bubbleZoom - bubblePanY / bubbleZoom - bubble.y;
+  
+  // Mark card as potential drag target (but not dragging yet)
+  draggedCard = card;
+  isDragging = false;
+  hasDragStarted = false;
+  
+  // Pause ambient animation
+  isAnyCardHovered = true;
+}
+
+function moveCardDrag(e) {
+  if (!draggedCard) return;
+  
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  
+  // Check if we've moved enough to start dragging
+  if (!hasDragStarted) {
+    const moveX = Math.abs(clientX - dragStartClientX);
+    const moveY = Math.abs(clientY - dragStartClientY);
+    const totalMove = Math.sqrt(moveX * moveX + moveY * moveY);
+    
+    if (totalMove < DRAG_THRESHOLD) {
+      // Not enough movement - this is still potentially a click
+      return;
+    }
+    
+    // Crossed threshold - now it's a drag
+    hasDragStarted = true;
+    isDragging = true;
+    draggedCard.classList.add('dragging');
+  }
+  
+  // Prevent scrolling while dragging
+  e.preventDefault();
+  
+  const bubbleId = draggedCard.dataset.id;
+  const bubble = bubbles.find(b => b.bubbleId === bubbleId);
+  if (!bubble) return;
+  
+  const containerRect = document.getElementById('bubbleContainer').getBoundingClientRect();
+  
+  // Calculate desired position
+  let desiredX = (clientX - containerRect.left) / bubbleZoom - bubblePanX / bubbleZoom - dragOffsetX;
+  let desiredY = (clientY - containerRect.top) / bubbleZoom - bubblePanY / bubbleZoom - dragOffsetY;
+  
+  // Calculate distance from original position
+  const dx = desiredX - cardOriginalX;
+  const dy = desiredY - cardOriginalY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  
+  // Clamp to max distance (smooth - stays at boundary, no flashing)
+  let finalX, finalY;
+  if (distance > MAX_DRAG_DISTANCE) {
+    // Normalize and scale to max distance
+    const scale = MAX_DRAG_DISTANCE / distance;
+    finalX = cardOriginalX + dx * scale;
+    finalY = cardOriginalY + dy * scale;
+    
+    // Visual feedback that we're at the limit
+    draggedCard.classList.add('at-limit');
+  } else {
+    finalX = desiredX;
+    finalY = desiredY;
+    draggedCard.classList.remove('at-limit');
+  }
+  
+  // Update visual position
+  const width = bubble.size || 200;
+  draggedCard.style.left = `${finalX - width / 2}px`;
+  draggedCard.style.top = `${finalY - width * 0.7}px`;
+  
+  // Update bubble data temporarily (for connections)
+  bubble.x = finalX;
+  bubble.y = finalY;
+  
+  // Redraw connections if any are visible
+  if (selectedBubbleId) {
+    showConnections(selectedBubbleId);
+  }
+}
+
+function endCardDrag(e) {
+  if (!draggedCard) return;
+  
+  const bubbleId = draggedCard.dataset.id;
+  const bubble = bubbles.find(b => b.bubbleId === bubbleId);
+  const card = draggedCard;
+  
+  // Clean up classes
+  card.classList.remove('dragging', 'at-limit');
+  
+  // Check if this was a click (not a drag)
+  if (!hasDragStarted) {
+    // It was a click - trigger selection
+    draggedCard = null;
+    isDragging = false;
+    isAnyCardHovered = false;
+    
+    // Let the click handler deal with it (selectBubble is already bound via onclick)
+    return;
+  }
+  
+  // It was a drag - animate back to original position
+  card.classList.add('returning');
+  
+  if (bubble) {
+    const width = bubble.size || 200;
+    card.style.left = `${cardOriginalX - width / 2}px`;
+    card.style.top = `${cardOriginalY - width * 0.7}px`;
+    
+    // Reset bubble position
+    bubble.x = cardOriginalX;
+    bubble.y = cardOriginalY;
+  }
+  
+  // Remove returning class after animation completes
+  setTimeout(() => {
+    card.classList.remove('returning');
+  }, 400);
+  
+  draggedCard = null;
+  isDragging = false;
+  hasDragStarted = false;
+  isAnyCardHovered = false;
+  
+  // Redraw connections
+  if (selectedBubbleId) {
+    showConnections(selectedBubbleId);
+  }
+}
+
+function endCardDrag(e) {
+  if (!draggedCard) return;
+  
+  const bubbleId = draggedCard.dataset.id;
+  const bubble = bubbles.find(b => b.bubbleId === bubbleId);
+  
+  draggedCard.classList.remove('dragging', 'resisting');
+  draggedCard.classList.add('returning');
+  
+  // Animate back to original position with spring effect
+  if (bubble) {
+    draggedCard.style.left = `${cardOriginalX}px`;
+    draggedCard.style.top = `${cardOriginalY}px`;
+    
+    // Reset bubble position
+    bubble.x = cardOriginalX;
+    bubble.y = cardOriginalY;
+  }
+  
+  // Remove returning class after animation completes
+  const card = draggedCard;
+  setTimeout(() => {
+    card.classList.remove('returning');
+  }, 400);
+  
+  draggedCard = null;
+  isAnyCardHovered = false;
+  
+  // Redraw connections
+  if (selectedBubbleId) {
+    drawConnections(selectedBubbleId);
+  }
 }
 
 function formatUrl(url) {
@@ -5772,6 +5837,160 @@ function openEditModalViewOnly(card) {
   renderEditCommentsForCommunity(card);
 }
 
+// ============== MEDIA DETECTION & PLAYBACK ==============
+function detectMediaType(url) {
+  if (!url) return { type: 'none', embedUrl: null };
+  
+  const urlLower = url.toLowerCase();
+  
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) {
+    return { 
+      type: 'youtube', 
+      embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=0&rel=0`,
+      videoId: ytMatch[1]
+    };
+  }
+  
+  // Vimeo
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) {
+    return { 
+      type: 'vimeo', 
+      embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}` 
+    };
+  }
+  
+  // Spotify
+  const spotifyMatch = url.match(/spotify\.com\/(track|album|playlist|episode)\/([a-zA-Z0-9]+)/);
+  if (spotifyMatch) {
+    return { 
+      type: 'spotify', 
+      embedUrl: `https://open.spotify.com/embed/${spotifyMatch[1]}/${spotifyMatch[2]}` 
+    };
+  }
+  
+  // SoundCloud
+  if (urlLower.includes('soundcloud.com')) {
+    return { 
+      type: 'soundcloud', 
+      embedUrl: `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%236366f1&auto_play=false` 
+    };
+  }
+  
+  // Direct video files
+  if (urlLower.match(/\.(mp4|webm|ogg|mov)(\?|$)/)) {
+    return { type: 'video', embedUrl: url };
+  }
+  
+  // Direct audio files
+  if (urlLower.match(/\.(mp3|wav|ogg|m4a|flac)(\?|$)/)) {
+    return { type: 'audio', embedUrl: url };
+  }
+  
+  // Twitch
+  const twitchMatch = url.match(/twitch\.tv\/(?:videos\/)?(\w+)/);
+  if (twitchMatch) {
+    const isVideo = url.includes('/videos/');
+    return { 
+      type: 'twitch', 
+      embedUrl: isVideo 
+        ? `https://player.twitch.tv/?video=${twitchMatch[1]}&parent=${window.location.hostname}`
+        : `https://player.twitch.tv/?channel=${twitchMatch[1]}&parent=${window.location.hostname}`
+    };
+  }
+  
+  return { type: 'none', embedUrl: null };
+}
+
+function setupMediaPlayer(card) {
+  const mediaPlayer = document.getElementById('editMediaPlayer');
+  const mediaThumbnail = document.getElementById('editMediaThumbnail');
+  const playBtn = document.getElementById('editPlayBtn');
+  
+  const media = detectMediaType(card.url);
+  
+  // Reset
+  mediaPlayer.innerHTML = '';
+  mediaPlayer.classList.remove('active');
+  mediaThumbnail.style.display = 'block';
+  playBtn.style.display = 'none';
+  
+  // Store media info for later
+  mediaThumbnail.dataset.mediaType = media.type;
+  mediaThumbnail.dataset.embedUrl = media.embedUrl || '';
+  
+  if (media.type !== 'none') {
+    playBtn.style.display = 'flex';
+    
+    // For audio, show different icon
+    if (media.type === 'audio' || media.type === 'spotify' || media.type === 'soundcloud') {
+      playBtn.textContent = '🎵';
+    } else {
+      playBtn.textContent = '▶';
+    }
+  }
+}
+
+function playMedia(event) {
+  if (event) event.stopPropagation();
+  
+  const mediaThumbnail = document.getElementById('editMediaThumbnail');
+  const mediaPlayer = document.getElementById('editMediaPlayer');
+  const mediaType = mediaThumbnail.dataset.mediaType;
+  const embedUrl = mediaThumbnail.dataset.embedUrl;
+  
+  if (!embedUrl || mediaType === 'none') return;
+  
+  let playerHTML = '';
+  
+  switch (mediaType) {
+    case 'youtube':
+    case 'vimeo':
+    case 'twitch':
+      playerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>`;
+      break;
+      
+    case 'spotify':
+      playerHTML = `<iframe src="${embedUrl}" allow="encrypted-media" style="height: 152px;"></iframe>`;
+      break;
+      
+    case 'soundcloud':
+      playerHTML = `<iframe src="${embedUrl}" allow="autoplay" style="height: 166px;"></iframe>`;
+      break;
+      
+    case 'video':
+      playerHTML = `<video src="${embedUrl}" controls autoplay playsinline></video>`;
+      break;
+      
+    case 'audio':
+      playerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg, var(--bg-secondary), var(--bg-elevated));">
+          <div style="text-align:center;">
+            <div style="font-size:4rem;margin-bottom:1rem;">🎵</div>
+            <audio src="${embedUrl}" controls autoplay style="width:90%;max-width:400px;"></audio>
+          </div>
+        </div>
+      `;
+      break;
+  }
+  
+  mediaPlayer.innerHTML = playerHTML;
+  mediaPlayer.classList.add('active');
+  mediaThumbnail.style.display = 'none';
+}
+
+function stopMedia() {
+  const mediaPlayer = document.getElementById('editMediaPlayer');
+  const mediaThumbnail = document.getElementById('editMediaThumbnail');
+  
+  mediaPlayer.innerHTML = '';
+  mediaPlayer.classList.remove('active');
+  mediaThumbnail.style.display = 'block';
+}
+
+
 function renderEditTagsViewOnly(card) {
   const container = document.getElementById('tagsContainer');
   if (!container) return;
@@ -6345,13 +6564,18 @@ async function syncImagesToCloud() {
   renderGrid();
 }
 
-// Sync a single card's images to cloud
-async function syncCardImages(cardId) {
+// ============== FULL CARD SYNC ==============
+async function syncCardData(cardId) {
   const card = cards.find(c => c.id === cardId);
   if (!card) return;
   
   if (!supabaseClient || !currentUser) {
-    showToast('Sign in to sync images', 'error');
+    showToast('Sign in to sync', 'error');
+    return;
+  }
+  
+  if (card.isPrivate) {
+    showToast('Private cards are not synced', 'default');
     return;
   }
   
@@ -6361,91 +6585,157 @@ async function syncCardImages(cardId) {
     btn.textContent = '⏳';
   }
   
+  showToast('☁️ Syncing card data...', 'default');
+  
   let uploaded = 0;
   let failed = 0;
   
-  // Sync screenshot if it's base64
-  if (card.screenshot && card.screenshot.startsWith('data:image/')) {
-    showToast('📤 Uploading screenshot...', 'default');
-    const url = await uploadImageToStorage(card.screenshot, card.id, 'screenshot');
-    if (url) {
-      card.screenshot = url;
-      card.screenshotReal = true;
-      uploaded++;
-      
-      // Update the displayed image
-      const detailImage = document.getElementById('detailImage');
-      if (detailImage) detailImage.src = url;
-    } else {
-      failed++;
-    }
-  }
-  
-  // Sync photos if they're base64
-  if (card.photos && card.photos.length > 0) {
-    const newPhotos = [];
-    for (let i = 0; i < card.photos.length; i++) {
-      const photo = card.photos[i];
-      if (photo.startsWith('data:image/')) {
-        showToast(`📤 Uploading photo ${i + 1}/${card.photos.length}...`, 'default');
-        const url = await uploadImageToStorage(photo, card.id, `photo_${i}_${Date.now()}`);
-        if (url) {
-          newPhotos.push(url);
-          uploaded++;
-        } else {
-          newPhotos.push(photo);
-          failed++;
-        }
+  try {
+    // 1. Sync screenshot if it's base64
+    if (card.screenshot && card.screenshot.startsWith('data:image/')) {
+      showToast('📤 Uploading screenshot...', 'default');
+      const url = await uploadImageToStorage(card.screenshot, card.id, 'screenshot');
+      if (url) {
+        card.screenshot = url;
+        card.screenshotReal = true;
+        uploaded++;
+        
+        // Update displayed image
+        const detailImage = document.getElementById('detailImage');
+        if (detailImage) detailImage.src = url;
       } else {
-        newPhotos.push(photo);
+        failed++;
       }
     }
-    card.photos = newPhotos;
-  }
-  
-  saveCards();
-  
-  // Re-upload card to cloud with new URLs
-  if (uploaded > 0 && !card.isPrivate) {
-    await uploadCardToCloud(card);
-  }
-  
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = '☁️';
-  }
-  
-  // Update sync button visibility
-  updateSyncButtonVisibility(card);
-  
-  // Refresh photos display
-  renderEditPhotos();
-  renderGrid();
-  
-  if (uploaded > 0 && failed === 0) {
-    showToast(`✅ ${uploaded} image(s) synced!`, 'success');
-  } else if (failed > 0) {
-    showToast(`⚠️ ${uploaded} synced, ${failed} failed`, 'error');
-  } else {
-    showToast('All images already synced!', 'default');
+    
+    // 2. Sync photos if they're base64
+    if (card.photos && card.photos.length > 0) {
+      const newPhotos = [];
+      for (let i = 0; i < card.photos.length; i++) {
+        const photo = card.photos[i];
+        if (photo.startsWith('data:image/')) {
+          showToast(`📤 Uploading photo ${i + 1}/${card.photos.length}...`, 'default');
+          const url = await uploadImageToStorage(photo, card.id, `photo_${i}_${Date.now()}`);
+          if (url) {
+            newPhotos.push(url);
+            uploaded++;
+          } else {
+            newPhotos.push(photo);
+            failed++;
+          }
+        } else {
+          newPhotos.push(photo);
+        }
+      }
+      card.photos = newPhotos;
+    }
+    
+    // 3. Upload ALL card data to cloud
+    const cloudCard = {
+      id: String(card.id),
+      user_id: currentUser.id,
+      url: card.url,
+      title: card.title,
+      notes: card.notes || '',
+      location: card.location || '',
+      topic: card.topic || 'other',
+      tags: card.tags || [],
+      screenshot: getStorableScreenshot(card),
+      screenshot_real: card.screenshotReal || false,
+      photos: card.photos?.filter(p => !p.startsWith('data:')) || [], // Only synced photos
+      is_private: false,
+      starred: card.starred || false,
+      added_by: card.addedBy || username,
+      created_at: card.createdAt || new Date().toISOString(),
+      last_edited: new Date().toISOString(),
+      edited_by: username
+    };
+    
+    const { data, error } = await supabaseClient
+      .from('cards')
+      .upsert(cloudCard, { onConflict: 'id' })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    // Mark as synced
+    card.cloudSynced = true;
+    card.lastCloudSync = new Date().toISOString();
+    
+    saveCards();
+    
+    // Update UI
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '☁️';
+    }
+    
+    updateSyncButtonVisibility(card);
+    renderEditPhotos();
+    renderGrid();
+    
+    if (failed === 0) {
+      showToast(`✅ Card synced! ${uploaded > 0 ? `(${uploaded} images uploaded)` : ''}`, 'success');
+    } else {
+      showToast(`⚠️ Synced with ${failed} image failure(s)`, 'error');
+    }
+    
+  } catch (error) {
+    console.error('Sync error:', error);
+    showToast('❌ Sync failed: ' + error.message, 'error');
+    
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '☁️';
+    }
   }
 }
 
-// Check if card has local images that need syncing
-function cardNeedsImageSync(card) {
+// Update sync button visibility - now checks for any unsyncced data
+function updateSyncButtonVisibility(card) {
+  const btn = document.getElementById('editSyncBtn');
+  if (!btn) return;
+  
+  if (!currentUser) {
+    btn.style.display = 'none';
+    return;
+  }
+  
+  btn.style.display = 'flex';
+  
+  const needsSync = cardNeedsSync(card);
+  
+  if (needsSync) {
+    btn.style.opacity = '1';
+    btn.title = 'Sync card to cloud';
+  } else {
+    btn.style.opacity = '0.5';
+    btn.title = 'All data synced ✓';
+  }
+}
+
+// Check if card has any unsyncced data
+function cardNeedsSync(card) {
   if (!card) return false;
   
-  // Check screenshot
+  // Check for local images
   if (card.screenshot && card.screenshot.startsWith('data:image/')) {
     return true;
   }
   
-  // Check photos
-  if (card.photos && card.photos.length > 0) {
-    for (const photo of card.photos) {
-      if (photo.startsWith('data:image/')) {
-        return true;
-      }
+  if (card.photos && card.photos.some(p => p.startsWith('data:image/'))) {
+    return true;
+  }
+  
+  // Check if card was never synced or was edited since last sync
+  if (!card.cloudSynced) {
+    return true;
+  }
+  
+  if (card.lastEdited && card.lastCloudSync) {
+    if (new Date(card.lastEdited) > new Date(card.lastCloudSync)) {
+      return true;
     }
   }
   
@@ -7736,7 +8026,10 @@ function openEditModal(id) {
   const isGuideCard = card.isGuide || (card.url?.startsWith('thought://') && card.url?.includes('-guide'));
   document.getElementById('editModal').classList.add('active');
   
-  // Image
+  // Setup media player
+  setupMediaPlayer(card);
+  
+  // Image/Thumbnail
   const detailImage = document.getElementById('detailImage');
   let mainImage = card.screenshot;
   if (!card.screenshotReal && !card.customScreenshot && card.photos?.length) {
@@ -7790,11 +8083,14 @@ function openEditModal(id) {
   renderEditPhotos();
   renderEditComments();
   
-  // Show/hide sync button based on whether card has local images
+  // Show/hide sync button
   updateSyncButtonVisibility(card);
 }
 
 function closeEditModal() {
+  // Stop any playing media
+  stopMedia();
+  
   document.getElementById('editModal').classList.remove('active');
   
   // Re-enable inputs that might have been disabled for view-only mode
@@ -8265,7 +8561,7 @@ function renderGrid() {
           <div class="card-badges">
             <span class="badge">${emoji}</span>
             ${v ? `<span class="badge badge-vote ${v<0?'negative':''}">${v>0?'+':''}${v}</span>` : ''}
-			${card.isPrivate ? `<span class="badge" style="background:rgba(99,102,241,0.9)">🔒</span>` : ''}${card.isPrivate ? `<span class="badge" style="background:rgba(99,102,241,0.9)">🔒</span>` : ''}
+			${card.isPrivate ? `<span class="badge" style="background:rgba(99,102,241,0.9)">🔒</span>` : ''}
    ${card.cloudSynced ? `<span class="badge" style="background:rgba(6,182,212,0.9)">☁️</span>` : ''}
 		  </div>
         </div>
@@ -8326,13 +8622,20 @@ function vote(cardId, value) {
   renderGrid();
 }
 
+// Vote from edit modal (uses currentCardId)
+function voteCard(value) {
+  if (!currentCardId) return;
+  vote(currentCardId, value);
+}
+
 function updateVoteDisplay(cardId) {
   const c = cards.find(x => x.id === cardId);
   if (!c) return;
   
-  const score = document.getElementById('voteScore');
-  const up = document.getElementById('upvoteBtn');
-  const down = document.getElementById('downvoteBtn');
+  // Use correct element IDs from HTML
+  const score = document.getElementById('editVoteScore');
+  const up = document.getElementById('editUpvoteBtn');
+  const down = document.getElementById('editDownvoteBtn');
   
   if (score) {
     score.textContent = c.votes || 0;
@@ -8343,12 +8646,12 @@ function updateVoteDisplay(cardId) {
   
   const uv = userVotes[cardId] || 0;
   if (up) {
-    up.className = 'edit-vote-btn';
-    if (uv === 1) up.classList.add('upvoted');
+    up.className = 'edit-vote-btn upvote';
+    if (uv === 1) up.classList.add('active');
   }
   if (down) {
-    down.className = 'edit-vote-btn';
-    if (uv === -1) down.classList.add('downvoted');
+    down.className = 'edit-vote-btn downvote';
+    if (uv === -1) down.classList.add('active');
   }
 }
 
