@@ -230,6 +230,27 @@
       100% { transform: scale(1.3); opacity: 0; }
     }
     
+    /* Sync button states */
+    #editSyncBtn {
+      transition: all 0.2s ease;
+    }
+
+    #editSyncBtn:not([disabled]):hover {
+      background: rgba(6, 182, 212, 0.2);
+      border-color: rgba(6, 182, 212, 0.5);
+      color: #06b6d4;
+    }
+
+    #editSyncBtn[disabled] {
+      cursor: wait;
+      animation: syncPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes syncPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
     /* Tooltip styling */
     .btn-add::after {
       content: 'Share something!';
@@ -3709,6 +3730,7 @@
           
           <div class="edit-actions-quick">
             <button class="btn btn-icon" onclick="toggleStar(currentCardId)" id="editStarBtn" title="Star">☆</button>
+            <button class="btn btn-icon" onclick="syncCardImages(currentCardId)" id="editSyncBtn" title="Sync images to cloud" style="display:none;">☁️</button>
             <button class="btn btn-icon" onclick="shareToX()" title="Share to X">𝕏</button>
             <button class="btn btn-icon" onclick="navigator.clipboard.writeText(cards.find(c=>c.id===currentCardId)?.url);showToast('Copied!','success')" title="Copy Link">📋</button>
             <button class="btn btn-icon" onclick="shareLink()" title="Share">↗</button>
@@ -3835,6 +3857,8 @@
         <span id="lastSyncDisplay" style="font-size:0.7rem;color:var(--text-3);margin-left:auto;"></span>
       </div>
       <p style="font-size:0.75rem;color:var(--text-3);margin-bottom:0.75rem;">Your public cards sync automatically across all devices</p>
+      <button class="btn btn-secondary" style="width:100%;margin-bottom:0.5rem" onclick="syncImagesToCloud()" id="syncImagesBtn">☁️ Sync All Images to Cloud</button>
+      <p style="font-size:0.7rem;color:var(--text-3);margin-bottom:0.75rem">Upload local screenshots so others can see them</p>
       <button class="btn btn-danger" style="width:100%" onclick="signOut()">🚪 Sign Out</button>
     </div>
     
@@ -5614,16 +5638,262 @@ function handleBubbleOpen(id, event) {
   if (bubble.isGuide) {
     const promoted = promoteGuideCard(id);
     if (promoted) {
-      // Don't close Discover - modal will appear on top
       openEditModal(promoted.id);
     }
   } else {
-    const card = cards.find(c => String(c.id) === id);
+    // First check local cards
+    let card = cards.find(c => String(c.id) === id);
+    
     if (card) {
-      // Don't close Discover - modal will appear on top
       openEditModal(card.id);
+    } else if (bubble.isCommunity) {
+      // It's a community card - open in view-only mode
+      openCommunityCardModal(bubble);
+    } else {
+      // Card exists in bubbles but not in local cards - might be a sync issue
+      // Try to open it as a community card
+      openCommunityCardModal(bubble);
     }
   }
+}
+
+// View-only modal for community cards (not owned by user)
+function openCommunityCardModal(bubble) {
+  // Create a temporary card object for viewing
+  const viewCard = {
+    id: bubble.bubbleId || bubble.id,
+    url: bubble.url,
+    title: bubble.title,
+    notes: bubble.notes || '',
+    tags: bubble.tags || [],
+    topic: bubble.topic || 'other',
+    votes: bubble.votes || 0,
+    screenshot: bubble.screenshot,
+    photos: bubble.photos || [],
+    comments: bubble.comments || [],
+    location: bubble.location || '',
+    addedBy: bubble.addedBy || 'Anonymous',
+    createdAt: bubble.createdAt,
+    isCommunity: true,
+    isViewOnly: true
+  };
+  
+  // Open the edit modal but in view-only mode
+  openEditModalViewOnly(viewCard);
+}
+
+function openEditModalViewOnly(card) {
+  currentCardId = card.id;
+  
+  document.getElementById('editModal').classList.add('active');
+  
+  // Image
+  const detailImage = document.getElementById('detailImage');
+  const mainImage = card.screenshot || generatePlaceholderThumbnail(card);
+  detailImage.src = mainImage;
+  detailImage.style.display = 'block';
+  
+  // Disable image upload for view-only
+  const imageContainer = document.querySelector('.edit-image-container');
+  if (imageContainer) {
+    imageContainer.style.cursor = 'default';
+    imageContainer.onclick = null;
+  }
+  
+  // Title (read-only)
+  const titleInput = document.getElementById('editTitle');
+  titleInput.value = card.title;
+  titleInput.disabled = true;
+  
+  // URL
+  const urlLink = document.getElementById('editUrlLink');
+  const urlText = document.getElementById('editUrlText');
+  urlLink.href = card.url;
+  urlText.textContent = card.url;
+  
+  // Notes (read-only)
+  const notesEl = document.getElementById('editNotes');
+  notesEl.value = card.notes || '';
+  notesEl.disabled = true;
+  
+  // Location (read-only)
+  const locationEl = document.getElementById('editLocation');
+  if (locationEl) {
+    locationEl.value = card.location || '';
+    locationEl.disabled = true;
+  }
+  
+  // Privacy checkbox - hide for community cards
+  const privacyToggle = document.querySelector('.edit-privacy-toggle');
+  if (privacyToggle) privacyToggle.style.display = 'none';
+  
+  // Star button - allow starring to save locally
+  const starBtn = document.getElementById('editStarBtn');
+  if (starBtn) {
+    const isLocallyStarred = cards.find(c => c.url === card.url)?.starred;
+    starBtn.textContent = isLocallyStarred ? '⭐' : '☆';
+    starBtn.title = 'Save to my collection';
+    starBtn.onclick = () => saveCommunityCardLocally(card);
+  }
+  
+  // Footer meta
+  document.getElementById('editFooterMeta').textContent = 
+    `Shared by ${card.addedBy} · ${new Date(card.createdAt).toLocaleDateString()}`;
+  
+  // Hide delete button for community cards
+  const deleteBtn = document.querySelector('.edit-footer-right .btn-danger');
+  if (deleteBtn) deleteBtn.style.display = 'none';
+  
+  // Add "Save to My Cards" button if not already saved
+  const footerRight = document.querySelector('.edit-footer-right');
+  const existingSaveBtn = document.getElementById('saveCommunityBtn');
+  if (existingSaveBtn) existingSaveBtn.remove();
+  
+  const alreadySaved = cards.find(c => c.url === card.url);
+  if (!alreadySaved && footerRight) {
+    const saveBtn = document.createElement('button');
+    saveBtn.id = 'saveCommunityBtn';
+    saveBtn.className = 'btn btn-primary';
+    saveBtn.innerHTML = '💾 Save to My Cards';
+    saveBtn.onclick = () => saveCommunityCardLocally(card);
+    footerRight.insertBefore(saveBtn, footerRight.firstChild);
+  }
+  
+  // Update votes display
+  updateVoteDisplay(card.id);
+  
+  // Render tags (read-only)
+  renderEditTagsViewOnly(card);
+  
+  // Render photos (view-only)
+  renderEditPhotosViewOnly(card);
+  
+  // Render comments (can still add comments if signed in)
+  renderEditCommentsForCommunity(card);
+}
+
+function renderEditTagsViewOnly(card) {
+  const container = document.getElementById('tagsContainer');
+  if (!container) return;
+  
+  container.innerHTML = (card.tags || []).map(tag => 
+    `<span class="tag">${sanitizeHTML(tag)}</span>`
+  ).join('');
+  
+  // Hide tag input
+  const tagInput = document.getElementById('newTag');
+  if (tagInput) tagInput.style.display = 'none';
+}
+
+function renderEditPhotosViewOnly(card) {
+  const grid = document.getElementById('editPhotoGrid');
+  const countEl = document.getElementById('editPhotoCount');
+  
+  if (!grid) return;
+  
+  const photoCount = card.photos?.length || 0;
+  if (countEl) countEl.textContent = photoCount > 0 ? `(${photoCount})` : '';
+  
+  let html = '';
+  if (card.photos?.length) {
+    html = card.photos.map((photo, i) => `
+      <div class="edit-photo-item">
+        <img src="${photo}" alt="Photo ${i+1}">
+      </div>
+    `).join('');
+  } else {
+    html = '<p style="color:var(--text-3);font-size:0.75rem;padding:0.5rem;">No photos</p>';
+  }
+  
+  grid.innerHTML = html;
+}
+
+function renderEditCommentsForCommunity(card) {
+  const list = document.getElementById('editCommentsList');
+  const countEl = document.getElementById('editCommentsCount');
+  
+  if (!list) return;
+  
+  const comments = card.comments || [];
+  if (countEl) countEl.textContent = comments.length;
+  
+  if (!comments.length) {
+    list.innerHTML = `
+      <div class="edit-comments-empty">
+        <div class="edit-comments-empty-icon">💬</div>
+        <p>No comments yet</p>
+      </div>
+    `;
+  } else {
+    list.innerHTML = comments.map(c => {
+      const initial = (c.author || 'A').charAt(0).toUpperCase();
+      return `
+        <div class="edit-comment">
+          <div class="edit-comment-header">
+            <div class="edit-comment-author">
+              <div class="edit-comment-avatar">${initial}</div>
+              <span class="edit-comment-name">${sanitizeHTML(c.author)}</span>
+            </div>
+            <span class="edit-comment-time">${getRelativeTime(c.timestamp)}</span>
+          </div>
+          <div class="edit-comment-text">${sanitizeHTML(c.text)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  // Show comment input only if signed in
+  const commentInput = document.querySelector('.edit-comment-input-area');
+  if (commentInput) {
+    if (currentUser) {
+      commentInput.style.display = 'block';
+    } else {
+      commentInput.innerHTML = `
+        <p style="text-align:center;color:var(--text-3);font-size:0.8rem;padding:0.75rem;">
+          <a href="#" onclick="document.getElementById('authModal').classList.add('active');return false;" style="color:var(--accent);">Sign in</a> to comment
+        </p>
+      `;
+    }
+  }
+}
+
+function saveCommunityCardLocally(card) {
+  // Check if already saved
+  const existing = cards.find(c => c.url === card.url);
+  if (existing) {
+    showToast('Already in your collection!', 'default');
+    return;
+  }
+  
+  // Create local copy
+  const localCard = {
+    id: Date.now(),
+    url: card.url,
+    title: card.title,
+    notes: card.notes || '',
+    location: card.location || '',
+    tags: [...(card.tags || [])],
+    topic: card.topic || 'other',
+    votes: card.votes || 0,
+    screenshot: card.screenshot,
+    screenshotReal: !!card.screenshot,
+    photos: [...(card.photos || [])],
+    comments: [],
+    starred: true,
+    isPrivate: false,
+    addedBy: username,
+    originalAuthor: card.addedBy,
+    createdAt: new Date().toISOString(),
+    lastEdited: new Date().toISOString(),
+    editedBy: username
+  };
+  
+  cards.unshift(localCard);
+  saveCards();
+  renderGrid();
+  
+  closeEditModal();
+  showToast('💾 Saved to your collection!', 'success');
 }
 
 function openCardFromDiscover() {
@@ -5983,6 +6253,220 @@ async function deleteImageFromStorage(imageUrl) {
     }
   } catch (e) {
     console.error('❌ Delete image error:', e);
+  }
+}
+
+// Sync all local base64 images to cloud storage
+async function syncImagesToCloud() {
+  if (!supabaseClient || !currentUser) {
+    showToast('Sign in to sync images', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById('syncImagesBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Syncing...';
+  }
+  
+  let uploaded = 0;
+  let failed = 0;
+  let skipped = 0;
+  
+  for (const card of cards) {
+    // Skip cards that aren't ours
+    if (card.cloudUserId && card.cloudUserId !== currentUser.id) {
+      skipped++;
+      continue;
+    }
+    
+    // Sync screenshot if it's base64
+    if (card.screenshot && card.screenshot.startsWith('data:image/')) {
+      console.log(`📤 Uploading screenshot for: ${card.title}`);
+      const url = await uploadImageToStorage(card.screenshot, card.id, 'screenshot');
+      if (url) {
+        card.screenshot = url;
+        card.screenshotReal = true;
+        uploaded++;
+      } else {
+        failed++;
+      }
+    }
+    
+    // Sync photos if they're base64
+    if (card.photos && card.photos.length > 0) {
+      const newPhotos = [];
+      for (let i = 0; i < card.photos.length; i++) {
+        const photo = card.photos[i];
+        if (photo.startsWith('data:image/')) {
+          console.log(`📤 Uploading photo ${i + 1} for: ${card.title}`);
+          const url = await uploadImageToStorage(photo, card.id, `photo_${i}`);
+          if (url) {
+            newPhotos.push(url);
+            uploaded++;
+          } else {
+            newPhotos.push(photo); // Keep local version
+            failed++;
+          }
+        } else {
+          newPhotos.push(photo); // Already a URL
+          skipped++;
+        }
+      }
+      card.photos = newPhotos;
+    }
+  }
+  
+  saveCards();
+  
+  // Re-upload cards to cloud with new URLs
+  if (uploaded > 0) {
+    console.log('🔄 Re-syncing cards to cloud...');
+    for (const card of cards) {
+      if (!card.isPrivate && card.screenshot?.startsWith('http')) {
+        await uploadCardToCloud(card);
+      }
+    }
+  }
+  
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '☁️ Sync Images to Cloud';
+  }
+  
+  if (uploaded > 0) {
+    showToast(`✅ Uploaded ${uploaded} images!`, 'success');
+  } else if (failed > 0) {
+    showToast(`⚠️ ${failed} images failed to upload`, 'error');
+  } else {
+    showToast('All images already synced!', 'default');
+  }
+  
+  renderGrid();
+}
+
+// Sync a single card's images to cloud
+async function syncCardImages(cardId) {
+  const card = cards.find(c => c.id === cardId);
+  if (!card) return;
+  
+  if (!supabaseClient || !currentUser) {
+    showToast('Sign in to sync images', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById('editSyncBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳';
+  }
+  
+  let uploaded = 0;
+  let failed = 0;
+  
+  // Sync screenshot if it's base64
+  if (card.screenshot && card.screenshot.startsWith('data:image/')) {
+    showToast('📤 Uploading screenshot...', 'default');
+    const url = await uploadImageToStorage(card.screenshot, card.id, 'screenshot');
+    if (url) {
+      card.screenshot = url;
+      card.screenshotReal = true;
+      uploaded++;
+      
+      // Update the displayed image
+      const detailImage = document.getElementById('detailImage');
+      if (detailImage) detailImage.src = url;
+    } else {
+      failed++;
+    }
+  }
+  
+  // Sync photos if they're base64
+  if (card.photos && card.photos.length > 0) {
+    const newPhotos = [];
+    for (let i = 0; i < card.photos.length; i++) {
+      const photo = card.photos[i];
+      if (photo.startsWith('data:image/')) {
+        showToast(`📤 Uploading photo ${i + 1}/${card.photos.length}...`, 'default');
+        const url = await uploadImageToStorage(photo, card.id, `photo_${i}_${Date.now()}`);
+        if (url) {
+          newPhotos.push(url);
+          uploaded++;
+        } else {
+          newPhotos.push(photo);
+          failed++;
+        }
+      } else {
+        newPhotos.push(photo);
+      }
+    }
+    card.photos = newPhotos;
+  }
+  
+  saveCards();
+  
+  // Re-upload card to cloud with new URLs
+  if (uploaded > 0 && !card.isPrivate) {
+    await uploadCardToCloud(card);
+  }
+  
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '☁️';
+  }
+  
+  // Update sync button visibility
+  updateSyncButtonVisibility(card);
+  
+  // Refresh photos display
+  renderEditPhotos();
+  renderGrid();
+  
+  if (uploaded > 0 && failed === 0) {
+    showToast(`✅ ${uploaded} image(s) synced!`, 'success');
+  } else if (failed > 0) {
+    showToast(`⚠️ ${uploaded} synced, ${failed} failed`, 'error');
+  } else {
+    showToast('All images already synced!', 'default');
+  }
+}
+
+// Check if card has local images that need syncing
+function cardNeedsImageSync(card) {
+  if (!card) return false;
+  
+  // Check screenshot
+  if (card.screenshot && card.screenshot.startsWith('data:image/')) {
+    return true;
+  }
+  
+  // Check photos
+  if (card.photos && card.photos.length > 0) {
+    for (const photo of card.photos) {
+      if (photo.startsWith('data:image/')) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
+// Update sync button visibility based on card state
+function updateSyncButtonVisibility(card) {
+  const btn = document.getElementById('editSyncBtn');
+  if (!btn) return;
+  
+  // Show only if: signed in AND card has local images
+  if (currentUser && cardNeedsImageSync(card)) {
+    btn.style.display = 'flex';
+    btn.title = 'Sync images to cloud';
+  } else if (currentUser && !cardNeedsImageSync(card)) {
+    btn.style.display = 'flex';
+    btn.style.opacity = '0.5';
+    btn.title = 'All images synced ✓';
+  } else {
+    btn.style.display = 'none';
   }
 }
 
@@ -7305,11 +7789,61 @@ function openEditModal(id) {
   renderEditTags();
   renderEditPhotos();
   renderEditComments();
+  
+  // Show/hide sync button based on whether card has local images
+  updateSyncButtonVisibility(card);
 }
 
 function closeEditModal() {
   document.getElementById('editModal').classList.remove('active');
-  updateCard();
+  
+  // Re-enable inputs that might have been disabled for view-only mode
+  const titleInput = document.getElementById('editTitle');
+  if (titleInput) titleInput.disabled = false;
+  
+  const notesEl = document.getElementById('editNotes');
+  if (notesEl) notesEl.disabled = false;
+  
+  const locationEl = document.getElementById('editLocation');
+  if (locationEl) locationEl.disabled = false;
+  
+  const tagInput = document.getElementById('newTag');
+  if (tagInput) tagInput.style.display = 'block';
+  
+  const privacyToggle = document.querySelector('.edit-privacy-toggle');
+  if (privacyToggle) privacyToggle.style.display = 'flex';
+  
+  const deleteBtn = document.querySelector('.edit-footer-right .btn-danger');
+  if (deleteBtn) deleteBtn.style.display = 'flex';
+  
+  // Remove community save button if exists
+  const saveCommunityBtn = document.getElementById('saveCommunityBtn');
+  if (saveCommunityBtn) saveCommunityBtn.remove();
+  
+  // Restore image container click
+  const imageContainer = document.querySelector('.edit-image-container');
+  if (imageContainer) {
+    imageContainer.style.cursor = 'pointer';
+    imageContainer.onclick = () => document.getElementById('screenshotUpload').click();
+  }
+  
+  // Restore comment input area
+  const commentInput = document.querySelector('.edit-comment-input-area');
+  if (commentInput && !commentInput.querySelector('.edit-comment-input-row')) {
+    commentInput.innerHTML = `
+      <div class="edit-comment-input-row">
+        <input type="text" class="edit-comment-input" id="newCommentInput" placeholder="Join the conversation..." onkeypress="if(event.key==='Enter'){addCommentFromInput();event.preventDefault()}">
+        <button class="edit-comment-submit" onclick="addCommentFromInput()">Post</button>
+      </div>
+    `;
+  }
+  
+  // Save changes if it was an editable card
+  const card = cards.find(c => c.id === currentCardId);
+  if (card && !card.isViewOnly) {
+    updateCard();
+  }
+  
   currentCardId = null;
 }
 
