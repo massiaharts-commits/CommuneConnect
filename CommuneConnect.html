@@ -5076,9 +5076,12 @@ async function openUserProfile(username) {
   document.getElementById('userProfileContent').innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
       ${userCards.map(card => `
-        <div onclick="openCardFromProfile('${card.id}','${sanitizeHTML(card.url)}')" style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:all 0.2s ease;">
-          <img src="${card.screenshot || generatePlaceholderThumbnail(card)}" style="width:100%;height:120px;object-fit:cover;background:var(--bg-elevated);" onerror="this.src='${generatePlaceholderThumbnail(card)}'">
-          <div style="padding:0.875rem;">
+        <div 
+          onclick="openCardFromProfile('${card.id}','${sanitizeHTML(card.url)}')"
+          ontouchend="event.preventDefault(); openCardFromProfile('${card.id}','${sanitizeHTML(card.url)}')"
+          style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:all 0.2s ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation;">
+          <img src="${card.screenshot || generatePlaceholderThumbnail(card)}" style="width:100%;height:120px;object-fit:cover;background:var(--bg-elevated);pointer-events:none;" onerror="this.src='${generatePlaceholderThumbnail(card)}'">
+          <div style="padding:0.875rem;pointer-events:none;">
             <div style="font-size:0.9rem;font-weight:600;color:var(--text-1);margin-bottom:0.25rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${sanitizeHTML(card.title)}</div>
             <div style="font-size:0.75rem;color:var(--text-3);">👍 ${card.votes || 0} · ${new Date(card.createdAt).toLocaleDateString()}</div>
           </div>
@@ -6093,6 +6096,9 @@ function identifyStarSystems() {
 // ========== CELESTIAL LAYOUT SYSTEM ==========
 // Multi-cluster layout with mobile optimization
 
+// ========== TAG-FIRST GALAXY LAYOUT SYSTEM ==========
+// This REPLACES the existing layoutCelestialSystem function
+
 function layoutCelestialSystem() {
   const canvas = document.getElementById('discoverCanvas');
   const rect = canvas.getBoundingClientRect();
@@ -6106,175 +6112,197 @@ function layoutCelestialSystem() {
   // ===== MOBILE VS DESKTOP CONFIG =====
   const isMobileLayout = window.innerWidth < 768;
   const config = isMobileLayout ? {
-    baseSpacing: 30,
-    spiralMultiplier: 45,
-    collisionPadding: 12,
-    maxIterations: 60,
-    margin: 60,
-    clusterGap: 60
+    galaxySpacing: 300,      // Distance between galaxy centers
+    cardSpacing: 25,         // Minimum space between cards in same galaxy
+    clusterRadius: 200,      // Max radius of a galaxy cluster
+    orphanZoneY: 0.85,       // Bottom 15% for unconnected cards
+    margin: 60
   } : {
-    baseSpacing: 70,
-    spiralMultiplier: 105,
-    collisionPadding: 25,
-    maxIterations: 40,
-    margin: 120,
-    clusterGap: 150
+    galaxySpacing: 500,      // Distance between galaxy centers
+    cardSpacing: 40,         // Minimum space between cards in same galaxy
+    clusterRadius: 350,      // Max radius of a galaxy cluster
+    orphanZoneY: 0.85,       // Bottom 15% for unconnected cards
+    margin: 100
   };
-  
-  // ===== STEP 1: Build connection map =====
-  bubbles.forEach(bubble => {
-    bubble.connections = {};
-    bubble.totalConnections = 0;
+
+  // ===== STEP 1: Build tag frequency map =====
+  const tagCounts = {};
+  bubbles.forEach(b => {
+    (b.tags || []).forEach(tag => {
+      const normalizedTag = tag.toLowerCase();
+      tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1;
+    });
   });
   
-  for (let i = 0; i < bubbles.length; i++) {
-    for (let j = i + 1; j < bubbles.length; j++) {
-      const a = bubbles[i];
-      const b = bubbles[j];
-      const shared = (a.tags || []).filter(t => (b.tags || []).includes(t)).length;
-      
-      if (shared > 0) {
-        a.connections[b.bubbleId] = shared;
-        b.connections[a.bubbleId] = shared;
-        a.totalConnections += shared;
-        b.totalConnections += shared;
-      }
-    }
-  }
+  // ===== STEP 2: Identify major tags (tags with 2+ cards) =====
+  const majorTags = Object.entries(tagCounts)
+    .filter(([tag, count]) => count >= 2)
+    .sort((a, b) => b[1] - a[1]) // Sort by frequency
+    .map(([tag]) => tag);
   
-  // ===== STEP 2: Split into connected vs orphans =====
-  const connectedCards = bubbles.filter(b => b.totalConnections > 0);
-  const orphanCards = bubbles.filter(b => b.totalConnections === 0);
+  console.log('🏷️ Major tags for clustering:', majorTags);
   
-  // ===== STEP 3: Sort connected cards by connectivity =====
-  const placed = [];
-  const unplaced = [...connectedCards];
+  // ===== STEP 3: Assign each card to its PRIMARY cluster =====
+  // A card belongs to the cluster of its most popular tag
+  const clusters = {}; // tag -> [bubbles]
+  const assignedBubbles = new Set();
   
-  if (unplaced.length > 0) {
-    unplaced.sort((a, b) => b.totalConnections - a.totalConnections);
-    placed.push(unplaced.shift());
+  // Initialize clusters for major tags
+  majorTags.forEach(tag => {
+    clusters[tag] = [];
+  });
+  
+  // Assign bubbles to their best-fit cluster
+  bubbles.forEach(bubble => {
+    const bubbleTags = (bubble.tags || []).map(t => t.toLowerCase());
     
-    while (unplaced.length > 0) {
-      let bestCard = null;
-      let bestScore = -Infinity;
-      
-      unplaced.forEach(candidate => {
-        let connectionScore = 0;
-        placed.forEach(placedCard => {
-          connectionScore += candidate.connections[placedCard.bubbleId] || 0;
-        });
-        const score = connectionScore * 10 + (candidate.mass || 0) * 0.001;
+    // Find which major tag this bubble should belong to
+    // Prefer the most specific (least common) shared tag for variety
+    let bestTag = null;
+    let bestScore = -1;
+    
+    bubbleTags.forEach(tag => {
+      if (majorTags.includes(tag)) {
+        // Score: prefer tags where this card shares with fewer total cards
+        // This creates more distinct clusters
+        const score = 1000 - (tagCounts[tag] || 0);
         if (score > bestScore) {
           bestScore = score;
-          bestCard = candidate;
+          bestTag = tag;
         }
-      });
-      
-      const idx = unplaced.indexOf(bestCard);
-      if (idx > -1) {
-        unplaced.splice(idx, 1);
-        placed.push(bestCard);
       }
-    }
-  }
-  
-  // ===== STEP 4: Fibonacci spiral for connected cards =====
-  const spiralCenterX = centerX;
-  const spiralCenterY = centerY;
-  
-  placed.forEach((bubble, i) => {
-    // Get card size (already scaled for mobile via getCardSize)
-    const cardSize = bubble.size || 200;
+    });
     
-    if (i === 0) {
-      bubble.x = spiralCenterX;
-      bubble.y = spiralCenterY;
+    if (bestTag) {
+      clusters[bestTag].push(bubble);
+      bubble.clusterId = bestTag;
+      assignedBubbles.add(bubble.bubbleId);
+    }
+  });
+  
+  // Collect orphans (cards with no major tags)
+  const orphans = bubbles.filter(b => !assignedBubbles.has(b.bubbleId));
+  
+  // Remove empty clusters
+  Object.keys(clusters).forEach(tag => {
+    if (clusters[tag].length === 0) {
+      delete clusters[tag];
+    }
+  });
+  
+  const clusterList = Object.entries(clusters);
+  console.log(`📊 Created ${clusterList.length} clusters, ${orphans.length} orphans`);
+  
+  // ===== STEP 4: Position cluster centers in a large spiral =====
+  const clusterCenters = {};
+  
+  clusterList.forEach(([tag, cards], index) => {
+    if (index === 0) {
+      // First (largest) cluster goes in center
+      clusterCenters[tag] = { x: centerX, y: centerY };
     } else {
-      const angle = i * GOLDEN_ANGLE;
-      const sizeMultiplier = 1 + (cardSize - 150) / 400;
-      const radius = config.baseSpacing + Math.sqrt(i) * (config.spiralMultiplier * sizeMultiplier);
-      
-      bubble.x = spiralCenterX + Math.cos(angle) * radius;
-      bubble.y = spiralCenterY + Math.sin(angle) * radius;
+      // Other clusters spiral outward
+      const angle = index * GOLDEN_ANGLE;
+      const radius = config.galaxySpacing * Math.sqrt(index);
+      clusterCenters[tag] = {
+        x: centerX + Math.cos(angle) * radius,
+        y: centerY + Math.sin(angle) * radius
+      };
     }
+  });
+  
+  // ===== STEP 5: Position cards WITHIN each cluster =====
+  clusterList.forEach(([tag, cards]) => {
+    const center = clusterCenters[tag];
     
+    // Sort cards within cluster by their connectivity/mass
+    cards.sort((a, b) => (b.mass || 0) - (a.mass || 0));
+    
+    // Place cards in a tight spiral around cluster center
+    cards.forEach((bubble, i) => {
+      if (i === 0) {
+        // Most important card at cluster center
+        bubble.x = center.x;
+        bubble.y = center.y;
+      } else {
+        const angle = i * GOLDEN_ANGLE;
+        // Tighter spiral within cluster
+        const radius = config.cardSpacing + Math.sqrt(i) * (config.cardSpacing * 1.5);
+        bubble.x = center.x + Math.cos(angle) * radius;
+        bubble.y = center.y + Math.sin(angle) * radius;
+      }
+      
+      bubble.baseX = bubble.x;
+      bubble.baseY = bubble.y;
+      bubble.galaxyCenter = center;
+    });
+  });
+  
+  // ===== STEP 6: Position orphans in the "frontier" zone =====
+  const orphanStartY = height * config.orphanZoneY;
+  const orphanSpacing = Math.min(200, (width - config.margin * 2) / Math.max(orphans.length, 1));
+  
+  orphans.forEach((bubble, i) => {
+    // Spread orphans along the bottom in a gentle wave
+    const xOffset = (i - orphans.length / 2) * orphanSpacing;
+    bubble.x = centerX + xOffset;
+    bubble.y = orphanStartY + Math.sin(i * 0.5) * 50; // Gentle wave
     bubble.baseX = bubble.x;
     bubble.baseY = bubble.y;
-    bubble.orbitCenterX = spiralCenterX;
-    bubble.orbitCenterY = spiralCenterY;
-    bubble.orbitRadius = Math.sqrt((bubble.x - spiralCenterX) ** 2 + (bubble.y - spiralCenterY) ** 2);
-    bubble.orbitAngle = Math.atan2(bubble.y - spiralCenterY, bubble.x - spiralCenterX);
-    
-    // Animation speed
-    const distanceFactor = Math.max(0.2, 1 - (bubble.orbitRadius / 1000));
-    bubble.orbitSpeed = bubble.celestialType === 'star' ? 0 : 0.00005 * distanceFactor;
+    bubble.clusterId = 'frontier';
+    bubble.galaxyCenter = { x: bubble.x, y: bubble.y };
   });
   
-  // ===== STEP 5: Position orphans in outer ring =====
-  if (orphanCards.length > 0) {
-    let maxClusterRadius = 0;
-    placed.forEach(b => {
-      const dist = Math.sqrt((b.x - spiralCenterX) ** 2 + (b.y - spiralCenterY) ** 2);
-      const cardRadius = (b.size || 200) / 2;
-      maxClusterRadius = Math.max(maxClusterRadius, dist + cardRadius);
-    });
-    
-    const orphanZoneInnerRadius = maxClusterRadius + config.clusterGap;
-    const orphanZoneOuterRadius = Math.min(width, height) / 2 - config.margin;
-    
-    orphanCards.forEach((orphan, i) => {
-      const baseAngle = (i / orphanCards.length) * Math.PI * 2;
-      const angleVariation = (Math.random() - 0.5) * 0.8;
-      const angle = baseAngle + angleVariation;
-      
-      const radiusRange = Math.max(50, orphanZoneOuterRadius - orphanZoneInnerRadius);
-      const radius = orphanZoneInnerRadius + Math.random() * radiusRange;
-      
-      orphan.x = spiralCenterX + Math.cos(angle) * radius;
-      orphan.y = spiralCenterY + Math.sin(angle) * radius;
-      
-      orphan.baseX = orphan.x;
-      orphan.baseY = orphan.y;
-      orphan.orbitCenterX = spiralCenterX;
-      orphan.orbitCenterY = spiralCenterY;
-      orphan.orbitRadius = radius;
-      orphan.orbitAngle = angle;
-      orphan.orbitSpeed = 0.00003;
-    });
-  }
-  
-  // ===== STEP 6: Collision resolution =====
-  resolveCollisionsWithConfig(placed, config);
-  resolveCollisionsWithConfig(orphanCards, config);
-  
-  // ===== STEP 6.5: Tag proximity - pull related cards closer, push unrelated apart =====
-  const allCards = [...placed, ...orphanCards];
-  enforceTagProximity(allCards, config);
-  
-  // ===== STEP 6.6: Re-resolve collisions with MORE padding =====
-  resolveCollisionsWithConfig(allCards, { 
-    ...config, 
-    collisionPadding: config.collisionPadding * 1.5, // Increased from 1.2
-    maxIterations: 50 // More iterations for better convergence
+  // ===== STEP 7: Resolve collisions within clusters =====
+  clusterList.forEach(([tag, cards]) => {
+    resolveClusterCollisions(cards, config.cardSpacing);
   });
   
-  // ===== STEP 6.7: Final overlap check - force push any remaining overlaps =====
-  for (let pass = 0; pass < 20; pass++) {
-    let hadOverlap = false;
-    for (let i = 0; i < allCards.length; i++) {
-      for (let j = i + 1; j < allCards.length; j++) {
-        const a = allCards[i];
-        const b = allCards[j];
+  // Resolve orphan collisions
+  resolveClusterCollisions(orphans, config.cardSpacing);
+  
+  // ===== STEP 8: Resolve collisions BETWEEN clusters =====
+  resolveInterClusterCollisions(clusterList, config);
+  
+  // ===== STEP 9: Keep everything in bounds =====
+  const margin = config.margin;
+  bubbles.forEach(b => {
+    const halfSize = (b.size || 200) / 2;
+    b.x = Math.max(margin + halfSize, Math.min(width - margin - halfSize, b.x));
+    b.y = Math.max(margin + halfSize, Math.min(height - margin - halfSize, b.y));
+    b.baseX = b.x;
+    b.baseY = b.y;
+  });
+  
+  // ===== STEP 10: Initialize physics (desktop only) =====
+  initializePhysics(width, height);
+  
+  console.log('✨ Tag-first galaxy layout complete');
+}
+
+// Resolve collisions within a single cluster
+function resolveClusterCollisions(cards, minSpacing) {
+  if (cards.length < 2) return;
+  
+  for (let iteration = 0; iteration < 50; iteration++) {
+    let hadCollision = false;
+    
+    for (let i = 0; i < cards.length; i++) {
+      for (let j = i + 1; j < cards.length; j++) {
+        const a = cards[i];
+        const b = cards[j];
+        
         const dx = b.x - a.x;
         const dy = b.y - a.y;
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const minDist = ((a.size || 200) + (b.size || 200)) / 2 + 20;
+        const minDist = ((a.size || 180) + (b.size || 180)) / 2 + minSpacing;
         
         if (dist < minDist) {
-          hadOverlap = true;
-          const pushDist = (minDist - dist) / 2 + 5;
-          const pushX = (dx / dist) * pushDist;
-          const pushY = (dy / dist) * pushDist;
+          hadCollision = true;
+          const overlap = (minDist - dist) / 2 + 2;
+          const pushX = (dx / dist) * overlap;
+          const pushY = (dy / dist) * overlap;
+          
           a.x -= pushX;
           a.y -= pushY;
           b.x += pushX;
@@ -6282,191 +6310,89 @@ function layoutCelestialSystem() {
         }
       }
     }
-    if (!hadOverlap) break;
+    
+    if (!hadCollision) break;
   }
   
-  // Update base positions after final push
-  allCards.forEach(b => {
-    b.baseX = b.x;
-    b.baseY = b.y;
+  // Update base positions
+  cards.forEach(c => {
+    c.baseX = c.x;
+    c.baseY = c.y;
   });
-  
-  
-  // ===== STEP 7: Ensure all visible =====
-  const margin = config.margin;
-  bubbles.forEach(b => {
-    const halfSize = (b.size || 200) / 2;
-    b.x = Math.max(margin, Math.min(width - margin - halfSize, b.x));
-    b.y = Math.max(margin, Math.min(height - margin - halfSize, b.y));
-    b.baseX = b.x;
-    b.baseY = b.y;
-  });
-  
-  // ===== STEP 8: Initialize Matter.js physics =====
-  initializePhysics(width, height);
 }
-  
-  
-// Collision resolution with configurable padding
-function resolveCollisionsWithConfig(cardGroup, config) {
-  if (!cardGroup || cardGroup.length < 2) return;
-  
-  const padding = config?.collisionPadding || 25;
-  const maxIterations = config?.maxIterations || 40;
-  
-  for (let iter = 0; iter < maxIterations; iter++) {
+
+// Resolve collisions between different clusters
+function resolveInterClusterCollisions(clusterList, config) {
+  // Get cluster bounding boxes and push them apart if overlapping
+  for (let iteration = 0; iteration < 20; iteration++) {
     let hadCollision = false;
     
-    for (let i = 0; i < cardGroup.length; i++) {
-      for (let j = i + 1; j < cardGroup.length; j++) {
-        const a = cardGroup[i];
-        const b = cardGroup[j];
+    for (let i = 0; i < clusterList.length; i++) {
+      for (let j = i + 1; j < clusterList.length; j++) {
+        const [tagA, cardsA] = clusterList[i];
+        const [tagB, cardsB] = clusterList[j];
         
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
+        // Find cluster centers and radii
+        const centerA = getClusterCenter(cardsA);
+        const centerB = getClusterCenter(cardsB);
+        const radiusA = getClusterRadius(cardsA, centerA);
+        const radiusB = getClusterRadius(cardsB, centerB);
+        
+        const dx = centerB.x - centerA.x;
+        const dy = centerB.y - centerA.y;
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        // Larger minimum distance to prevent overlap (add extra buffer)
-        const minDist = ((a.size || 200) + (b.size || 200)) / 2 + padding + 30;
+        const minDist = radiusA + radiusB + config.cardSpacing * 2;
         
         if (dist < minDist) {
           hadCollision = true;
-          const overlap = (minDist - dist) / 2;
-          const pushX = (dx / dist) * overlap;
-          const pushY = (dy / dist) * overlap;
+          const pushDist = (minDist - dist) / 2 + 10;
+          const pushX = (dx / dist) * pushDist;
+          const pushY = (dy / dist) * pushDist;
           
-          const aWeight = (a.totalConnections || 0) + 1;
-          const bWeight = (b.totalConnections || 0) + 1;
-          const totalWeight = aWeight + bWeight;
-          
-          a.x -= pushX * (bWeight / totalWeight);
-          a.y -= pushY * (bWeight / totalWeight);
-          b.x += pushX * (aWeight / totalWeight);
-          b.y += pushY * (aWeight / totalWeight);
+          // Move all cards in each cluster
+          cardsA.forEach(c => {
+            c.x -= pushX;
+            c.y -= pushY;
+            c.baseX = c.x;
+            c.baseY = c.y;
+          });
+          cardsB.forEach(c => {
+            c.x += pushX;
+            c.y += pushY;
+            c.baseX = c.x;
+            c.baseY = c.y;
+          });
         }
       }
     }
     
     if (!hadCollision) break;
   }
-  
-  cardGroup.forEach(b => {
-    b.baseX = b.x;
-    b.baseY = b.y;
-  });
 }
 
-// Enforce that cards sharing tags stay within a reasonable distance
-// while also pushing apart cards that DON'T share tags
-// Enforce that cards sharing tags stay close, 
-// while cards with NO shared tags are pushed FAR apart (like separate galaxies)
-function enforceTagProximity(cardGroup, config) {
-  if (!cardGroup || cardGroup.length < 2) return;
-  
-  const isMobileLayout = window.innerWidth < 768;
-  
-  // === DRAMATICALLY INCREASED SEPARATION ===
-  // Cards sharing tags: keep within this distance
-  const MAX_TAG_DISTANCE = isMobileLayout ? 350 : 500;
-  
-  // Cards NOT sharing tags: push apart to at least this distance
-  // This creates the "separate galaxies" effect
-  const MIN_NO_TAG_DISTANCE = isMobileLayout ? 400 : 650;
-  
-  // Force strengths - much stronger for cleaner separation
-  const PULL_STRENGTH = 0.25;  // Pull related cards together
-  const PUSH_STRENGTH = 0.35;  // Push unrelated cards apart (was 0.1!)
-  
-  // More iterations for better convergence
-  const maxIterations = 40;
-  
-  for (let iter = 0; iter < maxIterations; iter++) {
-    let hadAdjustment = false;
-    
-    for (let i = 0; i < cardGroup.length; i++) {
-      for (let j = i + 1; j < cardGroup.length; j++) {
-        const a = cardGroup[i];
-        const b = cardGroup[j];
-        
-        // Check shared tags
-        const aTags = (a.tags || []).map(t => t.toLowerCase());
-        const bTags = (b.tags || []).map(t => t.toLowerCase());
-        const sharedTags = aTags.filter(t => bTags.includes(t));
-        
-        // Calculate distance
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        
-        // Weight by mass (heavier cards move less)
-        const aWeight = (a.totalConnections || 0) + (a.mass || 1) + 1;
-        const bWeight = (b.totalConnections || 0) + (b.mass || 1) + 1;
-        const totalWeight = aWeight + bWeight;
-        
-        // Calculate size-aware minimum distance (prevent overlap)
-        const aSize = a.size || 200;
-        const bSize = b.size || 200;
-        const combinedSize = (aSize + bSize) / 2;
-        const overlapPadding = 40; // Extra breathing room
-        
-        if (sharedTags.length > 0) {
-          // === PULL TOGETHER cards that share tags ===
-          
-          // More shared tags = even closer together
-          const proximityMultiplier = 1 / (1 + (sharedTags.length - 1) * 0.25);
-          const adjustedMaxDist = MAX_TAG_DISTANCE * proximityMultiplier;
-          
-          // Don't pull closer than card sizes allow
-          const minAllowedDist = combinedSize + overlapPadding;
-          
-          if (dist > adjustedMaxDist) {
-            hadAdjustment = true;
-            
-            const pullDistance = (dist - adjustedMaxDist) * PULL_STRENGTH;
-            const pullX = (dx / dist) * pullDistance;
-            const pullY = (dy / dist) * pullDistance;
-            
-            // Move toward each other (weighted by mass)
-            a.x += pullX * (bWeight / totalWeight);
-            a.y += pullY * (bWeight / totalWeight);
-            b.x -= pullX * (aWeight / totalWeight);
-            b.y -= pullY * (aWeight / totalWeight);
-          }
-          
-        } else {
-          // === PUSH APART cards that DON'T share any tags ===
-          // This is the key to the "separate galaxies" effect!
-          
-          // Minimum distance accounts for card sizes + large gap
-          const minDist = MIN_NO_TAG_DISTANCE + combinedSize / 2;
-          
-          if (dist < minDist) {
-            hadAdjustment = true;
-            
-            // Strong push to create clear visual separation
-            const overlap = minDist - dist;
-            const pushForce = overlap * PUSH_STRENGTH;
-            const pushX = (dx / dist) * pushForce;
-            const pushY = (dy / dist) * pushForce;
-            
-            // Move away from each other (weighted by mass)
-            a.x -= pushX * (bWeight / totalWeight);
-            a.y -= pushY * (bWeight / totalWeight);
-            b.x += pushX * (aWeight / totalWeight);
-            b.y += pushY * (aWeight / totalWeight);
-          }
-        }
-      }
-    }
-    
-    if (!hadAdjustment) break;
-  }
-  
-  // Update base positions
-  cardGroup.forEach(b => {
-    b.baseX = b.x;
-    b.baseY = b.y;
-  });
+// Helper: Get center of a cluster
+function getClusterCenter(cards) {
+  if (cards.length === 0) return { x: 0, y: 0 };
+  const sumX = cards.reduce((sum, c) => sum + c.x, 0);
+  const sumY = cards.reduce((sum, c) => sum + c.y, 0);
+  return { x: sumX / cards.length, y: sumY / cards.length };
 }
+
+// Helper: Get radius of a cluster (distance to farthest card)
+function getClusterRadius(cards, center) {
+  if (cards.length === 0) return 0;
+  let maxDist = 0;
+  cards.forEach(c => {
+    const dist = Math.sqrt((c.x - center.x) ** 2 + (c.y - center.y) ** 2);
+    const cardRadius = (c.size || 180) / 2;
+    maxDist = Math.max(maxDist, dist + cardRadius);
+  });
+  return maxDist;
+}
+  
+
+
+
 
 // Lighter collision pass between clusters (only edge cards)
 function resolveCrossClusterCollisions(clusterList, clusterZones) {
