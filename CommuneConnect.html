@@ -8338,6 +8338,27 @@ async function syncCardData(cardId) {
     return;
   }
   
+  // *** CRITICAL: Save form values to card BEFORE syncing ***
+  const titleEl = document.getElementById('editTitle');
+  const notesEl = document.getElementById('editNotes');
+  const locationEl = document.getElementById('editLocation');
+  
+  if (titleEl && !titleEl.disabled) {
+    card.title = titleEl.value;
+  }
+  if (notesEl && !notesEl.disabled) {
+    card.notes = notesEl.value;
+  }
+  if (locationEl && !locationEl.disabled) {
+    card.location = locationEl.value;
+  }
+  
+  card.lastEdited = new Date().toISOString();
+  card.editedBy = username;
+  
+  // Save locally first
+  saveCards();
+  
   if (card.isPrivate) {
     showToast('Private cards are not synced', 'default');
     return;
@@ -8419,7 +8440,12 @@ async function syncCardData(cardId) {
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Sync error:', error);
+      throw error;
+    }
+    
+    console.log('✅ Card synced to cloud:', data);
     
     // 4. Sync photos to photos table
     if (card.photos?.length > 0) {
