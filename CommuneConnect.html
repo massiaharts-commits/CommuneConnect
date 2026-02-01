@@ -5080,7 +5080,33 @@ function openCardFromProfile(cardId, cardUrl) {
   let card = cards.find(c => String(c.id) === normalizedId || c.url === cardUrl);
   
   if (card) {
-    openEditModal(card.id);
+    // Check if this is the current user's card
+    const isOwnCard = card.isOwnCard || 
+                      card.addedBy === username || 
+                      (currentUser && card.cloudUserId === currentUser.id);
+    
+    if (isOwnCard) {
+      openEditModal(card.id);
+    } else {
+      // Not our card - open in view-only mode
+      openCommunityCardModal({
+        bubbleId: card.id,
+        url: card.url,
+        title: card.title,
+        notes: card.notes,
+        tags: card.tags || [],
+        topic: card.topic,
+        votes: card.votes || 0,
+        screenshot: card.screenshot,
+        photos: card.photos || [],
+        comments: card.comments || [],
+        location: card.location,
+        addedBy: card.addedBy,
+        editedBy: card.editedBy,
+        createdAt: card.createdAt,
+        isCommunity: true
+      });
+    }
   } else {
     // Try bubbles with string comparison
     const bubble = bubbles.find(b => String(b.bubbleId) === normalizedId || b.url === cardUrl);
