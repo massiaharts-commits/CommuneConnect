@@ -661,6 +661,25 @@
       .edit-nav-next { right: 1.5rem; }
     }
     
+    /* Swipe hint for mobile */
+    .edit-modal::after {
+      content: '← Swipe to navigate →';
+      position: absolute;
+      bottom: 0.75rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      color: var(--text-3);
+      opacity: 0.6;
+      pointer-events: none;
+      animation: swipeHintFade 3s ease-out forwards;
+    }
+    
+    @keyframes swipeHintFade {
+      0%, 70% { opacity: 0.6; }
+      100% { opacity: 0; }
+    }
+    
     /* ========== EDIT MODAL - MEDIA FOCUSED LAYOUT ========== */
     .modal-content.edit-modal {
       max-width: 1100px;
@@ -2019,6 +2038,68 @@
       0%, 100% { opacity: var(--opacity); transform: scale(1); }
       50% { opacity: calc(var(--opacity) * 0.3); transform: scale(0.8); }
     }
+    
+    /* Nebula cloud animations */
+    @keyframes nebulaDrift0 {
+      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.6; }
+      25% { transform: translate(30px, -20px) scale(1.1) rotate(5deg); opacity: 0.8; }
+      50% { transform: translate(-20px, 30px) scale(0.95) rotate(-3deg); opacity: 0.5; }
+      75% { transform: translate(40px, 10px) scale(1.05) rotate(8deg); opacity: 0.7; }
+    }
+    
+    @keyframes nebulaDrift1 {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+      33% { transform: translate(-40px, 20px) scale(1.15); opacity: 0.7; }
+      66% { transform: translate(20px, -30px) scale(0.9); opacity: 0.4; }
+    }
+    
+    @keyframes nebulaDrift2 {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
+      50% { transform: translate(50px, 40px) rotate(10deg); opacity: 0.5; }
+    }
+    
+    @keyframes nebulaDrift3 {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+      25% { transform: translate(-30px, -40px) scale(1.2); opacity: 0.6; }
+      75% { transform: translate(40px, 20px) scale(0.85); opacity: 0.5; }
+    }
+    
+    @keyframes nebulaDrift4 {
+      0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+      40% { transform: translate(20px, -50px); opacity: 0.4; }
+      80% { transform: translate(-30px, 30px); opacity: 0.7; }
+    }
+    
+    .nebula-container {
+      mix-blend-mode: screen;
+    }
+
+    /* Constellation lines */
+    @keyframes constellationFade {
+      0%, 100% { opacity: 0.15; }
+      50% { opacity: 0.4; }
+    }
+    
+    .constellation-line {
+      stroke-linecap: round;
+    }
+    
+    .constellation-star {
+      animation: constellationStarPulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes constellationStarPulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+
+    /* Gravity well particle effects */
+    .gravity-particle {
+      will-change: transform, opacity;
+      transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  opacity 0.4s ease,
+                  filter 0.4s ease;
+    }
 
     /* Ambient particles */
     .ambient-particles {
@@ -2109,15 +2190,67 @@
       opacity: 1;
     }
 
-    /* Breathing animation */
-    .bubble-card.breathing {
-      animation: cardBreathe 4s ease-in-out infinite;
-      animation-delay: var(--breath-delay, 0s);
+    /* === THOUGHT BUBBLE ANIMATIONS (visual only, no position changes) === */
+    
+    /* Connected cards - warm campfire glow */
+    .bubble-card.connected {
+      --glow-color: rgba(139, 92, 246, 0.15);
     }
-
-    @keyframes cardBreathe {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-3px) scale(1.005); }
+    
+    .bubble-card.connected::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 18px;
+      background: radial-gradient(ellipse at center, var(--glow-color), transparent 70%);
+      opacity: 0;
+      animation: warmGlow 4s ease-in-out infinite;
+      animation-delay: var(--breath-delay, 0s);
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    @keyframes warmGlow {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+    }
+    
+    /* Unconnected cards - frontier discovery beacon */
+    .bubble-card.frontier {
+      --beacon-color: rgba(34, 211, 238, 0.2);
+    }
+    
+    .bubble-card.frontier::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 20px;
+      background: radial-gradient(ellipse at center, var(--beacon-color), transparent 60%);
+      opacity: 0;
+      animation: discoveryBeacon 3s ease-in-out infinite;
+      animation-delay: var(--breath-delay, 0s);
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    @keyframes discoveryBeacon {
+      0%, 100% { opacity: 0.2; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.05); }
+    }
+    
+    /* Frontier cards have a subtle inviting shimmer */
+    .bubble-card.frontier::before {
+      background: linear-gradient(135deg, 
+        rgba(34, 211, 238, 0.15) 0%, 
+        transparent 40%,
+        rgba(99, 102, 241, 0.1) 100%) !important;
+      opacity: 0.4 !important;
+      animation: frontierShimmer 5s ease-in-out infinite;
+    }
+    
+    @keyframes frontierShimmer {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
     }
 
     /* Hover state */
@@ -2419,10 +2552,7 @@
       animation: gentleFloat 6s ease-in-out infinite;
     }
 
-    @keyframes gentleFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-4px); }
-    }
+    
 
     /* Moon - Secondary cards */
     .bubble-card.celestial-moon {
@@ -2505,9 +2635,7 @@
       animation: none;
     }
 
-    .bubble-card.celestial-planet {
-      animation: gentleFloat 6s ease-in-out infinite;
-    }
+    
 
     /* ========== CONNECTION LINES ========== */
     .connection-line {
@@ -2669,6 +2797,93 @@
     @keyframes fabPulse {
       0%, 100% { box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4); }
       50% { box-shadow: 0 8px 40px rgba(99, 102, 241, 0.6); }
+    }
+    
+    /* ========== AMBIENT CONSTELLATIONS ========== */
+    .constellation-ambient {
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    
+    .constellation-ambient path {
+      transition: opacity 0.4s ease, stroke-width 0.4s ease;
+    }
+    
+    .constellation-ambient.dimmed path {
+      opacity: 0.05 !important;
+    }
+    
+    .constellation-ambient path.highlighted {
+      opacity: 0.6 !important;
+      stroke-width: 2 !important;
+    }
+    
+    /* ========== GHOST FAB (Frontier Invite) ========== */
+    .ghost-fab {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px dashed rgba(99, 102, 241, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0.4;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 15;
+      pointer-events: auto;
+    }
+    
+    .ghost-fab::before {
+      content: '+';
+      font-size: 1.75rem;
+      font-weight: 300;
+      color: rgba(99, 102, 241, 0.5);
+      transition: all 0.3s ease;
+    }
+    
+    .ghost-fab:hover {
+      opacity: 1;
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.5);
+      transform: scale(1.1);
+      box-shadow: 
+        0 0 30px rgba(99, 102, 241, 0.2),
+        0 0 60px rgba(99, 102, 241, 0.1);
+    }
+    
+    .ghost-fab:hover::before {
+      color: rgba(99, 102, 241, 0.9);
+    }
+    
+    .ghost-fab-tooltip {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 15, 20, 0.95);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-2);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    
+    .ghost-fab:hover .ghost-fab-tooltip {
+      opacity: 1;
+    }
+    
+    /* Hide on mobile - too cluttered */
+    @media (max-width: 768px) {
+      .ghost-fab {
+        display: none;
+      }
     }
     
     @keyframes topicPulse {
@@ -3746,7 +3961,24 @@
       }
     }
     
+    /* Constellation lines */
+    @keyframes constellationFade {
+      0%, 100% { opacity: 0.15; }
+      50% { opacity: 0.4; }
+    }
     
+    .constellation-line {
+      stroke-linecap: round;
+    }
+    
+    .constellation-star {
+      animation: constellationStarPulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes constellationStarPulse {
+      0%, 100% { opacity: 0.4; r: 1.5; }
+      50% { opacity: 0.8; r: 2; }
+    }
     
     /* ===== PREFERS REDUCED MOTION ===== */
     @media (prefers-reduced-motion: reduce) {
@@ -3769,6 +4001,7 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
 </head>
 <body>
 <header class="header">
@@ -4240,6 +4473,7 @@
   </div>
 </div>
   <div class="discover-canvas" id="discoverCanvas">
+    <svg id="ambientConstellationsSvg" class="constellation-ambient" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4"></svg>
     <svg id="connectionsSvg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5"></svg>
     <div class="bubble-container" id="bubbleContainer"></div>
     <div class="discover-stats">
@@ -4425,6 +4659,18 @@ let centerCardId = null;
 let lastClickTime = 0;
 let lastClickId = null;
 let hoveredBubbleId = null;
+
+// ============== MATTER.JS PHYSICS ==============
+let physicsEngine = null;
+let physicsWorld = null;
+let physicsBodies = {};
+let physicsRunner = null;
+let physicsEnabled = true;
+
+// Gravity well effect
+let gravityWellActive = false;
+let gravityWellPosition = { x: 0, y: 0 };
+let ambientParticlePositions = [];
 
 const TOPIC_COLORS = {
   tech: '#6366f1',
@@ -4629,14 +4875,28 @@ function updateDiscoverUserInfo() {
 
 function closeDiscover() {
   document.getElementById('discoverView').classList.remove('active');
-  if (ambientFrame) { 
-    cancelAnimationFrame(ambientFrame); 
-    ambientFrame = null; 
+  
+  // Stop physics when closing
+  if (physicsRunner && typeof Matter !== 'undefined') {
+    Matter.Runner.stop(physicsRunner);
   }
+  
+  // Cancel ambient animation
+  if (ambientFrame) {
+    cancelAnimationFrame(ambientFrame);
+    ambientFrame = null;
+  }
+  
+  // Deactivate gravity well
+  deactivateGravityWell();
+  
+  // Clean up ghost fab
+  cleanupGhostFab();
+  
+  // Reset selection state
   selectedBubbleId = null;
   hoveredBubbleId = null;
 }
-
 // ============== USER PROFILE VIEW ==============
 let viewingUsername = null;
 
@@ -4763,6 +5023,7 @@ function closeDiscoverInfo() {
     b.classList.remove('selected', 'related');
   });
   hideConnections();
+  resetConstellations();
 }
 
 async function initBubbleView() {
@@ -4807,28 +5068,103 @@ function createBackgroundEffects() {
   
   canvas.insertBefore(starField, canvas.firstChild);
   
-  // === AMBIENT PARTICLES (nebula dust) ===
+  // === AMBIENT PARTICLES (nebula dust) with gravity well support ===
   const particles = document.createElement('div');
   particles.className = 'ambient-particles';
+  particles.id = 'ambientParticles';
   
   const particleColors = ['#6366f1', '#8b5cf6', '#ec4899', '#06b6d4', '#10b981'];
-  const particleCount = isMobileDevice ? 10 : 20;
+  const particleCount = isMobileDevice ? 10 : 25;
+  
+  ambientParticlePositions = []; // Reset tracking
   
   for (let i = 0; i < particleCount; i++) {
     const particle = document.createElement('div');
-    particle.className = 'particle';
-    particle.style.left = `${Math.random() * 100}%`;
-    particle.style.top = `${Math.random() * 100}%`;
-    particle.style.width = `${4 + Math.random() * 8}px`;
-    particle.style.height = particle.style.width;
+    particle.className = 'particle gravity-particle';
+    particle.id = `particle-${i}`;
+    
+    const startX = Math.random() * 100;
+    const startY = Math.random() * 100;
+    const size = 4 + Math.random() * 8;
+    
+    particle.style.left = `${startX}%`;
+    particle.style.top = `${startY}%`;
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
     particle.style.background = particleColors[Math.floor(Math.random() * particleColors.length)];
+    particle.style.setProperty('--base-x', `${startX}%`);
+    particle.style.setProperty('--base-y', `${startY}%`);
     particle.style.setProperty('--duration', `${10 + Math.random() * 20}s`);
     particle.style.setProperty('--dx', `${(Math.random() - 0.5) * 100}px`);
     particle.style.setProperty('--dy', `${(Math.random() - 0.5) * 100}px`);
+    
+    // Track original position for gravity wells
+    ambientParticlePositions.push({
+      el: particle,
+      baseX: startX,
+      baseY: startY,
+      currentX: startX,
+      currentY: startY
+    });
+    
     particles.appendChild(particle);
   }
   
   canvas.insertBefore(particles, canvas.firstChild);
+  
+  // === NEBULA CLOUDS ===
+  const nebulaContainer = document.createElement('div');
+  nebulaContainer.className = 'nebula-container';
+  nebulaContainer.style.cssText = `
+    position: absolute;
+    inset: -20%;
+    width: 140%;
+    height: 140%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  `;
+  
+  const nebulaColors = [
+    { color1: 'rgba(99, 102, 241, 0.08)', color2: 'rgba(139, 92, 246, 0.05)' },
+    { color1: 'rgba(236, 72, 153, 0.06)', color2: 'rgba(244, 114, 182, 0.03)' },
+    { color1: 'rgba(6, 182, 212, 0.05)', color2: 'rgba(34, 211, 238, 0.03)' },
+    { color1: 'rgba(245, 158, 11, 0.04)', color2: 'rgba(251, 191, 36, 0.02)' },
+    { color1: 'rgba(16, 185, 129, 0.05)', color2: 'rgba(52, 211, 153, 0.03)' }
+  ];
+  
+  for (let i = 0; i < 5; i++) {
+    const nebula = document.createElement('div');
+    const colors = nebulaColors[i];
+    const size = 300 + Math.random() * 500;
+    const x = Math.random() * 100;
+    const y = Math.random() * 100;
+    const duration = 60 + Math.random() * 40;
+    const delay = Math.random() * -30;
+    
+    nebula.className = 'nebula-cloud';
+    nebula.style.cssText = `
+      position: absolute;
+      left: ${x}%;
+      top: ${y}%;
+      width: ${size}px;
+      height: ${size}px;
+      background: radial-gradient(ellipse at center, ${colors.color1} 0%, ${colors.color2} 40%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(40px);
+      opacity: 0.8;
+      animation: nebulaDrift${i} ${duration}s ease-in-out infinite;
+      animation-delay: ${delay}s;
+    `;
+    nebulaContainer.appendChild(nebula);
+  }
+  
+  canvas.insertBefore(nebulaContainer, canvas.firstChild);
+  
+  // === CONSTELLATION LINES ===
+  createConstellationLines(canvas);
+  
+
   
   // === SHOOTING STARS CONTAINER ===
   const shootingContainer = document.createElement('div');
@@ -4844,6 +5180,128 @@ function createBackgroundEffects() {
   
   // Start shooting stars
   startShootingStars(shootingContainer);
+  
+  
+}
+
+// Create constellation lines connecting background stars
+function createConstellationLines(canvas) {
+  // Remove existing
+  canvas.querySelectorAll('.constellation-svg').forEach(el => el.remove());
+  
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.classList.add('constellation-svg');
+  svg.style.cssText = `
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.3;
+  `;
+  
+  const width = canvas.offsetWidth || window.innerWidth;
+  const height = canvas.offsetHeight || window.innerHeight;
+  
+  // Generate random star points for constellations
+  const constellationStars = [];
+  const numStars = isMobileDevice ? 15 : 30;
+  
+  for (let i = 0; i < numStars; i++) {
+    constellationStars.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      id: i
+    });
+  }
+  
+  // Create constellation groups (3-6 stars each)
+  const constellations = [];
+  const usedStars = new Set();
+  
+  while (usedStars.size < numStars - 3) {
+    // Pick a random starting star
+    let startIdx;
+    do {
+      startIdx = Math.floor(Math.random() * numStars);
+    } while (usedStars.has(startIdx));
+    
+    const constellation = [startIdx];
+    usedStars.add(startIdx);
+    
+    // Add 2-5 more nearby stars
+    const constellationSize = 3 + Math.floor(Math.random() * 3);
+    
+    for (let i = 1; i < constellationSize && usedStars.size < numStars; i++) {
+      const lastStar = constellationStars[constellation[constellation.length - 1]];
+      
+      // Find nearest unused star
+      let nearestIdx = -1;
+      let nearestDist = Infinity;
+      
+      for (let j = 0; j < numStars; j++) {
+        if (usedStars.has(j)) continue;
+        
+        const star = constellationStars[j];
+        const dist = Math.sqrt((star.x - lastStar.x) ** 2 + (star.y - lastStar.y) ** 2);
+        
+        // Prefer stars within a reasonable distance
+        if (dist < nearestDist && dist < 300) {
+          nearestDist = dist;
+          nearestIdx = j;
+        }
+      }
+      
+      if (nearestIdx !== -1) {
+        constellation.push(nearestIdx);
+        usedStars.add(nearestIdx);
+      }
+    }
+    
+    if (constellation.length >= 3) {
+      constellations.push(constellation);
+    }
+  }
+  
+  // Draw constellation lines
+  let pathsHTML = '';
+  
+  constellations.forEach((constellation, cIdx) => {
+    const animDelay = cIdx * 2;
+    
+    for (let i = 0; i < constellation.length - 1; i++) {
+      const star1 = constellationStars[constellation[i]];
+      const star2 = constellationStars[constellation[i + 1]];
+      
+      pathsHTML += `
+        <line 
+          x1="${star1.x}" y1="${star1.y}" 
+          x2="${star2.x}" y2="${star2.y}"
+          stroke="rgba(255, 255, 255, 0.15)"
+          stroke-width="0.5"
+          stroke-dasharray="4 8"
+          class="constellation-line"
+          style="animation: constellationFade 8s ease-in-out infinite; animation-delay: ${animDelay}s;"
+        />
+      `;
+    }
+    
+    // Draw small dots at each star point
+    constellation.forEach(idx => {
+      const star = constellationStars[idx];
+      pathsHTML += `
+        <circle 
+          cx="${star.x}" cy="${star.y}" r="1.5"
+          fill="rgba(255, 255, 255, 0.4)"
+          class="constellation-star"
+        />
+      `;
+    });
+  });
+  
+  svg.innerHTML = pathsHTML;
+  canvas.insertBefore(svg, canvas.firstChild);
 }
 
 // Periodically create shooting stars
@@ -4924,6 +5382,313 @@ function startShootingStars(container) {
   setTimeout(createShootingStar, 1000);
 }
 
+// Create constellation lines connecting background stars
+function createConstellationLines(canvas) {
+  canvas.querySelectorAll('.constellation-svg').forEach(el => el.remove());
+  
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.classList.add('constellation-svg');
+  svg.style.cssText = `
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.3;
+  `;
+  
+  const width = canvas.offsetWidth || window.innerWidth;
+  const height = canvas.offsetHeight || window.innerHeight;
+  
+  const constellationStars = [];
+  const numStars = isMobileDevice ? 15 : 30;
+  
+  for (let i = 0; i < numStars; i++) {
+    constellationStars.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      id: i
+    });
+  }
+  
+  const constellations = [];
+  const usedStars = new Set();
+  
+  while (usedStars.size < numStars - 3) {
+    let startIdx;
+    do {
+      startIdx = Math.floor(Math.random() * numStars);
+    } while (usedStars.has(startIdx));
+    
+    const constellation = [startIdx];
+    usedStars.add(startIdx);
+    
+    const constellationSize = 3 + Math.floor(Math.random() * 3);
+    
+    for (let i = 1; i < constellationSize && usedStars.size < numStars; i++) {
+      const lastStar = constellationStars[constellation[constellation.length - 1]];
+      let nearestIdx = -1;
+      let nearestDist = Infinity;
+      
+      for (let j = 0; j < numStars; j++) {
+        if (usedStars.has(j)) continue;
+        const star = constellationStars[j];
+        const dist = Math.sqrt((star.x - lastStar.x) ** 2 + (star.y - lastStar.y) ** 2);
+        if (dist < nearestDist && dist < 300) {
+          nearestDist = dist;
+          nearestIdx = j;
+        }
+      }
+      
+      if (nearestIdx !== -1) {
+        constellation.push(nearestIdx);
+        usedStars.add(nearestIdx);
+      }
+    }
+    
+    if (constellation.length >= 3) {
+      constellations.push(constellation);
+    }
+  }
+  
+  let pathsHTML = '';
+  
+  constellations.forEach((constellation, cIdx) => {
+    const animDelay = cIdx * 2;
+    
+    for (let i = 0; i < constellation.length - 1; i++) {
+      const star1 = constellationStars[constellation[i]];
+      const star2 = constellationStars[constellation[i + 1]];
+      
+      pathsHTML += `
+        <line 
+          x1="${star1.x}" y1="${star1.y}" 
+          x2="${star2.x}" y2="${star2.y}"
+          stroke="rgba(255, 255, 255, 0.15)"
+          stroke-width="0.5"
+          stroke-dasharray="4 8"
+          class="constellation-line"
+          style="animation: constellationFade 8s ease-in-out infinite; animation-delay: ${animDelay}s;"
+        />
+      `;
+    }
+    
+    constellation.forEach(idx => {
+      const star = constellationStars[idx];
+      pathsHTML += `
+        <circle 
+          cx="${star.x}" cy="${star.y}" r="1.5"
+          fill="rgba(255, 255, 255, 0.4)"
+          class="constellation-star"
+        />
+      `;
+    });
+  });
+  
+  svg.innerHTML = pathsHTML;
+  canvas.insertBefore(svg, canvas.firstChild);
+}
+
+// Activate gravity well - particles drift toward hovered card
+function activateGravityWell(x, y, cardSize) {
+  gravityWellActive = true;
+  gravityWellPosition = { x, y };
+  
+  const canvas = document.getElementById('discoverCanvas');
+  if (!canvas) return;
+  
+  const rect = canvas.getBoundingClientRect();
+  const canvasWidth = rect.width;
+  const canvasHeight = rect.height;
+  const influenceRadius = cardSize * 2.5;
+  
+  ambientParticlePositions.forEach((p) => {
+    const particleX = (p.baseX / 100) * canvasWidth;
+    const particleY = (p.baseY / 100) * canvasHeight;
+    
+    const dx = x - particleX;
+    const dy = y - particleY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist < influenceRadius && dist > 50) {
+      const strength = Math.min(1, (influenceRadius - dist) / influenceRadius);
+      const pullDistance = 30 + strength * 60;
+      const angle = Math.atan2(dy, dx);
+      const pullX = Math.cos(angle) * pullDistance;
+      const pullY = Math.sin(angle) * pullDistance;
+      
+      if (p.el) {
+        p.el.style.transform = `translate(${pullX}px, ${pullY}px) scale(${1 + strength * 0.3})`;
+        p.el.style.opacity = `${0.4 + strength * 0.4}`;
+        p.el.style.filter = `blur(${(1 - strength) * 2}px)`;
+      }
+    }
+  });
+}
+
+// Deactivate gravity well
+function deactivateGravityWell() {
+  gravityWellActive = false;
+  ambientParticlePositions.forEach(p => {
+    if (p.el) {
+      p.el.style.transform = 'translate(0, 0) scale(1)';
+      p.el.style.opacity = '';
+      p.el.style.filter = '';
+    }
+  });
+}
+
+// ============== MATTER.JS PHYSICS SYSTEM ==============
+function initializePhysics(canvasWidth, canvasHeight) {
+  if (typeof Matter === 'undefined') {
+    console.warn('Matter.js not loaded');
+    return;
+  }
+  
+  if (physicsRunner) {
+    Matter.Runner.stop(physicsRunner);
+  }
+  if (physicsEngine) {
+    Matter.Engine.clear(physicsEngine);
+  }
+  
+  physicsEngine = Matter.Engine.create({
+    gravity: { x: 0, y: 0 }
+  });
+  physicsWorld = physicsEngine.world;
+  physicsBodies = {};
+  
+  bubbles.forEach(b => {
+    const radius = (b.size || 200) / 2 + 20;
+    
+    const body = Matter.Bodies.circle(b.x, b.y, radius, {
+      restitution: 0.3,
+      friction: 0.1,
+      frictionAir: 0.08,
+      mass: (b.mass || 1) + 1,
+      label: b.bubbleId,
+      collisionFilter: { category: 0x0001, mask: 0x0001 }
+    });
+    
+    physicsBodies[b.bubbleId] = body;
+    b.physicsBody = body;
+    Matter.Composite.add(physicsWorld, body);
+  });
+  
+  const wallThickness = 100;
+  const walls = [
+    Matter.Bodies.rectangle(canvasWidth / 2, -wallThickness / 2, canvasWidth + 400, wallThickness, { isStatic: true }),
+    Matter.Bodies.rectangle(canvasWidth / 2, canvasHeight + wallThickness / 2, canvasWidth + 400, wallThickness, { isStatic: true }),
+    Matter.Bodies.rectangle(-wallThickness / 2, canvasHeight / 2, wallThickness, canvasHeight + 400, { isStatic: true }),
+    Matter.Bodies.rectangle(canvasWidth + wallThickness / 2, canvasHeight / 2, wallThickness, canvasHeight + 400, { isStatic: true })
+  ];
+  Matter.Composite.add(physicsWorld, walls);
+  
+  applyInitialSeparation();
+  
+  physicsRunner = Matter.Runner.create({ delta: 1000 / 60, isFixed: true });
+  Matter.Runner.run(physicsRunner, physicsEngine);
+  Matter.Events.on(physicsEngine, 'afterUpdate', syncPhysicsToDOM);
+  
+  console.log('🔬 Matter.js physics initialized with', bubbles.length, 'bodies');
+}
+
+function applyInitialSeparation() {
+  bubbles.forEach(a => {
+    bubbles.forEach(b => {
+      if (a.bubbleId >= b.bubbleId) return;
+      
+      const bodyA = physicsBodies[a.bubbleId];
+      const bodyB = physicsBodies[b.bubbleId];
+      if (!bodyA || !bodyB) return;
+      
+      const dx = bodyB.position.x - bodyA.position.x;
+      const dy = bodyB.position.y - bodyA.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const minDist = ((a.size || 200) + (b.size || 200)) / 2 + 40;
+      
+      if (dist < minDist) {
+        const force = (minDist - dist) * 0.0005;
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+        Matter.Body.applyForce(bodyA, bodyA.position, { x: -fx, y: -fy });
+        Matter.Body.applyForce(bodyB, bodyB.position, { x: fx, y: fy });
+      }
+    });
+  });
+}
+
+function syncPhysicsToDOM() {
+  if (!physicsEnabled) return;
+  
+  bubbles.forEach(b => {
+    const body = physicsBodies[b.bubbleId];
+    if (!body) return;
+    
+    b.x = body.position.x;
+    b.y = body.position.y;
+    b.baseX = b.x;
+    b.baseY = b.y;
+    
+    const card = document.getElementById(`bubble-${b.bubbleId}`);
+    if (card) {
+      const width = b.size || 200;
+      card.style.left = `${b.x - width / 2}px`;
+      card.style.top = `${b.y - (width * 0.7)}px`;
+    }
+  });
+}
+
+function applyTagAttractionForces() {
+  if (!physicsEngine || !physicsEnabled) return;
+  
+  bubbles.forEach(a => {
+    bubbles.forEach(b => {
+      if (a.bubbleId >= b.bubbleId) return;
+      
+      const bodyA = physicsBodies[a.bubbleId];
+      const bodyB = physicsBodies[b.bubbleId];
+      if (!bodyA || !bodyB) return;
+      
+      const aTags = (a.tags || []).map(t => t.toLowerCase());
+      const bTags = (b.tags || []).map(t => t.toLowerCase());
+      const sharedTags = aTags.filter(t => bTags.includes(t));
+      
+      const dx = bodyB.position.x - bodyA.position.x;
+      const dy = bodyB.position.y - bodyA.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      
+      if (sharedTags.length > 0) {
+        const maxDist = 400;
+        if (dist > maxDist) {
+          const force = 0.000005 * sharedTags.length;
+          const fx = (dx / dist) * force;
+          const fy = (dy / dist) * force;
+          Matter.Body.applyForce(bodyA, bodyA.position, { x: fx, y: fy });
+          Matter.Body.applyForce(bodyB, bodyB.position, { x: -fx, y: -fy });
+        }
+      } else {
+        const minDist = 300;
+        if (dist < minDist) {
+          const force = 0.000002;
+          const fx = (dx / dist) * force;
+          const fy = (dy / dist) * force;
+          Matter.Body.applyForce(bodyA, bodyA.position, { x: -fx, y: -fy });
+          Matter.Body.applyForce(bodyB, bodyB.position, { x: fx, y: fy });
+        }
+      }
+    });
+  });
+}
+
+// Periodic tag-based forces
+setInterval(() => {
+  if (document.getElementById('discoverView')?.classList.contains('active')) {
+    applyTagAttractionForces();
+  }
+}, 500);
+
 async function buildBubbleData() {
   const container = document.getElementById('bubbleContainer');
   container.innerHTML = `
@@ -4967,7 +5732,8 @@ async function buildBubbleData() {
   const allUserCards = [];
   
   cards.forEach(c => {
-    if (!seenUrls.has(c.url)) {
+    // Skip private cards - they shouldn't appear in Discover
+    if (!seenUrls.has(c.url) && !c.isPrivate) {
       seenUrls.add(c.url);
       allUserCards.push({ ...c, isGuide: false });
     }
@@ -5292,11 +6058,43 @@ function layoutCelestialSystem() {
   enforceTagProximity(allCards, config);
   
   // ===== STEP 6.6: Re-resolve collisions with MORE padding =====
-  // (ensure cards don't overlap after adjustments)
   resolveCollisionsWithConfig(allCards, { 
     ...config, 
-    collisionPadding: config.collisionPadding * 1.2, // More spacing between all cards
-    maxIterations: 30 
+    collisionPadding: config.collisionPadding * 1.5, // Increased from 1.2
+    maxIterations: 50 // More iterations for better convergence
+  });
+  
+  // ===== STEP 6.7: Final overlap check - force push any remaining overlaps =====
+  for (let pass = 0; pass < 20; pass++) {
+    let hadOverlap = false;
+    for (let i = 0; i < allCards.length; i++) {
+      for (let j = i + 1; j < allCards.length; j++) {
+        const a = allCards[i];
+        const b = allCards[j];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const minDist = ((a.size || 200) + (b.size || 200)) / 2 + 20;
+        
+        if (dist < minDist) {
+          hadOverlap = true;
+          const pushDist = (minDist - dist) / 2 + 5;
+          const pushX = (dx / dist) * pushDist;
+          const pushY = (dy / dist) * pushDist;
+          a.x -= pushX;
+          a.y -= pushY;
+          b.x += pushX;
+          b.y += pushY;
+        }
+      }
+    }
+    if (!hadOverlap) break;
+  }
+  
+  // Update base positions after final push
+  allCards.forEach(b => {
+    b.baseX = b.x;
+    b.baseY = b.y;
   });
   
   
@@ -5309,8 +6107,12 @@ function layoutCelestialSystem() {
     b.baseX = b.x;
     b.baseY = b.y;
   });
+  
+  // ===== STEP 8: Initialize Matter.js physics =====
+  initializePhysics(width, height);
 }
-
+  
+  
 // Collision resolution with configurable padding
 function resolveCollisionsWithConfig(cardGroup, config) {
   if (!cardGroup || cardGroup.length < 2) return;
@@ -5329,7 +6131,8 @@ function resolveCollisionsWithConfig(cardGroup, config) {
         const dx = b.x - a.x;
         const dy = b.y - a.y;
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const minDist = ((a.size || 200) + (b.size || 200)) / 2 + padding;
+        // Larger minimum distance to prevent overlap (add extra buffer)
+        const minDist = ((a.size || 200) + (b.size || 200)) / 2 + padding + 30;
         
         if (dist < minDist) {
           hadCollision = true;
@@ -5583,6 +6386,7 @@ function renderBubbles() {
     };
     
     const typeClass = typeClasses[type] || '';
+    const connectionClass = b.connectionCount > 0 ? 'connected' : 'frontier';
     const isComet = type === 'comet';
     const isStar = type === 'star';
     
@@ -5590,7 +6394,7 @@ function renderBubbles() {
     const delayClass = index < 15 ? `entering-delay-${Math.min(index, 10)}` : '';
     
     return `
-      <div class="bubble-card ${typeClass} ${b.isGuide ? 'guide-card' : ''} entering ${delayClass}"
+      <div class="bubble-card ${typeClass} ${connectionClass} ${b.isGuide ? 'guide-card' : ''} entering ${delayClass}"
            id="bubble-${b.bubbleId}"
            data-id="${b.bubbleId}"
            data-type="${type}"
@@ -5646,6 +6450,12 @@ function renderBubbles() {
       el.classList.remove('entering');
     });
   }, 1200);
+  
+  // Draw ambient constellations after bubbles are rendered
+  setTimeout(() => {
+    drawAmbientConstellations();
+    createGhostFab();
+  }, 100);
 }
 
 function formatUrl(url) {
@@ -5669,6 +6479,13 @@ function applyTransform() {
   svg.style.transform = transform;
   svg.style.transformOrigin = 'center center';
   
+  // Also transform ambient constellations
+  const ambientSvg = document.getElementById('ambientConstellationsSvg');
+  if (ambientSvg) {
+    ambientSvg.style.transform = transform;
+    ambientSvg.style.transformOrigin = 'center center';
+  }
+  
   // Parallax effect - background layers move slower
   if (starField) {
     const parallaxSlow = `translate(${bubblePanX * 0.1}px, ${bubblePanY * 0.1}px) scale(${1 + (bubbleZoom - 1) * 0.05})`;
@@ -5683,8 +6500,15 @@ function applyTransform() {
   }
 }
 
-// Handle hover with magnetic push effect
+// Handle hover with magnetic push effect (touch-aware)
 function handleBubbleHover(id, isEntering) {
+  // On touch devices, minimize hover effects
+  if (isTouchDevice) {
+    isAnyCardHovered = isEntering;
+    hoveredBubbleId = isEntering ? id : null;
+    return; // Skip magnetic effects on touch
+  }
+  
   isAnyCardHovered = isEntering;
   hoveredBubbleId = isEntering ? id : null;
   
@@ -5697,6 +6521,9 @@ function handleBubbleHover(id, isEntering) {
   });
   
   if (isEntering) {
+    // Activate gravity well for particles
+    activateGravityWell(hoveredBubble.x, hoveredBubble.y, hoveredBubble.size || 200);
+    
     // Push nearby cards away slightly
     bubbles.forEach(b => {
       if (b.bubbleId === id) return;
@@ -5718,6 +6545,9 @@ function handleBubbleHover(id, isEntering) {
       }
     });
   } else {
+    // Deactivate gravity well
+    deactivateGravityWell();
+    
     // Reset positions
     bubbles.forEach(b => {
       const card = document.getElementById(`bubble-${b.bubbleId}`);
@@ -5772,6 +6602,7 @@ function selectBubble(id) {
     if (relEl) relEl.classList.add('related');
   });
   
+  highlightConstellations(id);
   showConnections(id);
   updateInfoPanel(bubble);
 }
@@ -5985,60 +6816,428 @@ function hideConnections() {
   document.getElementById('connectionsSvg').innerHTML = '';
 }
 
-// Ambient floating animation
+// ============== AMBIENT CONSTELLATIONS ==============
+// Always-visible faint lines showing the connection web
+
+function drawAmbientConstellations() {
+  const svg = document.getElementById('ambientConstellationsSvg');
+  if (!svg || bubbleConnections.length === 0) return;
+  
+  // Build connection paths at low opacity
+  const paths = bubbleConnections.map((conn, index) => {
+    const a = bubbles.find(b => b.bubbleId === conn.source);
+    const b = bubbles.find(b => b.bubbleId === conn.target);
+    if (!a || !b) return '';
+    
+    // Calculate curved path (same logic as showConnections)
+    const midX = (a.x + b.x) / 2;
+    const midY = (a.y + b.y) / 2;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    
+    const curveAmount = dist * 0.12 * (index % 2 === 0 ? 1 : -1);
+    const ctrlX = midX + (-dy / dist) * curveAmount;
+    const ctrlY = midY + (dx / dist) * curveAmount;
+    
+    // Opacity based on connection strength
+    const baseOpacity = 0.12 + (conn.strength * 0.04);
+    const strokeWidth = 0.75 + (conn.strength * 0.35);
+    
+    return `
+      <path 
+        d="M ${a.x} ${a.y} Q ${ctrlX} ${ctrlY} ${b.x} ${b.y}"
+        data-source="${conn.source}"
+        data-target="${conn.target}"
+        fill="none"
+        stroke="url(#ambientGrad)" 
+        stroke-width="${strokeWidth}"
+        opacity="${baseOpacity}"
+        stroke-linecap="round"
+      />
+    `;
+  }).join('');
+  
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="ambientGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="rgba(99, 102, 241, 0.6)"/>
+        <stop offset="50%" stop-color="rgba(139, 92, 246, 0.6)"/>
+        <stop offset="100%" stop-color="rgba(99, 102, 241, 0.6)"/>
+      </linearGradient>
+    </defs>
+    ${paths}
+  `;
+}
+
+function highlightConstellations(bubbleId) {
+  // Hide ambient constellations - let showConnections() handle the bright version
+  const svg = document.getElementById('ambientConstellationsSvg');
+  if (svg) {
+    svg.style.opacity = '0';
+  }
+}
+
+function resetConstellations() {
+  // Show ambient constellations again
+  const svg = document.getElementById('ambientConstellationsSvg');
+  if (svg) {
+    svg.style.opacity = '1';
+  }
+}
+
+function updateConstellationPositions() {
+  const svg = document.getElementById('ambientConstellationsSvg');
+  if (!svg) return;
+  
+  svg.querySelectorAll('path').forEach(path => {
+    const sourceId = path.getAttribute('data-source');
+    const targetId = path.getAttribute('data-target');
+    
+    const a = bubbles.find(b => b.bubbleId === sourceId);
+    const b = bubbles.find(b => b.bubbleId === targetId);
+    if (!a || !b) return;
+    
+    const midX = (a.x + b.x) / 2;
+    const midY = (a.y + b.y) / 2;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    
+    const index = Array.from(svg.querySelectorAll('path')).indexOf(path);
+    const curveAmount = dist * 0.12 * (index % 2 === 0 ? 1 : -1);
+    const ctrlX = midX + (-dy / dist) * curveAmount;
+    const ctrlY = midY + (dx / dist) * curveAmount;
+    
+    path.setAttribute('d', `M ${a.x} ${a.y} Q ${ctrlX} ${ctrlY} ${b.x} ${b.y}`);
+  });
+}
+
+// ============== GHOST FAB (Wandering Spirit) ==============
+let ghostFabElement = null;
+let ghostFabBaseX = 0;
+let ghostFabBaseY = 0;
+let ghostFabDriftAngle = 0;
+let ghostFabRelocateTimer = null;
+
+function createGhostFab() {
+  // Remove existing
+  if (ghostFabElement) {
+    ghostFabElement.remove();
+    ghostFabElement = null;
+  }
+  if (ghostFabRelocateTimer) {
+    clearTimeout(ghostFabRelocateTimer);
+  }
+  
+  const container = document.getElementById('bubbleContainer');
+  if (!container) return;
+  
+  // Find initial position in the frontier
+  const position = findFrontierPosition();
+  ghostFabBaseX = position.x;
+  ghostFabBaseY = position.y;
+  
+  // Create the ghost fab element
+  ghostFabElement = document.createElement('div');
+  ghostFabElement.className = 'ghost-fab';
+  ghostFabElement.style.left = `${ghostFabBaseX - 30}px`;
+  ghostFabElement.style.top = `${ghostFabBaseY - 30}px`;
+  ghostFabElement.onclick = () => openAddModal();
+  ghostFabElement.innerHTML = `<span class="ghost-fab-tooltip">Share a thought here</span>`;
+  
+  container.appendChild(ghostFabElement);
+  
+  // Start gentle drift animation
+  animateGhostFabDrift();
+  
+  // Schedule first relocation
+  scheduleGhostFabRelocation();
+}
+
+function findFrontierPosition() {
+  const canvas = document.getElementById('discoverCanvas');
+  const canvasRect = canvas.getBoundingClientRect();
+  const centerX = canvasRect.width / 2;
+  const centerY = canvasRect.height / 2;
+  
+  // Find orphan cards (frontier cards)
+  const orphans = bubbles.filter(b => b.connectionCount === 0);
+  
+  // Find connected cards to avoid
+  const connected = bubbles.filter(b => b.connectionCount > 0);
+  
+  let bestX, bestY;
+  let maxDistance = 0;
+  
+  // Try several random positions and pick the one furthest from connected cards
+  for (let attempt = 0; attempt < 10; attempt++) {
+    let candidateX, candidateY;
+    
+    if (orphans.length > 0 && Math.random() > 0.3) {
+      // 70% chance: position near an orphan card
+      const orphan = orphans[Math.floor(Math.random() * orphans.length)];
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 150 + Math.random() * 100;
+      candidateX = orphan.x + Math.cos(angle) * distance;
+      candidateY = orphan.y + Math.sin(angle) * distance;
+    } else {
+      // 30% chance: position in outer regions
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 400 + Math.random() * 300;
+      candidateX = centerX + Math.cos(angle) * distance;
+      candidateY = centerY + Math.sin(angle) * distance;
+    }
+    
+    // Calculate minimum distance to any connected card
+    let minDistToConnected = Infinity;
+    connected.forEach(b => {
+      const dx = candidateX - b.x;
+      const dy = candidateY - b.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      minDistToConnected = Math.min(minDistToConnected, dist);
+    });
+    
+    // Also check distance from current position to ensure it moves noticeably
+    const distFromCurrent = Math.sqrt(
+      (candidateX - ghostFabBaseX) ** 2 + 
+      (candidateY - ghostFabBaseY) ** 2
+    );
+    
+    // Prefer positions far from connected cards and different from current
+    const score = minDistToConnected + distFromCurrent * 0.3;
+    
+    if (score > maxDistance) {
+      maxDistance = score;
+      bestX = candidateX;
+      bestY = candidateY;
+    }
+  }
+  
+  return { x: bestX || centerX - 300, y: bestY || centerY + 200 };
+}
+
+function animateGhostFabDrift() {
+  if (!ghostFabElement || !ghostFabElement.isConnected) return;
+  
+  ghostFabDriftAngle += 0.002;
+  const driftX = Math.cos(ghostFabDriftAngle) * 12;
+  const driftY = Math.sin(ghostFabDriftAngle * 0.7) * 12;
+  
+  ghostFabElement.style.left = `${ghostFabBaseX + driftX - 30}px`;
+  ghostFabElement.style.top = `${ghostFabBaseY + driftY - 30}px`;
+  
+  requestAnimationFrame(animateGhostFabDrift);
+}
+
+function scheduleGhostFabRelocation() {
+  // Relocate every 20-30 seconds
+  const delay = 20000 + Math.random() * 10000;
+  
+  ghostFabRelocateTimer = setTimeout(() => {
+    relocateGhostFab();
+  }, delay);
+}
+
+function relocateGhostFab() {
+  if (!ghostFabElement || !ghostFabElement.isConnected) return;
+  
+  // Fade out
+  ghostFabElement.style.transition = 'opacity 0.8s ease';
+  ghostFabElement.style.opacity = '0';
+  
+  setTimeout(() => {
+    // Find new position
+    const newPosition = findFrontierPosition();
+    ghostFabBaseX = newPosition.x;
+    ghostFabBaseY = newPosition.y;
+    
+    // Move instantly while invisible
+    ghostFabElement.style.left = `${ghostFabBaseX - 30}px`;
+    ghostFabElement.style.top = `${ghostFabBaseY - 30}px`;
+    
+    // Fade back in
+    setTimeout(() => {
+      if (ghostFabElement) {
+        ghostFabElement.style.opacity = '';
+      }
+      
+      // Schedule next relocation
+      scheduleGhostFabRelocation();
+    }, 100);
+    
+  }, 800); // Wait for fade out to complete
+}
+
+// Clean up when leaving Discover
+function cleanupGhostFab() {
+  if (ghostFabRelocateTimer) {
+    clearTimeout(ghostFabRelocateTimer);
+    ghostFabRelocateTimer = null;
+  }
+  if (ghostFabElement) {
+    ghostFabElement.remove();
+    ghostFabElement = null;
+  }
+}
+
+// ============== THOUGHT BUBBLE ANIMATION SYSTEM ==============
+// Mobile-optimized: reduced calculations, touch-aware, battery-friendly
+
 function startAmbientAnimation() {
-  let time = 0;
-  const fps = 30;
-  const frameInterval = 1000 / fps;
-  let lastFrameTime = 0;
+  let lastTime = performance.now();
+  
+  // Mobile optimizations
+  const isMobile = isMobileDevice || window.innerWidth < 768;
+  const frameSkip = isMobile ? 2 : 1; // Skip frames on mobile
+  let frameCount = 0;
+  
+  // Initialize velocity and state for each bubble
+  bubbles.forEach(b => {
+    b.vx = 0;
+    b.vy = 0;
+    b.currentX = b.x;
+    b.currentY = b.y;
+    b.targetX = b.baseX;
+    b.targetY = b.baseY;
+    
+    const isConnected = b.connectionCount > 0;
+    b.isConnected = isConnected;
+    
+    // Reduced movement on mobile
+    const mobileFactor = isMobile ? 0.6 : 1;
+    
+    if (isConnected) {
+      b.wanderRadius = (15 + Math.random() * 10) * mobileFactor;
+      b.wanderSpeed = (0.0003 + Math.random() * 0.0002) * mobileFactor;
+      b.wanderAngle = Math.random() * Math.PI * 2;
+    } else {
+      b.wanderRadius = (25 + Math.random() * 20) * mobileFactor;
+      b.wanderSpeed = (0.0005 + Math.random() * 0.0003) * mobileFactor;
+      b.wanderAngle = Math.random() * Math.PI * 2;
+      b.wanderChangeTime = 0;
+      b.wanderDirection = { x: 0, y: 0 };
+    }
+  });
+  
+  let wasInteracting = false;
+  let isPaused = false;
+  
+  // Pause animation when tab is hidden (saves battery)
+  document.addEventListener('visibilitychange', () => {
+    isPaused = document.hidden;
+  });
   
   function animate(currentTime) {
     ambientFrame = requestAnimationFrame(animate);
     
-    if (currentTime - lastFrameTime < frameInterval) return;
-    lastFrameTime = currentTime;
+    // Skip if paused or tab hidden
+    if (isPaused) return;
     
-    // Don't animate while dragging or selecting
-    if (isAnyCardHovered || selectedBubbleId || isDraggingCanvas) return;
+    // Frame skipping for mobile performance
+    frameCount++;
+    if (frameCount % frameSkip !== 0) return;
     
-    time += 0.008;
+    const deltaTime = Math.min(currentTime - lastTime, 50);
+    lastTime = currentTime;
+    
+    // Touch-aware interaction detection
+    const isInteracting = isAnyCardHovered || selectedBubbleId || isDraggingCanvas;
+    
+    const justStartedInteracting = isInteracting && !wasInteracting;
+    const justStoppedInteracting = !isInteracting && wasInteracting;
+    wasInteracting = isInteracting;
+    
+    // Batch DOM reads/writes for performance
+    const updates = [];
     
     bubbles.forEach(bubble => {
       const card = document.getElementById(`bubble-${bubble.bubbleId}`);
       if (!card || card.classList.contains('selected') || card.classList.contains('related')) return;
       
-      const type = bubble.celestialType;
-      let newX = bubble.baseX;
-      let newY = bubble.baseY;
-      
-      // Different movement based on celestial type
-      if (type === 'star') {
-        // Stars: very subtle breathing only (no movement)
-        return;
-      } else if (type === 'planet' && bubble.orbitCenterX !== undefined) {
-        // Planets: slow orbital drift
-        const angle = bubble.orbitAngle + time * bubble.orbitSpeed;
-        newX = bubble.orbitCenterX + Math.cos(angle) * bubble.orbitRadius;
-        newY = bubble.orbitCenterY + Math.sin(angle) * bubble.orbitRadius;
-      } else if (type === 'moon' && bubble.orbitCenterX !== undefined) {
-        // Moons: faster orbital drift
-        const angle = bubble.orbitAngle + time * bubble.orbitSpeed * 1.5;
-        newX = bubble.orbitCenterX + Math.cos(angle) * bubble.orbitRadius;
-        newY = bubble.orbitCenterY + Math.sin(angle) * bubble.orbitRadius;
-      } else if (type === 'comet') {
-        // Comets: gentle bobbing
-        newX = bubble.baseX + Math.sin(time * 0.5 + bubble.breathDelay) * 3;
-        newY = bubble.baseY + Math.cos(time * 0.3 + bubble.breathDelay) * 2;
-      } else if (type === 'asteroid') {
-        // Asteroids: slow tumbling drift
-        newX = bubble.baseX + Math.sin(time * 0.2 + bubble.breathDelay) * 2;
-        newY = bubble.baseY + Math.cos(time * 0.15 + bubble.breathDelay) * 2;
+      // Handle state transitions
+      if (justStartedInteracting) {
+        bubble.restX = bubble.currentX;
+        bubble.restY = bubble.currentY;
       }
       
+      if (justStoppedInteracting) {
+        bubble.baseX = bubble.currentX;
+        bubble.baseY = bubble.currentY;
+        bubble.wanderAngle = Math.atan2(
+          bubble.currentY - bubble.baseY,
+          bubble.currentX - bubble.baseX
+        ) || Math.random() * Math.PI * 2;
+      }
+      
+      // Calculate target position
+      if (isInteracting) {
+        bubble.targetX = bubble.restX || bubble.currentX;
+        bubble.targetY = bubble.restY || bubble.currentY;
+      } else {
+        if (bubble.isConnected) {
+          bubble.wanderAngle += bubble.wanderSpeed * deltaTime;
+          bubble.targetX = bubble.baseX + Math.cos(bubble.wanderAngle) * bubble.wanderRadius;
+          bubble.targetY = bubble.baseY + Math.sin(bubble.wanderAngle) * bubble.wanderRadius;
+        } else {
+          bubble.wanderChangeTime -= deltaTime;
+          
+          if (bubble.wanderChangeTime <= 0) {
+            const angle = Math.random() * Math.PI * 2;
+            bubble.wanderDirection = {
+              x: Math.cos(angle) * bubble.wanderRadius,
+              y: Math.sin(angle) * bubble.wanderRadius
+            };
+            bubble.wanderChangeTime = 4000 + Math.random() * 5000; // Longer intervals on mobile
+          }
+          
+          bubble.targetX = bubble.baseX + bubble.wanderDirection.x;
+          bubble.targetY = bubble.baseY + bubble.wanderDirection.y;
+        }
+      }
+      
+      // Smooth velocity interpolation
+      const ease = isInteracting ? 0.008 : 0.012;
+      bubble.vx += (bubble.targetX - bubble.currentX) * ease;
+      bubble.vy += (bubble.targetY - bubble.currentY) * ease;
+      
+      // Apply friction
+      const friction = 0.94;
+      bubble.vx *= friction;
+      bubble.vy *= friction;
+      
+      // Update position
+      bubble.currentX += bubble.vx;
+      bubble.currentY += bubble.vy;
+      bubble.x = bubble.currentX;
+      bubble.y = bubble.currentY;
+      
+      // Only queue DOM update if movement is significant
       const width = bubble.size || 200;
-      card.style.left = `${newX - width / 2}px`;
-      card.style.top = `${newY - (width * 0.7)}px`;
+      const newLeft = bubble.currentX - width / 2;
+      const newTop = bubble.currentY - (width * 0.7);
+      const currentLeft = parseFloat(card.style.left) || 0;
+      const currentTop = parseFloat(card.style.top) || 0;
+      
+      // Higher threshold on mobile (less precision needed)
+      const threshold = isMobile ? 1 : 0.5;
+      
+      if (Math.abs(newLeft - currentLeft) > threshold || Math.abs(newTop - currentTop) > threshold) {
+        updates.push({ card, left: newLeft, top: newTop });
+      }
     });
+    
+    // Batch DOM writes
+    updates.forEach(({ card, left, top }) => {
+      card.style.left = `${left}px`;
+      card.style.top = `${top}px`;
+    });
+    
+    // Update constellation line positions (throttled)
+    if (frameCount % 10 === 0) {
+      updateConstellationPositions();
+    }
+    
   }
   
   ambientFrame = requestAnimationFrame(animate);
@@ -8405,10 +9604,23 @@ function buildCardNavigationList(currentId) {
   const isDiscoverOpen = document.getElementById('discoverView')?.classList.contains('active');
   
   if (isDiscoverOpen) {
-    // In Discover - use bubbles
+    // In Discover - navigate through ALL visible bubbles
+    // Sort spatially: left-to-right, top-to-bottom (like reading)
     cardNavigationList = bubbles
-      .filter(b => !b.isGuide || b.starred)
-      .map(b => ({ id: b.bubbleId, type: b.isCommunity ? 'community' : 'local', bubble: b }));
+      .filter(b => !b.isGuide || b.starred) // Include guides only if starred
+      .sort((a, b) => {
+        // Create rows based on Y position (group cards in ~200px rows)
+        const rowA = Math.floor((a.y || 0) / 200);
+        const rowB = Math.floor((b.y || 0) / 200);
+        if (rowA !== rowB) return rowA - rowB;
+        // Within same row, sort by X
+        return (a.x || 0) - (b.x || 0);
+      })
+      .map(b => ({ 
+        id: b.bubbleId, 
+        type: b.isCommunity ? 'community' : 'local', 
+        bubble: b 
+      }));
   } else {
     // In main grid - use filtered cards
     let filtered = currentTopic === 'all' ? [...cards] : cards.filter(c => c.topic === currentTopic);
@@ -8429,19 +9641,20 @@ function buildCardNavigationList(currentId) {
     }
     
     // Apply starred filter
-    if (starredOnly) {
+    if (showOnlyStarred) {
       filtered = filtered.filter(c => c.starred);
     }
     
     cardNavigationList = filtered.map(c => ({ id: c.id, type: 'local', card: c }));
   }
   
-  // Find current index
+  // Find current index - match by string ID for consistency
   currentNavIndex = cardNavigationList.findIndex(item => String(item.id) === String(currentId));
   if (currentNavIndex === -1) currentNavIndex = 0;
   
   updateNavArrows();
 }
+
 
 function updateNavArrows() {
   const prevBtn = document.getElementById('editNavPrev');
@@ -8467,13 +9680,27 @@ function navigateCard(direction) {
   currentNavIndex = newIndex;
   
   if (item.type === 'community' && item.bubble) {
-    // Community card from Discover
+    // Community card from Discover - view only
     openCommunityCardModal(item.bubble);
+  } else if (item.bubble) {
+    // Card from Discover - could be local or guide
+    const localCard = cards.find(c => String(c.id) === String(item.id));
+    if (localCard) {
+      // It's a local card - refresh modal
+      currentCardId = localCard.id;
+      refreshEditModal(localCard);
+    } else {
+      // It's a community/guide card - open view only
+      openCommunityCardModal(item.bubble);
+    }
+  } else if (item.card) {
+    // Local card from grid view
+    currentCardId = item.card.id;
+    refreshEditModal(item.card);
   } else {
-    // Local card
+    // Fallback - try to find by ID
     const card = cards.find(c => String(c.id) === String(item.id));
     if (card) {
-      // Refresh the modal with new card
       currentCardId = card.id;
       refreshEditModal(card);
     }
@@ -8592,6 +9819,51 @@ document.addEventListener('keydown', (e) => {
     navigateCard(1);
   }
 });
+
+// ============== MOBILE SWIPE NAVIGATION ==============
+(function initSwipeNavigation() {
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartTime = 0;
+  
+  const modal = document.getElementById('editModal');
+  if (!modal) return;
+  
+  modal.addEventListener('touchstart', (e) => {
+    // Don't capture if touching interactive elements
+    if (e.target.closest('input, textarea, button, .edit-photo-item, .edit-comment')) return;
+    
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchStartTime = Date.now();
+  }, { passive: true });
+  
+  modal.addEventListener('touchend', (e) => {
+    if (!touchStartX) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    const deltaTime = Date.now() - touchStartTime;
+    
+    // Reset
+    touchStartX = 0;
+    touchStartY = 0;
+    
+    // Must be a quick, horizontal swipe
+    if (deltaTime > 300) return; // Too slow
+    if (Math.abs(deltaY) > Math.abs(deltaX)) return; // Vertical scroll
+    if (Math.abs(deltaX) < 50) return; // Too short
+    
+    // Swipe left = next, swipe right = prev
+    if (deltaX < -50) {
+      navigateCard(1); // Next
+    } else if (deltaX > 50) {
+      navigateCard(-1); // Previous
+    }
+  }, { passive: true });
+})();
 
 // ============== MEDIA DETECTION & PLAYBACK ==============
 function detectMediaType(url) {
@@ -10779,13 +12051,7 @@ if (isMobile) {
   };
 }
 
-// Disable magnetic hover effect on touch devices
-if (isTouchDevice) {
-  handleBubbleHover = function(id, isEntering) {
-    isAnyCardHovered = isEntering;
-    hoveredBubbleId = isEntering ? id : null;
-  };
-}
+
 
 // Prevent pull-to-refresh when panning in Discover
 document.addEventListener('touchmove', function(e) {
