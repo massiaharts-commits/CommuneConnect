@@ -2144,6 +2144,21 @@
       overflow: visible;
       z-index: 10;
     }
+    
+    /* ===== STABILIZE CARDS ON MOBILE ===== */
+    .bubble-card {
+      transition: transform 0.15s ease-out, box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.3s ease !important;
+      will-change: auto !important; /* Disable will-change on mobile to prevent jitter */
+    }
+    
+    .bubble-card:not(.selected):not(.related) {
+      animation: none !important; /* Disable all breathing/glow animations */
+    }
+    
+    .bubble-card.connected::after,
+    .bubble-card.frontier::after {
+      display: none !important; /* Hide glow overlays on mobile */
+    }
 
     /* ========== BUBBLE CARD STYLES ========== */
     .bubble-card {
@@ -5000,13 +5015,23 @@ async function openUserProfile(username) {
 }
 
 function openCardFromProfile(cardId, cardUrl) {
-  let card = cards.find(c => c.id == cardId || c.url === cardUrl);
+  // Normalize cardId to string for consistent comparison
+  const normalizedId = String(cardId);
+  
+  // Try to find in local cards first (compare as strings)
+  let card = cards.find(c => String(c.id) === normalizedId || c.url === cardUrl);
+  
   if (card) {
     openEditModal(card.id);
   } else {
-    const bubble = bubbles.find(b => b.bubbleId == cardId || b.url === cardUrl);
-    if (bubble) openCommunityCardModal(bubble);
-    else showToast('Card not found', 'error');
+    // Try bubbles with string comparison
+    const bubble = bubbles.find(b => String(b.bubbleId) === normalizedId || b.url === cardUrl);
+    if (bubble) {
+      openCommunityCardModal(bubble);
+    } else {
+      // Last resort: try to create a view from the URL
+      showToast('Card not found', 'error');
+    }
   }
 }
 
@@ -6558,21 +6583,34 @@ function handleBubbleHover(id, isEntering) {
   }
 }
 
-// Double-click detection for opening cards
+// Click/tap detection for opening cards
 function handleBubbleClick(id, event) {
   event.stopPropagation();
   const now = Date.now();
   
-  if (lastClickId === id && now - lastClickTime < 300) {
-    handleBubbleOpen(id, event);
-    lastClickTime = 0;
-    lastClickId = null;
-    return;
+  // On touch devices: single tap selects, tap on already-selected opens
+  // On desktop: double-click opens
+  if (isTouchDevice) {
+    // If already selected, open it
+    if (selectedBubbleId === id) {
+      handleBubbleOpen(id, event);
+      return;
+    }
+    // Otherwise just select
+    selectBubble(id);
+  } else {
+    // Desktop: use double-click
+    if (lastClickId === id && now - lastClickTime < 300) {
+      handleBubbleOpen(id, event);
+      lastClickTime = 0;
+      lastClickId = null;
+      return;
+    }
+    
+    lastClickTime = now;
+    lastClickId = id;
+    selectBubble(id);
   }
-  
-  lastClickTime = now;
-  lastClickId = id;
-  selectBubble(id);
 }
 
 function selectBubble(id) {
@@ -7089,7 +7127,7 @@ function startAmbientAnimation() {
   
   // Mobile optimizations
   const isMobile = isMobileDevice || window.innerWidth < 768;
-  const frameSkip = isMobile ? 2 : 1; // Skip frames on mobile
+  const frameSkip = isMobile ? 4 : 1; // Skip MORE frames on mobile (was 2)
   let frameCount = 0;
   
   // Initialize velocity and state for each bubble
@@ -7104,8 +7142,8 @@ function startAmbientAnimation() {
     const isConnected = b.connectionCount > 0;
     b.isConnected = isConnected;
     
-    // Reduced movement on mobile
-    const mobileFactor = isMobile ? 0.6 : 1;
+    // Reduced movement on mobile - MUCH more aggressive reduction
+    const mobileFactor = isMobile ? 0.25 : 1;
     
     if (isConnected) {
       b.wanderRadius = (15 + Math.random() * 10) * mobileFactor;
@@ -7219,8 +7257,8 @@ function startAmbientAnimation() {
       const currentLeft = parseFloat(card.style.left) || 0;
       const currentTop = parseFloat(card.style.top) || 0;
       
-      // Higher threshold on mobile (less precision needed)
-      const threshold = isMobile ? 1 : 0.5;
+      // MUCH higher threshold on mobile to prevent jitter
+      const threshold = isMobile ? 3 : 0.5;
       
       if (Math.abs(newLeft - currentLeft) > threshold || Math.abs(newTop - currentTop) > threshold) {
         updates.push({ card, left: newLeft, top: newTop });
@@ -7343,8 +7381,21 @@ function handleBubbleCollection(id, event) {
 
 function handleBubbleOpen(id, event) {
   if (event) event.stopPropagation();
-  const bubble = bubbles.find(b => b.bubbleId === id);
-  if (!bubble) return;
+  
+  // Normalize ID to string
+  const normalizedId = String(id);
+  
+  const bubble = bubbles.find(b => String(b.bubbleId) === normalizedId);
+  if (!bubble) {
+    // Fallback: try to find local card directly
+    const directCard = cards.find(c => String(c.id) === normalizedId);
+    if (directCard) {
+      openEditModal(directCard.id);
+      return;
+    }
+    showToast('Card not found', 'error');
+    return;
+  }
   
   if (bubble.isGuide) {
     const promoted = promoteGuideCard(id);
@@ -7352,17 +7403,13 @@ function handleBubbleOpen(id, event) {
       openEditModal(promoted.id);
     }
   } else {
-    // First check local cards
-    let card = cards.find(c => String(c.id) === id);
+    // First check local cards (with string comparison)
+    let card = cards.find(c => String(c.id) === normalizedId);
     
     if (card) {
       openEditModal(card.id);
-    } else if (bubble.isCommunity) {
-      // It's a community card - open in view-only mode
-      openCommunityCardModal(bubble);
-    } else {
-      // Card exists in bubbles but not in local cards - might be a sync issue
-      // Try to open it as a community card
+    } else if (bubble.isCommunity || !card) {
+      // It's a community card or not found locally - open in view-only mode
       openCommunityCardModal(bubble);
     }
   }
@@ -11980,26 +12027,7 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 isMobileDevice = isMobile; // Store globally for runtime checks
 
-// Adjust double-click timing for mobile (more forgiving)
-if (isMobile || isTouchDevice) {
-  const originalHandleBubbleClick = handleBubbleClick;
-  handleBubbleClick = function(id, event) {
-    event.stopPropagation();
-    const now = Date.now();
-    
-    // Use 500ms threshold on mobile instead of 300ms
-    if (lastClickId === id && now - lastClickTime < 500) {
-      handleBubbleOpen(id, event);
-      lastClickTime = 0;
-      lastClickId = null;
-      return;
-    }
-    
-    lastClickTime = now;
-    lastClickId = id;
-    selectBubble(id);
-  };
-}
+
 
 // Reduce particle count on mobile for performance
 if (isMobile) {
