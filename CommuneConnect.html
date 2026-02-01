@@ -5026,6 +5026,7 @@ async function openUserProfile(username) {
   );
   
   // Cloud cards if available
+  let cloudCards = [];
   if (supabaseClient) {
     try {
       const { data } = await supabaseClient
@@ -5036,13 +5037,29 @@ async function openUserProfile(username) {
         .order('created_at', { ascending: false })
         .limit(100);
       
-      if (data) userCards = data.map(cloudCardToLocal);
+      if (data) cloudCards = data.map(cloudCardToLocal);
     } catch (e) { console.warn('Failed to fetch user cards:', e); }
   }
   
-  // Merge
-  const seenUrls = new Set(userCards.map(c => c.url));
-  localCards.forEach(c => { if (!seenUrls.has(c.url)) userCards.push(c); });
+  // Merge: LOCAL cards take priority over cloud (local has latest edits)
+  const seenUrls = new Set();
+  
+  // Add local cards first (they have the most up-to-date data)
+  localCards.forEach(c => {
+    userCards.push(c);
+    seenUrls.add(c.url);
+  });
+  
+  // Then add cloud cards only if not already present locally
+  cloudCards.forEach(c => {
+    if (!seenUrls.has(c.url)) {
+      userCards.push(c);
+      seenUrls.add(c.url);
+    }
+  });
+  
+  // Sort by created date (newest first)
+  userCards.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   
   document.getElementById('profileStats').textContent = `${userCards.length} card${userCards.length !== 1 ? 's' : ''} shared`;
   
