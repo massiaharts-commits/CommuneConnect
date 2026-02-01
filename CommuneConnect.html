@@ -7538,7 +7538,7 @@ function handleBubbleOpen(id, event) {
 }
 
 // View-only modal for community cards (not owned by user)
-function openCommunityCardModal(bubble) {
+async function openCommunityCardModal(bubble) {
   // Create a temporary card object for viewing
   const viewCard = {
     id: bubble.bubbleId || bubble.id,
@@ -7558,11 +7558,11 @@ function openCommunityCardModal(bubble) {
     isViewOnly: true
   };
   
-  // Open the edit modal but in view-only mode
-  openEditModalViewOnly(viewCard);
+  // Open the edit modal but in view-only mode (now async)
+  await openEditModalViewOnly(viewCard);
 }
 
-function openEditModalViewOnly(card) {
+async function openEditModalViewOnly(card) {
   currentCardId = card.id;
   
   document.getElementById('editModal').classList.add('active');
@@ -7573,6 +7573,19 @@ function openEditModalViewOnly(card) {
   
   // *** CRITICAL: Setup media player to show play button for video/audio ***
   setupMediaPlayer(card);
+  
+  // *** FETCH PHOTOS FROM DATABASE FOR COMMUNITY CARDS ***
+  if (card.isCommunity && supabaseClient) {
+    try {
+      const cloudPhotos = await fetchPhotosFromDatabase(card.id);
+      if (cloudPhotos.length > 0) {
+        card.photos = cloudPhotos;
+        console.log(`📷 Loaded ${cloudPhotos.length} photos for community card`);
+      }
+    } catch (e) {
+      console.warn('Could not fetch photos:', e);
+    }
+  }
   
   // Image/Thumbnail handling
   const detailImage = document.getElementById('detailImage');
@@ -7604,11 +7617,24 @@ function openEditModalViewOnly(card) {
     imageContainer.onclick = null;
   }
   
-  // Hide the "Change thumbnail" overlay
+  // Check if this is playable media
+  const media = detectMediaType(card.url);
+  const playableTypes = ['youtube', 'vimeo', 'twitch', 'video', 'soundcloud', 'spotify', 'audio', 'applemusic', 'bandcamp', 'deezer'];
+  const isPlayableMedia = playableTypes.includes(media.type);
+  
+  // Hide the "Change thumbnail" overlay, but allow play button to work
   if (mediaThumbnail) {
     const overlay = mediaThumbnail.querySelector('.edit-media-overlay');
     if (overlay) overlay.style.display = 'none';
-    // But don't disable clicking on the thumbnail - play button should still work
+    
+    // Allow clicking to play media
+    if (isPlayableMedia) {
+      mediaThumbnail.style.cursor = 'pointer';
+      mediaThumbnail.onclick = () => playMedia();
+    } else {
+      mediaThumbnail.style.cursor = 'default';
+      mediaThumbnail.onclick = null;
+    }
   }
   
   // Title - readonly
@@ -7640,48 +7666,47 @@ function openEditModalViewOnly(card) {
   const starBtn = document.getElementById('editStarBtn');
   if (starBtn) {
     const alreadySaved = cards.find(c => c.url === card.url);
-    starBtn.textContent = alreadySaved ? '⭐' : '☆';
-    starBtn.title = 'Save to my collection';
-    starBtn.onclick = () => saveCommunityCardLocally(card);
+    starBtn.textContent = alreadySaved ? '✓ Saved' : '+ Save';
+    starBtn.title = alreadySaved ? 'Already in your collection' : 'Save to your collection';
+    starBtn.onclick = alreadySaved ? null : () => saveToCollection(card);
+    starBtn.style.opacity = alreadySaved ? '0.5' : '1';
   }
   
-  // Footer meta
-  document.getElementById('editFooterMeta').textContent = 
-    `Shared by ${card.addedBy} · ${new Date(card.createdAt).toLocaleDateString()}`;
+  // Tags - readonly (hide add input)
+  const tagInput = document.getElementById('newTag');
+  if (tagInput) tagInput.style.display = 'none';
   
-  // Hide delete button for community cards
+  // Sync button - hide for community cards
+  const syncBtn = document.getElementById('editSyncBtn');
+  if (syncBtn) syncBtn.style.display = 'none';
+  
+  // Delete button - hide
   const deleteBtn = document.querySelector('.edit-footer-right .btn-danger');
   if (deleteBtn) deleteBtn.style.display = 'none';
   
-  // Add "Save to My Cards" button if not already saved
-  const footerRight = document.querySelector('.edit-footer-right');
-  const existingSaveBtn = document.getElementById('saveCommunityBtn');
-  if (existingSaveBtn) existingSaveBtn.remove();
+  // Footer meta with clickable author
+  const footerMeta = document.getElementById('editFooterMeta');
+  const authorName = card.addedBy || 'Anonymous';
+  const editedByText = card.editedBy && card.editedBy !== card.addedBy ? ` · Edited by ${sanitizeHTML(card.editedBy)}` : '';
   
-  const alreadySaved = cards.find(c => c.url === card.url);
-  if (!alreadySaved && footerRight) {
-    const saveBtn = document.createElement('button');
-    saveBtn.id = 'saveCommunityBtn';
-    saveBtn.className = 'btn btn-primary';
-    saveBtn.innerHTML = '💾 Save to My Cards';
-    saveBtn.onclick = () => saveCommunityCardLocally(card);
-    footerRight.insertBefore(saveBtn, footerRight.firstChild);
+  if (authorName !== 'Anonymous' && authorName !== 'CommuneCollab') {
+    footerMeta.innerHTML = `Created: ${new Date(card.createdAt).toLocaleDateString()} · By <span class="clickable-author" onclick="closeEditModal(); setTimeout(() => openUserProfile('${sanitizeHTML(authorName)}'), 100)">${sanitizeHTML(authorName)}</span>${editedByText}`;
+  } else {
+    footerMeta.textContent = `Created: ${new Date(card.createdAt).toLocaleDateString()} · By ${sanitizeHTML(authorName)}${editedByText}`;
   }
   
-  // Update votes display
+  // Mark as community card for other functions
+  document.getElementById('editModal').dataset.isCommunity = 'true';
+  
+  // Update vote display and render sections
   updateVoteDisplay(card.id);
+  renderEditTags();
+  renderEditPhotos(); // This will now show the fetched photos
+  renderEditComments();
   
-  // Render tags (read-only)
-  renderEditTagsViewOnly(card);
-  
-  // Render photos (view-only)
-  renderEditPhotosViewOnly(card);
-  
-  // Render comments (can still add comments if signed in)
-  renderEditCommentsForCommunity(card);
-  
-  // Build navigation list for prev/next
-  buildCardNavigationList(card.id);
+  // Build navigation list and update arrows
+  buildCardNavigationList(card);
+  updateNavArrows();
 }
 
 function renderEditTagsViewOnly(card) {
@@ -7779,25 +7804,28 @@ function saveCommunityCardLocally(card) {
   
   // Create local copy
   const localCard = {
-    id: Date.now(),
-    url: card.url,
-    title: card.title,
-    notes: card.notes || '',
-    location: card.location || '',
-    tags: [...(card.tags || [])],
-    topic: card.topic || 'other',
-    votes: card.votes || 0,
-    screenshot: card.screenshot,
-    screenshotReal: !!card.screenshot,
-    photos: [...(card.photos || [])],
+    id: cloudCard.id,
+    url: cloudCard.url,
+    title: cloudCard.title,
+    notes: cloudCard.notes || '',
+    location: cloudCard.location || '',
+    topic: cloudCard.topic || 'other',
+    tags: cloudCard.tags || [],
+    screenshot: screenshot,
+    screenshotReal: !screenshot || !screenshot.startsWith('http'),
+    isPrivate: cloudCard.is_private,
+    votes: cloudCard.vote_total || 0,
+    photos: [],  // Will be fetched when modal opens
     comments: [],
-    starred: true,
-    isPrivate: false,
-    addedBy: username,
-    originalAuthor: card.addedBy,
-    createdAt: new Date().toISOString(),
-    lastEdited: new Date().toISOString(),
-    editedBy: username
+    starred: false,
+    addedBy: cloudCard.added_by || 'Anonymous',
+    editedBy: cloudCard.edited_by || null,  // ADD THIS LINE
+    createdAt: cloudCard.created_at,
+    lastEdited: cloudCard.updated_at,
+    cloudSynced: true,
+    cloudUserId: cloudCard.user_id,
+    isOwnCard: cloudCard.user_id === currentUser?.id,
+    isCommunity: cloudCard.user_id !== currentUser?.id
   };
   
   cards.unshift(localCard);
@@ -8335,12 +8363,10 @@ async function syncCardData(cardId) {
       tags: card.tags || [],
       screenshot: getStorableScreenshot(card),
       screenshot_real: card.screenshotReal || false,
-      photos: card.photos?.filter(p => !p.startsWith('data:')) || [], // Only synced photos
-      is_private: false,
-      starred: card.starred || false,
+      is_private: card.isPrivate || false,
       added_by: card.addedBy || username,
       created_at: card.createdAt || new Date().toISOString(),
-      last_edited: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       edited_by: username
     };
     
@@ -8351,6 +8377,11 @@ async function syncCardData(cardId) {
       .single();
     
     if (error) throw error;
+    
+    // 4. Sync photos to photos table
+    if (card.photos?.length > 0) {
+      await syncPhotosToDatabase(card.id, card.photos);
+    }
     
     // Mark as synced
     card.cloudSynced = true;
@@ -8465,6 +8496,61 @@ function updateSyncButtonVisibility(card) {
   }
 }
 
+// Sync photos to the photos table
+async function syncPhotosToDatabase(cardId, photoUrls) {
+  if (!supabaseClient || !currentUser || !photoUrls?.length) return;
+  
+  try {
+    // First, delete existing photos for this card (to avoid duplicates)
+    await supabaseClient
+      .from('photos')
+      .delete()
+      .eq('card_id', cardId);
+    
+    // Insert new photo records
+    const photoRecords = photoUrls
+      .filter(url => url.startsWith('http')) // Only synced URLs
+      .map((url, index) => ({
+        card_id: String(cardId),
+        user_id: currentUser.id,
+        url: url,
+        sort_order: index
+      }));
+    
+    if (photoRecords.length > 0) {
+      const { error } = await supabaseClient
+        .from('photos')
+        .insert(photoRecords);
+      
+      if (error) {
+        console.error('Photo sync error:', error);
+      } else {
+        console.log(`✅ Synced ${photoRecords.length} photos to database`);
+      }
+    }
+  } catch (e) {
+    console.error('Photo sync exception:', e);
+  }
+}
+
+// Fetch photos from database for a card
+async function fetchPhotosFromDatabase(cardId) {
+  if (!supabaseClient) return [];
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('photos')
+      .select('url')
+      .eq('card_id', cardId)
+      .order('sort_order', { ascending: true });
+    
+    if (error) throw error;
+    return data?.map(p => p.url) || [];
+  } catch (e) {
+    console.error('Fetch photos error:', e);
+    return [];
+  }
+}
 
 // Upload a single card to cloud
 async function uploadCardToCloud(card) {
@@ -9792,12 +9878,18 @@ function openEditModal(id) {
   // Setup media player
   setupMediaPlayer(card);
   
-  // Disable thumbnail upload for guide cards
+  // Disable thumbnail upload for guide cards AND playable media (audio/video)
   const mediaThumbnail = document.getElementById('editMediaThumbnail');
   if (mediaThumbnail) {
-    if (isGuideCard) {
-      mediaThumbnail.style.cursor = 'default';
-      mediaThumbnail.onclick = null;
+    // Check if this is playable media (audio or video)
+    const media = detectMediaType(card.url);
+    const playableTypes = ['youtube', 'vimeo', 'twitch', 'video', 'soundcloud', 'spotify', 'audio', 'applemusic', 'bandcamp', 'deezer'];
+    const isPlayableMedia = playableTypes.includes(media.type);
+    
+    if (isGuideCard || isPlayableMedia) {
+      // Disable thumbnail change for guide cards and playable media
+      mediaThumbnail.style.cursor = isPlayableMedia ? 'pointer' : 'default';
+      mediaThumbnail.onclick = isPlayableMedia ? () => playMedia() : null;
       const overlay = mediaThumbnail.querySelector('.edit-media-overlay');
       if (overlay) overlay.style.display = 'none';
     } else {
@@ -10047,11 +10139,15 @@ function refreshEditModal(card) {
     if (mediaThumbnail) mediaThumbnail.classList.add('placeholder-active');
   };
   
-  // Thumbnail protection for guide cards
+  // Thumbnail protection for guide cards AND playable media
   if (mediaThumbnail) {
-    if (isGuideCard) {
-      mediaThumbnail.style.cursor = 'default';
-      mediaThumbnail.onclick = null;
+    const media = detectMediaType(card.url);
+    const playableTypes = ['youtube', 'vimeo', 'twitch', 'video', 'soundcloud', 'spotify', 'audio', 'applemusic', 'bandcamp', 'deezer'];
+    const isPlayableMedia = playableTypes.includes(media.type);
+    
+    if (isGuideCard || isPlayableMedia) {
+      mediaThumbnail.style.cursor = isPlayableMedia ? 'pointer' : 'default';
+      mediaThumbnail.onclick = isPlayableMedia ? () => playMedia() : null;
       const overlay = mediaThumbnail.querySelector('.edit-media-overlay');
       if (overlay) overlay.style.display = 'none';
     } else {
