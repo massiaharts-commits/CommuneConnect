@@ -4180,7 +4180,7 @@
   
   <div class="modal-content edit-modal">
     <div class="modal-header">
-      <h2 class="modal-title">Edit Link</h2>
+      <h2 class="modal-title">View Link</h2>
       <button class="modal-close" onclick="closeEditModal()">×</button>
     </div>
     <!-- Main Layout: Media Left, Info Right (YouTube style) -->
@@ -7445,6 +7445,10 @@ function openEditModalViewOnly(card) {
   
   document.getElementById('editModal').classList.add('active');
   
+  // Set title to View Link for view-only cards
+  const modalTitle = document.querySelector('#editModal .modal-title');
+  if (modalTitle) modalTitle.textContent = 'View Link';
+  
   // Image
   const detailImage = document.getElementById('detailImage');
   const mainImage = card.screenshot || generatePlaceholderThumbnail(card);
@@ -9526,6 +9530,10 @@ function openEditModal(id) {
   const isGuideCard = card.isGuide || (card.url?.startsWith('thought://') && card.url?.includes('-guide'));
   document.getElementById('editModal').classList.add('active');
   
+  // Set modal title
+  const modalTitle = document.querySelector('#editModal .modal-title');
+  if (modalTitle) modalTitle.textContent = 'View Link';
+  
   // Setup media player
   setupMediaPlayer(card);
   
@@ -9976,6 +9984,32 @@ function detectMediaType(url) {
     };
   }
   
+  // Apple Music
+  const appleMusicMatch = url.match(/music\.apple\.com\/([a-z]{2})\/(?:album|playlist|song)\/([^\/]+)\/([^?]+)/);
+  if (appleMusicMatch) {
+    return { 
+      type: 'applemusic', 
+      embedUrl: `https://embed.music.apple.com/${appleMusicMatch[1]}/album/${appleMusicMatch[2]}/${appleMusicMatch[3]}`
+    };
+  }
+  
+  // Bandcamp
+  if (urlLower.includes('bandcamp.com')) {
+    return { 
+      type: 'bandcamp', 
+      embedUrl: url // Bandcamp requires fetching the embed code, so we'll handle differently
+    };
+  }
+  
+  // Deezer
+  const deezerMatch = url.match(/deezer\.com\/(?:[a-z]{2}\/)?(track|album|playlist)\/(\d+)/);
+  if (deezerMatch) {
+    return { 
+      type: 'deezer', 
+      embedUrl: `https://widget.deezer.com/widget/dark/${deezerMatch[1]}/${deezerMatch[2]}`
+    };
+  }
+  
   return { type: 'none', embedUrl: null };
 }
 
@@ -9999,13 +10033,13 @@ function setupMediaPlayer(card) {
   mediaThumbnail.dataset.embedUrl = media.embedUrl || '';
   
   // ONLY show play button for actual playable media types
-  const playableTypes = ['youtube', 'vimeo', 'spotify', 'soundcloud', 'twitch', 'video', 'audio'];
+  const playableTypes = ['youtube', 'vimeo', 'spotify', 'soundcloud', 'twitch', 'video', 'audio', 'applemusic', 'bandcamp', 'deezer'];
   
   if (playableTypes.includes(media.type)) {
     playBtn.style.display = 'flex';
     
     // For audio, show different icon
-    if (media.type === 'audio' || media.type === 'spotify' || media.type === 'soundcloud') {
+    if (media.type === 'audio' || media.type === 'spotify' || media.type === 'soundcloud' || media.type === 'applemusic' || media.type === 'bandcamp' || media.type === 'deezer') {
       playBtn.textContent = '🎵';
     } else {
       playBtn.textContent = '▶';
@@ -10037,20 +10071,55 @@ function playMedia(event) {
       break;
       
     case 'soundcloud':
-      playerHTML = `<iframe src="${embedUrl}" allow="autoplay" style="height: 166px;"></iframe>`;
+      playerHTML = `
+        <div style="display:flex;flex-direction:column;height:100%;background:linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);">
+          <iframe src="${embedUrl}" allow="autoplay" style="flex:1;min-height:166px;border:none;"></iframe>
+        </div>
+      `;
       break;
       
     case 'video':
       playerHTML = `<video src="${embedUrl}" controls autoplay playsinline></video>`;
       break;
       
-    case 'audio':
+   case 'audio':
       playerHTML = `
         <div style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg, var(--bg-secondary), var(--bg-elevated));">
           <div style="text-align:center;">
             <div style="font-size:4rem;margin-bottom:1rem;">🎵</div>
             <audio src="${embedUrl}" controls autoplay style="width:90%;max-width:400px;"></audio>
           </div>
+        </div>
+      `;
+      break;
+      
+    case 'applemusic':
+      playerHTML = `
+        <div style="display:flex;flex-direction:column;height:100%;background:linear-gradient(135deg, #1a1a1a 0%, #2d1f3d 50%, #1a1a1a 100%);">
+          <iframe src="${embedUrl}" allow="autoplay *; encrypted-media *;" style="flex:1;min-height:175px;border:none;border-radius:10px;overflow:hidden;"></iframe>
+        </div>
+      `;
+      break;
+      
+    case 'bandcamp':
+      // Bandcamp needs special handling - show link to play on site
+      playerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg, #1a1a2e 0%, #1e3a5f 50%, #1a1a2e 100%);">
+          <div style="text-align:center;color:white;">
+            <div style="font-size:4rem;margin-bottom:1rem;">🎵</div>
+            <p style="margin-bottom:1rem;opacity:0.8;">Bandcamp audio</p>
+            <a href="${embedUrl}" target="_blank" rel="noopener" style="display:inline-block;padding:0.75rem 1.5rem;background:var(--accent);color:white;border-radius:8px;text-decoration:none;font-weight:600;">
+              ▶ Play on Bandcamp
+            </a>
+          </div>
+        </div>
+      `;
+      break;
+      
+    case 'deezer':
+      playerHTML = `
+        <div style="display:flex;flex-direction:column;height:100%;background:linear-gradient(135deg, #1a1a1a 0%, #191414 100%);">
+          <iframe src="${embedUrl}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" style="flex:1;min-height:300px;border:none;"></iframe>
         </div>
       `;
       break;
