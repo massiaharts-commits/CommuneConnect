@@ -69,7 +69,35 @@
       0%, 100% { opacity: 0.8; }
       50% { opacity: 1; }
     }
+    /* Load More Button in Discover */
+    #loadMoreBubblesBtn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border: none;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
     
+    #loadMoreBubblesBtn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    
+    #loadMoreBubblesBtn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+    
+    #loadMoreBubblesBtn .discover-loading-spinner {
+      margin: 0;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      #loadMoreBubblesBtn {
+        font-size: 0.6rem !important;
+        padding: 0.4rem 0.5rem !important;
+      }
+    }
     /* Personal star field for main view */
     body::after {
       content: '';
@@ -752,6 +780,8 @@
       cursor: pointer;
       overflow: hidden;
       background: var(--bg-elevated);
+      min-height: 140px; /* Reserve space to prevent CLS */
+      background: var(--bg-elevated); /* Placeholder while loading */
     }
 
     /* Animated placeholder effect in edit modal */
@@ -2379,8 +2409,9 @@
     .bubble-card-image {
       width: 100%;
       height: 120px;
+      min-height: 120px; /* Reserve space to prevent CLS */
       overflow: hidden;
-      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%);
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%); /* Placeholder color */
       position: relative;
     }
 
@@ -3165,7 +3196,24 @@
       z-index: 2;
     }
 
-   
+    /* Audio media thumbnail styling */
+    .edit-media-thumbnail.audio-media {
+      cursor: pointer;
+    }
+    
+    .edit-media-thumbnail.audio-media::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+      animation: audioPulse 2s ease-in-out infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes audioPulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.02); }
+    }
     
     /* ========== MOBILE RESPONSIVE STYLES ========== */
     /* These styles ONLY apply on mobile - desktop remains unchanged */
@@ -4501,6 +4549,9 @@
       <button class="btn btn-secondary" onclick="zoomBubbles(0.8)" title="Zoom out">−</button>
       <button class="btn btn-secondary" onclick="resetBubbleView()" title="Reset">⟲</button>
       <button class="btn btn-secondary" onclick="shuffleBubbles()" title="Shuffle">🎲</button>
+      <button class="btn btn-primary" id="loadMoreBubblesBtn" onclick="loadMoreBubbles()" title="Load more cards" style="display:none;gap:0.35rem;font-size:0.7rem;padding:0.5rem 0.75rem;">
+        <span>🔭</span> Load More
+      </button>
     </div>
     <div class="discover-info" id="discoverInfo" style="display:none">
       <div class="discover-info-header">
@@ -4664,6 +4715,13 @@ function sanitizeUsername(name) {
 let bubbles = [];
 let isMobileDevice = false; // Will be set on init
 let bubbleConnections = [];
+
+// Pagination state for Discover view
+const CARDS_PER_PAGE = 60; // Initial load + each "Load More"
+let allBubbleData = []; // Store all card data before pagination
+let currentBubblePage = 0;
+let hasMoreBubbles = false;
+
 let selectedBubbleId = null;
 let bubbleZoom = 1;
 let bubblePanX = 0, bubblePanY = 0;
@@ -5714,67 +5772,87 @@ setInterval(() => {
   }
 }, 500);
 
-async function buildBubbleData() {
+async function buildBubbleData(loadMore = false) {
   const container = document.getElementById('bubbleContainer');
-  container.innerHTML = `
-    <div class="discover-loading">
-      <div class="discover-loading-spinner"></div>
-      <span style="color: var(--text-2);">Mapping the cosmos...</span>
-    </div>
-  `;
   
-// Fetch community cards - allow even for anonymous users (read-only)
-  // Fetch community cards - allow even for anonymous users (read-only)
-  let communityCards = [];
-  if (supabaseClient) {
-    try {
-      communityCards = await fetchCommunityCards();
-      console.log(`📡 Fetched ${communityCards.length} community cards`);
-    } catch (e) {
-      console.error('Failed to fetch community cards:', e);
-    }
+  // Only show loading on initial load, not on "Load More"
+  if (!loadMore) {
+    container.innerHTML = `
+      <div class="discover-loading">
+        <div class="discover-loading-spinner"></div>
+        <span style="color: var(--text-2);">Mapping the cosmos...</span>
+      </div>
+    `;
+    
+    // Reset pagination state
+    currentBubblePage = 0;
+    allBubbleData = [];
   }
   
-  // Filter out promoted guide cards
-  const promotedGuideUrls = new Set(
-    cards.filter(c => c.url?.startsWith('thought://') && c.url?.includes('-guide'))
-         .map(c => c.url)
-  );
-  
-  const activeGuides = GUIDE_CARDS.filter(g => !promotedGuideUrls.has(g.url));
-  
-  const guidesWithImages = activeGuides.map(g => ({
-    ...g,
-    screenshot: generatePlaceholderThumbnail(g),
-    photos: [],
-    comments: [],
-    starred: false,
-    isPrivate: false
-  }));
-  
-  // Merge local and community cards
-  const seenUrls = new Set();
-  const allUserCards = [];
-  
-  cards.forEach(c => {
-    // Skip private cards - they shouldn't appear in Discover
-    if (!seenUrls.has(c.url) && !c.isPrivate) {
-      seenUrls.add(c.url);
-      allUserCards.push({ ...c, isGuide: false });
+  // Only fetch data on initial load
+  if (!loadMore) {
+    // Fetch community cards - allow even for anonymous users (read-only)
+    let communityCards = [];
+    if (supabaseClient) {
+      try {
+        communityCards = await fetchCommunityCards();
+        console.log(`📡 Fetched ${communityCards.length} community cards`);
+      } catch (e) {
+        console.error('Failed to fetch community cards:', e);
+      }
     }
-  });
+    
+    // Filter out promoted guide cards
+    const promotedGuideUrls = new Set(
+      cards.filter(c => c.url?.startsWith('thought://') && c.url?.includes('-guide'))
+           .map(c => c.url)
+    );
+    
+    const activeGuides = GUIDE_CARDS.filter(g => !promotedGuideUrls.has(g.url));
+    
+    const guidesWithImages = activeGuides.map(g => ({
+      ...g,
+      screenshot: generatePlaceholderThumbnail(g),
+      photos: [],
+      comments: [],
+      starred: false,
+      isPrivate: false
+    }));
+    
+    // Merge local and community cards
+    const seenUrls = new Set();
+    const allUserCards = [];
+    
+    cards.forEach(c => {
+      // Skip private cards - they shouldn't appear in Discover
+      if (!seenUrls.has(c.url) && !c.isPrivate) {
+        seenUrls.add(c.url);
+        allUserCards.push({ ...c, isGuide: false });
+      }
+    });
+    
+    communityCards.forEach(c => {
+      if (!seenUrls.has(c.url)) {
+        seenUrls.add(c.url);
+        allUserCards.push({ ...c, isGuide: false, isCommunity: true });
+      }
+    });
+    
+    // Store ALL cards for pagination
+    allBubbleData = [...guidesWithImages, ...allUserCards];
+    console.log(`📊 Total cards available: ${allBubbleData.length}`);
+  }
   
-  communityCards.forEach(c => {
-    if (!seenUrls.has(c.url)) {
-      seenUrls.add(c.url);
-      allUserCards.push({ ...c, isGuide: false, isCommunity: true });
-    }
-  });
+  // Calculate pagination
+  const startIndex = 0; // Always start from 0 since we rebuild bubbles array
+  const endIndex = (currentBubblePage + 1) * CARDS_PER_PAGE;
+  const paginatedCards = allBubbleData.slice(0, endIndex);
+  hasMoreBubbles = endIndex < allBubbleData.length;
   
-  const allCards = [...guidesWithImages, ...allUserCards];
+  console.log(`📄 Showing ${paginatedCards.length} of ${allBubbleData.length} cards (page ${currentBubblePage + 1})`);
   
-  // Create bubble objects
-  bubbles = allCards.map((c, index) => ({
+  // Create bubble objects from paginated cards
+  bubbles = paginatedCards.map((c, index) => ({
     ...c,
     bubbleId: String(c.id),
     x: 0, y: 0,
@@ -5783,8 +5861,8 @@ async function buildBubbleData() {
     connectionCount: 0,
     mass: 0,
     celestialType: 'asteroid',
-    parentId: null,  // for moons/planets
-    systemId: null,  // which star system
+    parentId: null,
+    systemId: null,
     orbitAngle: Math.random() * Math.PI * 2,
     orbitSpeed: 0.0002 + Math.random() * 0.0001,
     breathDelay: Math.random() * 4
@@ -5820,12 +5898,53 @@ async function buildBubbleData() {
     b.size = getCardSize(b);
   });
   
-  // Identify star systems (find stars and their orbiting bodies)
+  // Identify star systems
   identifyStarSystems();
   
-  // Update stats
-  document.getElementById('statNodes').textContent = bubbles.length;
+  // Update stats - show total available
+  document.getElementById('statNodes').textContent = `${bubbles.length}${hasMoreBubbles ? '+' : ''}`;
   document.getElementById('statConnections').textContent = bubbleConnections.length;
+}
+
+// Load more cards in Discover view
+async function loadMoreBubbles() {
+  if (!hasMoreBubbles) return;
+  
+  currentBubblePage++;
+  
+  // Show loading state on button
+  const loadMoreBtn = document.getElementById('loadMoreBubblesBtn');
+  if (loadMoreBtn) {
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.innerHTML = '<span class="discover-loading-spinner" style="width:20px;height:20px;border-width:2px;"></span> Loading...';
+  }
+  
+  // Rebuild bubble data with more cards
+  await buildBubbleData(true);
+  
+  // Re-layout and render
+  layoutCelestialSystem();
+  renderBubbles();
+  
+  // Update button state
+  updateLoadMoreButton();
+  
+  showToast(`Loaded ${bubbles.length} cards`, 'success');
+}
+
+// Update the Load More button visibility and state
+function updateLoadMoreButton() {
+  const btn = document.getElementById('loadMoreBubblesBtn');
+  if (!btn) return;
+  
+  if (hasMoreBubbles) {
+    const remaining = allBubbleData.length - bubbles.length;
+    btn.style.display = 'flex';
+    btn.disabled = false;
+    btn.innerHTML = `<span>🔭</span> Load More (${remaining} remaining)`;
+  } else {
+    btn.style.display = 'none';
+  }
 }
 
 // Identify star systems and assign relationships
@@ -6433,7 +6552,7 @@ function renderBubbles() {
         ${isStar ? '<div class="star-corona"></div>' : ''}
         
         <div class="bubble-card-image">
-          <img src="${img}" alt="${sanitizeHTML(b.title)}" 
+          <img src="${img}" alt="${sanitizeHTML(b.title)}" loading="lazy"
                onerror="this.onerror=null; this.src='${generatePlaceholderThumbnail(b).replace(/'/g, "\\'")}'; this.parentElement.classList.add('placeholder-active');"
                onload="if(this.naturalWidth < 10 || this.naturalHeight < 10) { this.onerror(); }">
           <div class="bubble-card-image-overlay">
@@ -6481,6 +6600,9 @@ function renderBubbles() {
     drawAmbientConstellations();
     createGhostFab();
   }, 100);
+  
+  // Update Load More button state
+  updateLoadMoreButton();
 }
 
 function formatUrl(url) {
@@ -7445,55 +7567,80 @@ function openEditModalViewOnly(card) {
   
   document.getElementById('editModal').classList.add('active');
   
-  // Set title to View Link for view-only cards
+  // Set modal title
   const modalTitle = document.querySelector('#editModal .modal-title');
   if (modalTitle) modalTitle.textContent = 'View Link';
   
-  // Image
-  const detailImage = document.getElementById('detailImage');
-  const mainImage = card.screenshot || generatePlaceholderThumbnail(card);
-  detailImage.src = mainImage;
-  detailImage.style.display = 'block';
+  // *** CRITICAL: Setup media player to show play button for video/audio ***
+  setupMediaPlayer(card);
   
-  // Disable image upload for view-only
+  // Image/Thumbnail handling
+  const detailImage = document.getElementById('detailImage');
+  const mediaThumbnail = document.getElementById('editMediaThumbnail');
+  
+  // Check if it's an audio URL - use audio placeholder
+  const audioSites = ['soundcloud.com', 'spotify.com', 'music.apple.com', 'bandcamp.com', 'deezer.com'];
+  const isAudioUrl = card.url && audioSites.some(site => card.url.includes(site));
+  
+  let mainImage;
+  if (isAudioUrl && typeof generateAudioPlaceholder === 'function') {
+    mainImage = generateAudioPlaceholder(card);
+  } else {
+    mainImage = card.screenshot || generatePlaceholderThumbnail(card);
+  }
+  
+  if (detailImage) {
+    detailImage.src = mainImage;
+    detailImage.style.display = 'block';
+    detailImage.onerror = function() {
+      this.src = generatePlaceholderThumbnail(card);
+    };
+  }
+  
+  // Disable image upload for view-only (but keep cursor for clicking play)
   const imageContainer = document.querySelector('.edit-image-container');
   if (imageContainer) {
     imageContainer.style.cursor = 'default';
     imageContainer.onclick = null;
   }
   
-  // Title (read-only)
+  // Hide the "Change thumbnail" overlay
+  if (mediaThumbnail) {
+    const overlay = mediaThumbnail.querySelector('.edit-media-overlay');
+    if (overlay) overlay.style.display = 'none';
+    // But don't disable clicking on the thumbnail - play button should still work
+  }
+  
+  // Title - readonly
   const titleInput = document.getElementById('editTitle');
   titleInput.value = card.title;
   titleInput.disabled = true;
   
   // URL
-  const urlLink = document.getElementById('editUrlLink');
-  const urlText = document.getElementById('editUrlText');
-  urlLink.href = card.url;
-  urlText.textContent = card.url;
+  document.getElementById('editUrlLink').href = card.url;
+  document.getElementById('editUrlText').textContent = card.url;
   
-  // Notes (read-only)
+  // Notes - readonly
   const notesEl = document.getElementById('editNotes');
   notesEl.value = card.notes || '';
   notesEl.disabled = true;
   
-  // Location (read-only)
+  // Location - readonly
   const locationEl = document.getElementById('editLocation');
   if (locationEl) {
     locationEl.value = card.location || '';
     locationEl.disabled = true;
   }
   
-  // Privacy checkbox - hide for community cards
+  // Privacy - hide
   const privacyToggle = document.querySelector('.edit-privacy-toggle');
   if (privacyToggle) privacyToggle.style.display = 'none';
   
-  // Star button - allow starring to save locally
+  // Star button - changes to "Save to collection"
   const starBtn = document.getElementById('editStarBtn');
   if (starBtn) {
-    const isLocallyStarred = cards.find(c => c.url === card.url)?.starred;
-    starBtn.textContent = isLocallyStarred ? '⭐' : '☆';
+    const alreadySaved = cards.find(c => c.url === card.url);
+    starBtn.textContent = alreadySaved ? '⭐' : '☆';
     starBtn.title = 'Save to my collection';
     starBtn.onclick = () => saveCommunityCardLocally(card);
   }
@@ -7532,6 +7679,9 @@ function openEditModalViewOnly(card) {
   
   // Render comments (can still add comments if signed in)
   renderEditCommentsForCommunity(card);
+  
+  // Build navigation list for prev/next
+  buildCardNavigationList(card.id);
 }
 
 function renderEditTagsViewOnly(card) {
@@ -8851,6 +9001,14 @@ async function loadCards() {
         return;
       }
       
+      // Audio sites - use audio placeholder
+      const audioSites = ['soundcloud.com', 'spotify.com', 'music.apple.com', 'bandcamp.com', 'deezer.com'];
+      if (audioSites.some(site => card.url?.includes(site))) {
+        card.screenshot = generateAudioPlaceholder(card);
+        card.screenshotReal = true; // Mark as real to prevent retry attempts
+        return;
+      }
+      
       // Vimeo - use thumbnail API format
       if (card.url && card.url.includes('vimeo.com')) {
         const vimeoMatch = card.url.match(/vimeo\.com\/(\d+)/);
@@ -9136,9 +9294,106 @@ function generatePlaceholderThumbnail(card) {
   return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
 }
 
+// Generate audio-specific placeholder thumbnail
+function generateAudioPlaceholder(card) {
+  const url = card.url || '';
+  let brandColor = '#6366f1';
+  let brandName = 'Audio';
+  let icon = '🎵';
+  
+  // Brand-specific colors
+  if (url.includes('soundcloud.com')) {
+    brandColor = '#ff5500';
+    brandName = 'SoundCloud';
+    icon = '☁️';
+  } else if (url.includes('spotify.com')) {
+    brandColor = '#1db954';
+    brandName = 'Spotify';
+    icon = '🎧';
+  } else if (url.includes('music.apple.com')) {
+    brandColor = '#fc3c44';
+    brandName = 'Apple Music';
+    icon = '🎵';
+  } else if (url.includes('bandcamp.com')) {
+    brandColor = '#1da0c3';
+    brandName = 'Bandcamp';
+    icon = '🎸';
+  } else if (url.includes('deezer.com')) {
+    brandColor = '#feaa2d';
+    brandName = 'Deezer';
+    icon = '🎶';
+  }
+  
+  const title = (card.title || brandName).substring(0, 35);
+  
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+      <defs>
+        <linearGradient id="audioBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0a0a0f;stop-opacity:1" />
+          <stop offset="50%" style="stop-color:#1a1a2e;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#0a0a0f;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:${brandColor};stop-opacity:0.8" />
+          <stop offset="100%" style="stop-color:${brandColor};stop-opacity:0.4" />
+        </linearGradient>
+        <radialGradient id="audioGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" style="stop-color:${brandColor};stop-opacity:0.4" />
+          <stop offset="100%" style="stop-color:${brandColor};stop-opacity:0" />
+        </radialGradient>
+      </defs>
+      
+      <!-- Background -->
+      <rect width="400" height="300" fill="url(#audioBg)"/>
+      
+      <!-- Glow effect -->
+      <circle cx="200" cy="120" r="100" fill="url(#audioGlow)"/>
+      
+      <!-- Sound wave bars -->
+      <g fill="${brandColor}" opacity="0.6">
+        <rect x="120" y="90" width="8" height="60" rx="4"/>
+        <rect x="140" y="70" width="8" height="100" rx="4"/>
+        <rect x="160" y="85" width="8" height="70" rx="4"/>
+        <rect x="180" y="60" width="8" height="120" rx="4"/>
+        <rect x="200" y="75" width="8" height="90" rx="4"/>
+        <rect x="220" y="55" width="8" height="130" rx="4"/>
+        <rect x="240" y="80" width="8" height="80" rx="4"/>
+        <rect x="260" y="65" width="8" height="110" rx="4"/>
+        <rect x="280" y="95" width="8" height="50" rx="4"/>
+      </g>
+      
+      <!-- Play button circle -->
+      <circle cx="200" cy="120" r="35" fill="rgba(255,255,255,0.1)" stroke="${brandColor}" stroke-width="2"/>
+      <polygon points="190,105 190,135 215,120" fill="${brandColor}"/>
+      
+      <!-- Brand pill -->
+      <rect x="140" y="200" width="120" height="28" rx="14" fill="url(#brandGrad)"/>
+      <text x="200" y="219" font-family="system-ui, sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="white">${brandName}</text>
+      
+      <!-- Title -->
+      <text x="200" y="260" font-family="system-ui, sans-serif" font-size="13" font-weight="500" text-anchor="middle" fill="rgba(255,255,255,0.8)">${title}</text>
+      
+      <!-- Stars -->
+      <circle cx="50" cy="40" r="1.5" fill="white" opacity="0.5"/>
+      <circle cx="350" cy="60" r="1" fill="white" opacity="0.4"/>
+      <circle cx="80" cy="250" r="1.5" fill="white" opacity="0.3"/>
+      <circle cx="320" cy="230" r="1" fill="white" opacity="0.5"/>
+    </svg>
+  `;
+  
+  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+}
+
 
 // Get valid thumbnail or generate placeholder
 function getCardThumbnail(card) {
+  // 0. Check for audio URLs first - use audio placeholder
+  const audioSites = ['soundcloud.com', 'spotify.com', 'music.apple.com', 'bandcamp.com', 'deezer.com'];
+  if (card.url && audioSites.some(site => card.url.includes(site))) {
+    return generateAudioPlaceholder(card);
+  }
+  
   // 1. Try YouTube thumbnail first (most reliable)
   if (card.url && (card.url.includes('youtube.com') || card.url.includes('youtu.be'))) {
     const videoId = extractYouTubeId(card.url);
@@ -10017,6 +10272,7 @@ function setupMediaPlayer(card) {
   const mediaPlayer = document.getElementById('editMediaPlayer');
   const mediaThumbnail = document.getElementById('editMediaThumbnail');
   const playBtn = document.getElementById('editPlayBtn');
+  const detailImage = document.getElementById('detailImage');
   
   if (!mediaPlayer || !mediaThumbnail || !playBtn) return;
   
@@ -10032,19 +10288,32 @@ function setupMediaPlayer(card) {
   mediaThumbnail.dataset.mediaType = media.type;
   mediaThumbnail.dataset.embedUrl = media.embedUrl || '';
   
+  // Audio types that need special placeholder
+  const audioTypes = ['soundcloud', 'spotify', 'audio', 'applemusic', 'bandcamp', 'deezer'];
+  
+  // For audio types, use audio placeholder instead of broken image
+  if (audioTypes.includes(media.type)) {
+    const audioPlaceholder = generateAudioPlaceholder(card);
+    if (detailImage) {
+      detailImage.src = audioPlaceholder;
+      detailImage.onerror = null; // Prevent error handling since it's a data URL
+    }
+    mediaThumbnail.classList.add('audio-media');
+    playBtn.style.display = 'flex';
+    playBtn.textContent = '🎵';
+    return;
+  }
+  
   // ONLY show play button for actual playable media types
-  const playableTypes = ['youtube', 'vimeo', 'spotify', 'soundcloud', 'twitch', 'video', 'audio', 'applemusic', 'bandcamp', 'deezer'];
+  const playableTypes = ['youtube', 'vimeo', 'twitch', 'video'];
   
   if (playableTypes.includes(media.type)) {
     playBtn.style.display = 'flex';
-    
-    // For audio, show different icon
-    if (media.type === 'audio' || media.type === 'spotify' || media.type === 'soundcloud' || media.type === 'applemusic' || media.type === 'bandcamp' || media.type === 'deezer') {
-      playBtn.textContent = '🎵';
-    } else {
-      playBtn.textContent = '▶';
-    }
+    playBtn.textContent = '▶';
   }
+  
+  // Remove audio class if not audio
+  mediaThumbnail.classList.remove('audio-media');
 }
 
 function playMedia(event) {
