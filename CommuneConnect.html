@@ -10,7 +10,7 @@
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com;
     img-src 'self' data: https: blob:;
-    connect-src 'self' https://*.supabase.co https://jsonlink.io https://image.thum.io https://nominatim.openstreetmap.org https://img.youtube.com https://www.google.com;
+    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://jsonlink.io https://image.thum.io https://nominatim.openstreetmap.org https://img.youtube.com https://www.google.com blob:;
     frame-src 'none';
     object-src 'none';
     base-uri 'self';
@@ -4535,8 +4535,8 @@
   </div>
 </div>
   <div class="discover-canvas" id="discoverCanvas">
-    <svg id="ambientConstellationsSvg" class="constellation-ambient" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4"></svg>
-    <svg id="connectionsSvg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5"></svg>
+    <svg id="ambientConstellationsSvg" class="constellation-ambient" style="position:absolute;pointer-events:none;z-index:4;overflow:visible"></svg>
+<svg id="connectionsSvg" style="position:absolute;pointer-events:none;z-index:5;overflow:visible"></svg>
     <div class="bubble-container" id="bubbleContainer"></div>
     <div class="discover-stats">
       <div class="discover-stat"><strong id="statNodes">0</strong> cards</div>
@@ -6096,8 +6096,11 @@ function identifyStarSystems() {
 // ========== CELESTIAL LAYOUT SYSTEM ==========
 // Multi-cluster layout with mobile optimization
 
+
 // ========== TAG-FIRST GALAXY LAYOUT SYSTEM ==========
-// This REPLACES the existing layoutCelestialSystem function
+// Cards with unique tags become cluster centers
+// Cards with matching tags orbit around centers
+// Cluster center = most popular card (votes + comments)
 
 function layoutCelestialSystem() {
   const canvas = document.getElementById('discoverCanvas');
@@ -6112,122 +6115,160 @@ function layoutCelestialSystem() {
   // ===== MOBILE VS DESKTOP CONFIG =====
   const isMobileLayout = window.innerWidth < 768;
   const config = isMobileLayout ? {
-    galaxySpacing: 300,      // Distance between galaxy centers
-    cardSpacing: 25,         // Minimum space between cards in same galaxy
-    clusterRadius: 200,      // Max radius of a galaxy cluster
-    orphanZoneY: 0.85,       // Bottom 15% for unconnected cards
-    margin: 60
+    galaxySpacing: 700,      // Distant clusters on mobile
+    cardSpacing: 30,         // Space between cards in same cluster
+    clusterRadius: 250,      // Max radius of a cluster
+    margin: 80
   } : {
-    galaxySpacing: 500,      // Distance between galaxy centers
-    cardSpacing: 40,         // Minimum space between cards in same galaxy
-    clusterRadius: 350,      // Max radius of a galaxy cluster
-    orphanZoneY: 0.85,       // Bottom 15% for unconnected cards
-    margin: 100
+    galaxySpacing: 1400,     // Very distant clusters - feels like separate galaxies
+    cardSpacing: 50,         // Space between cards in same cluster  
+    clusterRadius: 400,      // Max radius of a cluster
+    margin: 150
   };
 
-  // ===== STEP 1: Build tag frequency map =====
-  const tagCounts = {};
+  // ===== STEP 1: Calculate popularity score for each card =====
   bubbles.forEach(b => {
-    (b.tags || []).forEach(tag => {
-      const normalizedTag = tag.toLowerCase();
-      tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1;
-    });
+    const votes = b.votes || 0;
+    const comments = (b.comments || []).length;
+    const connections = b.connectionCount || 0;
+    b.popularity = votes + (comments * 2) + (connections * 0.5);
   });
   
-  // ===== STEP 2: Identify major tags (tags with 2+ cards) =====
-  const majorTags = Object.entries(tagCounts)
-    .filter(([tag, count]) => count >= 2)
-    .sort((a, b) => b[1] - a[1]) // Sort by frequency
-    .map(([tag]) => tag);
+  // ===== STEP 2: Build clusters dynamically =====
+  // Each unique tag combination can form a cluster
+  // Cards join existing clusters if they share ANY tag
+  const clusters = {}; // clusterId -> { tags: Set, cards: [], centerId: null }
+  let clusterIdCounter = 0;
   
-  console.log('🏷️ Major tags for clustering:', majorTags);
+  // Sort bubbles by popularity (most popular processed first = become centers)
+  const sortedBubbles = [...bubbles].sort((a, b) => b.popularity - a.popularity);
   
-  // ===== STEP 3: Assign each card to its PRIMARY cluster =====
-  // A card belongs to the cluster of its most popular tag
-  const clusters = {}; // tag -> [bubbles]
-  const assignedBubbles = new Set();
-  
-  // Initialize clusters for major tags
-  majorTags.forEach(tag => {
-    clusters[tag] = [];
-  });
-  
-  // Assign bubbles to their best-fit cluster
-  bubbles.forEach(bubble => {
-    const bubbleTags = (bubble.tags || []).map(t => t.toLowerCase());
+  sortedBubbles.forEach(bubble => {
+    const bubbleTags = (bubble.tags || []).map(t => t.toLowerCase()).filter(t => t.trim());
     
-    // Find which major tag this bubble should belong to
-    // Prefer the most specific (least common) shared tag for variety
-    let bestTag = null;
-    let bestScore = -1;
+    // Card has NO tags = becomes its own isolated cluster
+    if (bubbleTags.length === 0) {
+      const clusterId = `solo_${clusterIdCounter++}`;
+      clusters[clusterId] = {
+        tags: new Set(),
+        cards: [bubble],
+        centerId: bubble.bubbleId,
+        isSolo: true
+      };
+      bubble.clusterId = clusterId;
+      bubble.isClusterCenter = true;
+      return;
+    }
     
-    bubbleTags.forEach(tag => {
-      if (majorTags.includes(tag)) {
-        // Score: prefer tags where this card shares with fewer total cards
-        // This creates more distinct clusters
-        const score = 1000 - (tagCounts[tag] || 0);
-        if (score > bestScore) {
-          bestScore = score;
-          bestTag = tag;
-        }
+    // Find existing cluster that shares ANY tag with this card
+    let bestCluster = null;
+    let bestOverlap = 0;
+    
+    Object.entries(clusters).forEach(([clusterId, cluster]) => {
+      if (cluster.isSolo) return; // Don't merge into solo clusters
+      
+      const overlap = bubbleTags.filter(t => cluster.tags.has(t)).length;
+      if (overlap > bestOverlap) {
+        bestOverlap = overlap;
+        bestCluster = clusterId;
       }
     });
     
-    if (bestTag) {
-      clusters[bestTag].push(bubble);
-      bubble.clusterId = bestTag;
-      assignedBubbles.add(bubble.bubbleId);
+    // Require at least 2 shared tags to merge, OR exact tag match for single-tag cards
+    if (bestCluster && bestOverlap > 0) {
+      // Join existing cluster
+      clusters[bestCluster].cards.push(bubble);
+      bubble.clusterId = bestCluster;
+      bubble.isClusterCenter = false;
+      
+      // Add this card's tags to the cluster's tag pool
+      bubbleTags.forEach(t => clusters[bestCluster].tags.add(t));
+    } else {
+      // No matching cluster - become a new cluster center
+      const clusterId = `cluster_${clusterIdCounter++}`;
+      const tagSet = new Set(bubbleTags);
+      
+      clusters[clusterId] = {
+        tags: tagSet,
+        cards: [bubble],
+        centerId: bubble.bubbleId,
+        isSolo: false
+      };
+      bubble.clusterId = clusterId;
+      bubble.isClusterCenter = true;
     }
   });
   
-  // Collect orphans (cards with no major tags)
-  const orphans = bubbles.filter(b => !assignedBubbles.has(b.bubbleId));
-  
-  // Remove empty clusters
-  Object.keys(clusters).forEach(tag => {
-    if (clusters[tag].length === 0) {
-      delete clusters[tag];
-    }
+  // ===== STEP 3: Determine cluster centers by popularity =====
+  // The most popular card in each cluster becomes the center
+  Object.values(clusters).forEach(cluster => {
+    if (cluster.cards.length === 0) return;
+    
+    // Sort by popularity, highest first
+    cluster.cards.sort((a, b) => b.popularity - a.popularity);
+    
+    // Most popular becomes center
+    const centerCard = cluster.cards[0];
+    cluster.centerId = centerCard.bubbleId;
+    
+    // Mark center status
+    cluster.cards.forEach((card, i) => {
+      card.isClusterCenter = (i === 0);
+    });
   });
   
-  const clusterList = Object.entries(clusters);
-  console.log(`📊 Created ${clusterList.length} clusters, ${orphans.length} orphans`);
+  const clusterList = Object.entries(clusters).filter(([id, c]) => c.cards.length > 0);
+  console.log(`🏷️ Created ${clusterList.length} clusters from ${bubbles.length} cards`);
   
-  // ===== STEP 4: Position cluster centers in a large spiral =====
+  // ===== STEP 4: Position cluster centers in bounded spiral =====
   const clusterCenters = {};
   
-  clusterList.forEach(([tag, cards], index) => {
+  // Sort clusters by size (largest clusters more central)
+  clusterList.sort((a, b) => b[1].cards.length - a[1].cards.length);
+  
+  // Calculate max radius based on screen and cluster count
+  const screenSize = Math.max(width, height);
+  const clusterCount = clusterList.length;
+  
+  // Adaptive spacing: more clusters = tighter spacing to keep things reachable
+  const adaptiveSpacing = Math.min(
+    config.galaxySpacing,
+    (screenSize * 1.5) / Math.sqrt(clusterCount)
+  );
+  
+  clusterList.forEach(([clusterId, cluster], index) => {
     if (index === 0) {
-      // First (largest) cluster goes in center
-      clusterCenters[tag] = { x: centerX, y: centerY };
+      // Largest cluster goes in center
+      clusterCenters[clusterId] = { x: centerX, y: centerY };
     } else {
-      // Other clusters spiral outward
+      // Spiral outward with sqrt growth (slower than linear)
       const angle = index * GOLDEN_ANGLE;
-      const radius = config.galaxySpacing * Math.sqrt(index);
-      clusterCenters[tag] = {
+      const radius = adaptiveSpacing * Math.sqrt(index) * 1.2;
+      
+      clusterCenters[clusterId] = {
         x: centerX + Math.cos(angle) * radius,
         y: centerY + Math.sin(angle) * radius
       };
     }
   });
   
+  console.log(`📐 Cluster spacing: ${Math.round(adaptiveSpacing)}px, screen: ${screenSize}px`);
+  
   // ===== STEP 5: Position cards WITHIN each cluster =====
-  clusterList.forEach(([tag, cards]) => {
-    const center = clusterCenters[tag];
+  clusterList.forEach(([clusterId, cluster]) => {
+    const center = clusterCenters[clusterId];
+    const cards = cluster.cards;
     
-    // Sort cards within cluster by their connectivity/mass
-    cards.sort((a, b) => (b.mass || 0) - (a.mass || 0));
-    
-    // Place cards in a tight spiral around cluster center
+    // Cards already sorted by popularity (center first)
     cards.forEach((bubble, i) => {
       if (i === 0) {
-        // Most important card at cluster center
+        // Cluster center (most popular card)
         bubble.x = center.x;
         bubble.y = center.y;
       } else {
+        // Orbit around center
         const angle = i * GOLDEN_ANGLE;
-        // Tighter spiral within cluster
-        const radius = config.cardSpacing + Math.sqrt(i) * (config.cardSpacing * 1.5);
+        const radius = config.cardSpacing + Math.sqrt(i) * (config.cardSpacing * 1.8);
         bubble.x = center.x + Math.cos(angle) * radius;
         bubble.y = center.y + Math.sin(angle) * radius;
       }
@@ -6238,43 +6279,39 @@ function layoutCelestialSystem() {
     });
   });
   
-  // ===== STEP 6: Position orphans in the "frontier" zone =====
-  const orphanStartY = height * config.orphanZoneY;
-  const orphanSpacing = Math.min(200, (width - config.margin * 2) / Math.max(orphans.length, 1));
-  
-  orphans.forEach((bubble, i) => {
-    // Spread orphans along the bottom in a gentle wave
-    const xOffset = (i - orphans.length / 2) * orphanSpacing;
-    bubble.x = centerX + xOffset;
-    bubble.y = orphanStartY + Math.sin(i * 0.5) * 50; // Gentle wave
-    bubble.baseX = bubble.x;
-    bubble.baseY = bubble.y;
-    bubble.clusterId = 'frontier';
-    bubble.galaxyCenter = { x: bubble.x, y: bubble.y };
+  // ===== STEP 6: Resolve collisions within clusters =====
+  clusterList.forEach(([clusterId, cluster]) => {
+    resolveClusterCollisions(cluster.cards, config.cardSpacing);
   });
   
-  // ===== STEP 7: Resolve collisions within clusters =====
-  clusterList.forEach(([tag, cards]) => {
-    resolveClusterCollisions(cards, config.cardSpacing);
-  });
+  // ===== STEP 7: Resolve collisions BETWEEN clusters =====
+  // Format: [[clusterId, cards], ...] for the collision resolver
+const clusterListForCollisions = clusterList.map(([clusterId, cluster]) => [clusterId, cluster.cards]);
+resolveInterClusterCollisions(clusterListForCollisions, config);
   
-  // Resolve orphan collisions
-  resolveClusterCollisions(orphans, config.cardSpacing);
+  // ===== STEP 8: Keep cards visible but allow spread =====
+  const padding = 100;
+  const maxX = Math.max(width * 2, width + config.galaxySpacing * clusterList.length);
+  const maxY = Math.max(height * 2, height + config.galaxySpacing * clusterList.length);
   
-  // ===== STEP 8: Resolve collisions BETWEEN clusters =====
-  resolveInterClusterCollisions(clusterList, config);
-  
-  // ===== STEP 9: Keep everything in bounds =====
-  const margin = config.margin;
   bubbles.forEach(b => {
     const halfSize = (b.size || 200) / 2;
-    b.x = Math.max(margin + halfSize, Math.min(width - margin - halfSize, b.x));
-    b.y = Math.max(margin + halfSize, Math.min(height - margin - halfSize, b.y));
+    b.x = Math.max(padding + halfSize, Math.min(maxX - halfSize, b.x));
+    b.y = Math.max(padding + halfSize, Math.min(maxY - halfSize, b.y));
     b.baseX = b.x;
     b.baseY = b.y;
   });
   
-  // ===== STEP 10: Initialize physics (desktop only) =====
+  // Debug: log card positions
+  console.log('📍 Card positions:', bubbles.map(b => ({ 
+    id: b.bubbleId, 
+    title: b.title?.substring(0, 20), 
+    x: Math.round(b.x), 
+    y: Math.round(b.y),
+    cluster: b.clusterId 
+  })));
+  
+  // ===== STEP 9: Initialize physics (keeps everything alive) =====
   initializePhysics(width, height);
   
   console.log('✨ Tag-first galaxy layout complete');
@@ -6593,20 +6630,25 @@ function formatUrl(url) {
 function applyTransform() {
   const container = document.getElementById('bubbleContainer');
   const svg = document.getElementById('connectionsSvg');
+  const ambientSvg = document.getElementById('ambientConstellationsSvg');
   const starField = document.querySelector('.discover-view .star-field');
   const particles = document.querySelector('.discover-view .ambient-particles');
   
   const transform = `translate(${bubblePanX}px, ${bubblePanY}px) scale(${bubbleZoom})`;
-  container.style.transform = transform;
-  container.style.transformOrigin = 'center center';
-  svg.style.transform = transform;
-  svg.style.transformOrigin = 'center center';
   
-  // Also transform ambient constellations
-  const ambientSvg = document.getElementById('ambientConstellationsSvg');
+  // Transform bubble container
+  container.style.transform = transform;
+  container.style.transformOrigin = '0 0';
+  
+  // Transform both SVGs with same origin as container
+  if (svg) {
+    svg.style.transform = transform;
+    svg.style.transformOrigin = '0 0';
+  }
+  
   if (ambientSvg) {
     ambientSvg.style.transform = transform;
-    ambientSvg.style.transformOrigin = 'center center';
+    ambientSvg.style.transformOrigin = '0 0';
   }
   
   // Parallax effect - background layers move slower
@@ -6758,6 +6800,16 @@ function showConnections(id) {
   const svg = document.getElementById('connectionsSvg');
   const bubble = bubbles.find(b => b.bubbleId === id);
   if (!bubble) return;
+  
+  // Use stored bounds from drawAmbientConstellations
+  if (window.bubbleBounds) {
+    const { minX, minY, width, height } = window.bubbleBounds;
+    svg.setAttribute('viewBox', `${minX} ${minY} ${width} ${height}`);
+    svg.style.width = `${width}px`;
+    svg.style.height = `${height}px`;
+    svg.style.left = `${minX}px`;
+    svg.style.top = `${minY}px`;
+  }
   
   // Find all cards that share tags with the selected card
   const selectedTags = (bubble.tags || []).map(t => t.toLowerCase());
@@ -6957,15 +7009,82 @@ function hideConnections() {
 
 function drawAmbientConstellations() {
   const svg = document.getElementById('ambientConstellationsSvg');
-  if (!svg || bubbleConnections.length === 0) return;
+  const connSvg = document.getElementById('connectionsSvg');
+  if (!svg) return;
+  
+  // Only draw connections between cards that actually exist and have valid positions
+  const validBubbles = bubbles.filter(b => 
+    typeof b.x === 'number' && 
+    typeof b.y === 'number' && 
+    !isNaN(b.x) && 
+    !isNaN(b.y)
+  );
+  
+  if (validBubbles.length === 0) return;
+  
+  // Calculate actual bounds of all bubbles
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  validBubbles.forEach(b => {
+    const halfSize = (b.size || 200) / 2;
+    minX = Math.min(minX, b.x - halfSize);
+    minY = Math.min(minY, b.y - halfSize);
+    maxX = Math.max(maxX, b.x + halfSize);
+    maxY = Math.max(maxY, b.y + halfSize);
+  });
+  
+  // Add padding
+  const padding = 300;
+  minX -= padding;
+  minY -= padding;
+  maxX += padding;
+  maxY += padding;
+  
+  const width = maxX - minX;
+  const height = maxY - minY;
+  
+  // Store bounds globally for other functions
+  window.bubbleBounds = { minX, minY, maxX, maxY, width, height };
+  
+  // Use simple viewBox starting at 0,0 - let CSS transform handle positioning
+  // This keeps SVG in sync with bubbleContainer at all zoom levels
+  svg.setAttribute('viewBox', `0 0 ${maxX + padding} ${maxY + padding}`);
+  svg.style.width = `${maxX + padding}px`;
+  svg.style.height = `${maxY + padding}px`;
+  svg.style.left = '0';
+  svg.style.top = '0';
+  
+  // Store bounds globally for other functions
+  window.bubbleBounds = { minX: 0, minY: 0, maxX: maxX + padding, maxY: maxY + padding, width: maxX + padding, height: maxY + padding };
+  
+  // Also update connectionsSvg
+  if (connSvg) {
+    connSvg.setAttribute('viewBox', `0 0 ${maxX + padding} ${maxY + padding}`);
+    connSvg.style.width = `${maxX + padding}px`;
+    connSvg.style.height = `${maxY + padding}px`;
+    connSvg.style.left = '0';
+    connSvg.style.top = '0';
+  }
+  
+  // Build valid bubble ID set for quick lookup
+  const validBubbleIds = new Set(validBubbles.map(b => b.bubbleId));
+  
+  // Filter connections to only include those between valid bubbles
+  const validConnections = bubbleConnections.filter(conn => 
+    validBubbleIds.has(conn.source) && validBubbleIds.has(conn.target)
+  );
+  
+  if (validConnections.length === 0) {
+    svg.innerHTML = '';
+    return;
+  }
   
   // Build connection paths at low opacity
-  const paths = bubbleConnections.map((conn, index) => {
-    const a = bubbles.find(b => b.bubbleId === conn.source);
-    const b = bubbles.find(b => b.bubbleId === conn.target);
+  const paths = validConnections.map((conn, index) => {
+    const a = validBubbles.find(b => b.bubbleId === conn.source);
+    const b = validBubbles.find(b => b.bubbleId === conn.target);
     if (!a || !b) return '';
     
-    // Calculate curved path (same logic as showConnections)
+    // Calculate curved path
     const midX = (a.x + b.x) / 2;
     const midY = (a.y + b.y) / 2;
     const dx = b.x - a.x;
@@ -7004,6 +7123,8 @@ function drawAmbientConstellations() {
     </defs>
     ${paths}
   `;
+  
+  console.log(`🔗 Drew ${validConnections.length} connections between ${validBubbles.length} cards`);
 }
 
 function highlightConstellations(bubbleId) {
@@ -8080,17 +8201,14 @@ async function uploadImageToStorage(base64Data, cardId, imageType = 'screenshot'
   }
   
   try {
-    // Convert base64 to blob
-    const response = await fetch(base64Data);
-    const blob = await response.blob();
+    // Convert base64 to blob WITHOUT fetch (CSP-safe)
+    const blob = base64ToBlob(base64Data);
     
     // Check file size (max 5MB)
     if (blob.size > 5 * 1024 * 1024) {
       console.warn('⚠️ Image too large, compressing...');
-      // Compress the image
       const compressedBase64 = await compressImage(base64Data, 800, 0.7);
-      const compressedResponse = await fetch(compressedBase64);
-      const compressedBlob = await compressedResponse.blob();
+      const compressedBlob = base64ToBlob(compressedBase64);
       
       if (compressedBlob.size > 5 * 1024 * 1024) {
         console.error('❌ Image still too large after compression');
@@ -8106,6 +8224,19 @@ async function uploadImageToStorage(base64Data, cardId, imageType = 'screenshot'
     console.error('❌ Image upload error:', e);
     return null;
   }
+}
+
+// Convert base64 data URI to Blob (CSP-safe, no fetch needed)
+function base64ToBlob(base64Data) {
+  const parts = base64Data.split(',');
+  const mime = parts[0].match(/:(.*?);/)[1];
+  const bstr = atob(parts[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
 }
 
 async function uploadBlobToStorage(blob, cardId, imageType) {
