@@ -4062,33 +4062,48 @@
       }
       
       /* Edge indicators for off-screen clusters */
-      .edge-indicator {
-        position: absolute;
-        padding: 0.4rem 0.8rem;
-        background: rgba(99, 102, 241, 0.9);
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: white;
-        cursor: pointer;
-        z-index: 100;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 12px rgba(99, 102, 241, 0.4);
-        white-space: nowrap;
-      }
-      .edge-indicator:hover {
-        background: rgba(139, 92, 246, 1);
-        transform: scale(1.05);
-      }
-      .edge-indicator.left { left: 10px; }
-      .edge-indicator.right { right: 10px; }
-      .edge-indicator.top { top: 70px; }
-      .edge-indicator.bottom { bottom: 80px; }
-      .edge-indicator .arrow {
-        font-size: 0.9rem;
+     .edge-indicator {
+       position: absolute;
+       width: 36px;
+       height: 36px;
+       background: rgba(99, 102, 241, 0.15);
+       border: 1px solid rgba(99, 102, 241, 0.3);
+       border-radius: 50%;
+       font-size: 1rem;
+       color: rgba(255, 255, 255, 0.7);
+       cursor: pointer;
+       z-index: 100;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       transition: all 0.3s ease;
+       backdrop-filter: blur(8px);
+     }
+     .edge-indicator:hover {
+       background: rgba(99, 102, 241, 0.3);
+       border-color: rgba(99, 102, 241, 0.6);
+       color: white;
+       transform: scale(1.1);
+     }
+     .edge-indicator:hover .edge-tooltip {
+       opacity: 1;
+       transform: translateX(0);
+     }
+     .edge-tooltip {
+       position: absolute;
+       background: rgba(0, 0, 0, 0.8);
+       padding: 0.3rem 0.6rem;
+       border-radius: 6px;
+       font-size: 0.7rem;
+       white-space: nowrap;
+       opacity: 0;
+       transition: all 0.2s ease;
+       pointer-events: none;
+     }
+     .edge-indicator.left .edge-tooltip { left: 45px; transform: translateX(-5px); }
+     .edge-indicator.right .edge-tooltip { right: 45px; transform: translateX(5px); }
+     .edge-indicator.top .edge-tooltip { top: 45px; transform: translateY(-5px); }
+     .edge-indicator.bottom .edge-tooltip { bottom: 45px; transform: translateY(5px); }
       }
       
     }
@@ -8117,7 +8132,10 @@ function updateEdgeIndicators() {
       const arrows = { left: '←', right: '→', top: '↑', bottom: '↓' };
       const indicator = document.createElement('div');
       indicator.className = `edge-indicator ${direction}`;
-      indicator.innerHTML = `<span class="arrow">${arrows[direction]}</span> #${tags} (${data.count})`;
+      indicator.innerHTML = `
+        ${arrows[direction]}
+        <span class="edge-tooltip">#${tags} · ${data.count}</span>
+      `;
       Object.assign(indicator.style, position);
       indicator.onclick = () => focusOnCluster(clusterId);
       canvas.appendChild(indicator);
