@@ -4060,6 +4060,37 @@
       .bubble-card {
         transition: transform 0.1s ease, box-shadow 0.1s ease !important;
       }
+      
+      /* Edge indicators for off-screen clusters */
+      .edge-indicator {
+        position: absolute;
+        padding: 0.4rem 0.8rem;
+        background: rgba(99, 102, 241, 0.9);
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 12px rgba(99, 102, 241, 0.4);
+        white-space: nowrap;
+      }
+      .edge-indicator:hover {
+        background: rgba(139, 92, 246, 1);
+        transform: scale(1.05);
+      }
+      .edge-indicator.left { left: 10px; }
+      .edge-indicator.right { right: 10px; }
+      .edge-indicator.top { top: 70px; }
+      .edge-indicator.bottom { bottom: 80px; }
+      .edge-indicator .arrow {
+        font-size: 0.9rem;
+      }
+      
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -5170,6 +5201,8 @@ async function initBubbleView() {
   renderBubbles();
   setupCanvasDrag();
   startAmbientAnimation();
+// Initial edge indicators
+  setTimeout(updateEdgeIndicators, 500);
 }
 
 // Create star field, ambient particles, and shooting stars
@@ -6663,7 +6696,11 @@ function applyTransform() {
     particles.style.transform = parallaxMedium;
     particles.style.transformOrigin = 'center center';
   }
+    // Update edge indicators (debounced)
+  clearTimeout(window.edgeIndicatorTimeout);
+  window.edgeIndicatorTimeout = setTimeout(updateEdgeIndicators, 100);
 }
+  
 
 // Handle hover with magnetic push effect (touch-aware)
 function handleBubbleHover(id, isEntering) {
@@ -7986,7 +8023,161 @@ function filterDiscoverByTag() {
       el.style.filter = 'blur(2px)';
     }
   });
+  
+  // Focus on the tag cluster if a tag is selected
+  if (tag) {
+    focusOnTag(tag);
+  }
 }
+
+// Focus camera on the center of all cards with a specific tag
+function focusOnTag(tag) {
+  // Find all bubbles with this tag
+  const matchingBubbles = bubbles.filter(b => 
+    (b.tags || []).map(t => t.toLowerCase()).includes(tag.toLowerCase())
+  );
+  
+  if (matchingBubbles.length === 0) return;
+  
+  // Calculate center point of all matching cards
+  let sumX = 0, sumY = 0;
+  matchingBubbles.forEach(b => {
+    sumX += b.x;
+    sumY += b.y;
+  });
+  const centerX = sumX / matchingBubbles.length;
+  const centerY = sumY / matchingBubbles.length;
+  
+  // Get canvas dimensions
+  const canvas = document.getElementById('discoverCanvas');
+  const rect = canvas.getBoundingClientRect();
+  
+  // Animate to centered position
+  animatePanTo(
+    rect.width / 2 - centerX,
+    rect.height / 2 - centerY,
+    matchingBubbles.length > 3 ? 0.8 : 1.0  // Zoom out slightly for large clusters
+  );
+}
+
+// Edge indicators for off-screen clusters
+function updateEdgeIndicators() {
+  // Remove existing indicators
+  document.querySelectorAll('.edge-indicator').forEach(el => el.remove());
+  
+  const canvas = document.getElementById('discoverCanvas');
+  if (!canvas) return;
+  
+  const rect = canvas.getBoundingClientRect();
+  const viewLeft = -bubblePanX / bubbleZoom;
+  const viewTop = -bubblePanY / bubbleZoom;
+  const viewRight = viewLeft + rect.width / bubbleZoom;
+  const viewBottom = viewTop + rect.height / bubbleZoom;
+  
+  // Group bubbles by cluster and find cluster centers
+  const clusterCenters = {};
+  bubbles.forEach(b => {
+    if (!b.clusterId) return;
+    if (!clusterCenters[b.clusterId]) {
+      clusterCenters[b.clusterId] = { sumX: 0, sumY: 0, count: 0, tags: new Set() };
+    }
+    clusterCenters[b.clusterId].sumX += b.x;
+    clusterCenters[b.clusterId].sumY += b.y;
+    clusterCenters[b.clusterId].count++;
+    (b.tags || []).forEach(t => clusterCenters[b.clusterId].tags.add(t));
+  });
+  
+  // Check which clusters are off-screen
+  Object.entries(clusterCenters).forEach(([clusterId, data]) => {
+    const cx = data.sumX / data.count;
+    const cy = data.sumY / data.count;
+    const tags = [...data.tags].slice(0, 2).join(', ');
+    
+    if (!tags || clusterId.startsWith('solo_')) return; // Skip solo/tagless clusters
+    
+    let direction = null;
+    let position = {};
+    
+    // Determine if off-screen and which edge
+    if (cx < viewLeft) {
+      direction = 'left';
+      position = { left: '10px', top: `${Math.min(Math.max(50, ((cy - viewTop) / (viewBottom - viewTop)) * 100), 85)}%` };
+    } else if (cx > viewRight) {
+      direction = 'right';
+      position = { right: '10px', top: `${Math.min(Math.max(50, ((cy - viewTop) / (viewBottom - viewTop)) * 100), 85)}%` };
+    } else if (cy < viewTop) {
+      direction = 'top';
+      position = { top: '70px', left: `${Math.min(Math.max(15, ((cx - viewLeft) / (viewRight - viewLeft)) * 100), 85)}%` };
+    } else if (cy > viewBottom) {
+      direction = 'bottom';
+      position = { bottom: '80px', left: `${Math.min(Math.max(15, ((cx - viewLeft) / (viewRight - viewLeft)) * 100), 85)}%` };
+    }
+    
+    if (direction) {
+      const arrows = { left: '←', right: '→', top: '↑', bottom: '↓' };
+      const indicator = document.createElement('div');
+      indicator.className = `edge-indicator ${direction}`;
+      indicator.innerHTML = `<span class="arrow">${arrows[direction]}</span> #${tags} (${data.count})`;
+      Object.assign(indicator.style, position);
+      indicator.onclick = () => focusOnCluster(clusterId);
+      canvas.appendChild(indicator);
+    }
+  });
+}
+
+// Focus on a specific cluster by ID
+function focusOnCluster(clusterId) {
+  const clusterBubbles = bubbles.filter(b => b.clusterId === clusterId);
+  if (clusterBubbles.length === 0) return;
+  
+  let sumX = 0, sumY = 0;
+  clusterBubbles.forEach(b => {
+    sumX += b.x;
+    sumY += b.y;
+  });
+  const centerX = sumX / clusterBubbles.length;
+  const centerY = sumY / clusterBubbles.length;
+  
+  const canvas = document.getElementById('discoverCanvas');
+  const rect = canvas.getBoundingClientRect();
+  
+  animatePanTo(
+    rect.width / 2 - centerX,
+    rect.height / 2 - centerY,
+    clusterBubbles.length > 5 ? 0.7 : 0.9
+  );
+}
+
+// Smooth pan/zoom animation
+function animatePanTo(targetX, targetY, targetZoom) {
+  const startX = bubblePanX;
+  const startY = bubblePanY;
+  const startZoom = bubbleZoom;
+  const duration = 500; // ms
+  const startTime = performance.now();
+  
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    
+    // Ease out cubic
+    const ease = 1 - Math.pow(1 - progress, 3);
+    
+    bubblePanX = startX + (targetX - startX) * ease;
+    bubblePanY = startY + (targetY - startY) * ease;
+    bubbleZoom = startZoom + (targetZoom - startZoom) * ease;
+    
+    applyTransform();
+    
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+  
+  requestAnimationFrame(animate);
+}
+
+
 function handleDiscoverSearch() {
   const query = document.getElementById('discoverSearchBar').value.toLowerCase().trim();
   
