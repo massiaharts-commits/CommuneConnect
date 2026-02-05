@@ -12331,12 +12331,18 @@ async function initSupabase() {
   try {
     console.log('🔧 Initializing Supabase...');
     
-    // Initialize client
+    // Get the project ref for storage key
+    const projectRef = SUPABASE_URL.split('//')[1].split('.')[0];
+    const storageKey = `sb-${projectRef}-auth-token`;
+    
+    // Initialize client with explicit storage
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true
+        detectSessionInUrl: true,
+        storage: localStorage,
+        storageKey: storageKey
       }
     });
     
@@ -12346,7 +12352,7 @@ async function initSupabase() {
     const refreshToken = hashParams.get('refresh_token');
     
     if (accessToken && refreshToken) {
-      console.log('🔐 Processing magic link callback...');
+      console.log('🔑 Processing magic link callback...');
       
       const { data, error } = await supabaseClient.auth.setSession({
         access_token: accessToken,
@@ -12358,6 +12364,13 @@ async function initSupabase() {
         showToast('Sign in failed: ' + error.message, 'error');
       } else if (data.session) {
         currentUser = data.session.user;
+        // Save backup copy
+        localStorage.setItem('linkgrid-auth-backup', JSON.stringify({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          user: data.session.user,
+          expires_at: data.session.expires_at
+        }));
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
         console.log('✅ Signed in via magic link:', currentUser.email);
         onUserLoggedIn();
@@ -12374,7 +12387,7 @@ async function initSupabase() {
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     }
     
-    // Try to get existing session with retry logic
+    // Try to get existing session
     console.log('🔍 Checking for existing session...');
     let session = null;
     
@@ -12389,48 +12402,58 @@ async function initSupabase() {
       console.warn('⚠️ getSession() failed:', e.message);
     }
     
-    // Attempt 2: If getSession failed, try to restore from localStorage manually
+    // Attempt 2: Try our backup if getSession failed
     if (!session) {
-      console.log('🔄 Attempting manual session restore...');
-      const storageKey = `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`;
-      const storedData = localStorage.getItem(storageKey);
+      console.log('🔄 Attempting backup session restore...');
+      const backupData = localStorage.getItem('linkgrid-auth-backup');
       
-      if (storedData) {
+      if (backupData) {
         try {
-          const parsed = JSON.parse(storedData);
-          console.log('📦 Found stored session, attempting restore...');
+          const parsed = JSON.parse(backupData);
+          console.log('📦 Found backup session, attempting restore...');
           
-          if (parsed.access_token && parsed.refresh_token) {
-            // Use setSession to restore
-            const { data, error } = await supabaseClient.auth.setSession({
-              access_token: parsed.access_token,
-              refresh_token: parsed.refresh_token
-            });
-            
-            if (!error && data?.session) {
-              session = data.session;
-              console.log('✅ Session restored from localStorage');
-            } else if (error) {
-              console.warn('⚠️ setSession failed:', error.message);
-              
-              // Token might be expired, try refresh
-              console.log('🔄 Attempting token refresh...');
+          // Check if token is expired
+          const expiresAt = parsed.expires_at ? new Date(parsed.expires_at * 1000) : null;
+          const isExpired = expiresAt && expiresAt < new Date();
+          
+          if (parsed.refresh_token) {
+            if (isExpired) {
+              // Token expired, try refresh
+              console.log('🔄 Token expired, refreshing...');
               const { data: refreshData, error: refreshError } = await supabaseClient.auth.refreshSession({
                 refresh_token: parsed.refresh_token
               });
               
               if (!refreshError && refreshData?.session) {
                 session = refreshData.session;
-                console.log('✅ Session restored via refresh');
+                // Update backup
+                localStorage.setItem('linkgrid-auth-backup', JSON.stringify({
+                  access_token: session.access_token,
+                  refresh_token: session.refresh_token,
+                  user: session.user,
+                  expires_at: session.expires_at
+                }));
+                console.log('✅ Session refreshed successfully');
               } else {
                 console.warn('⚠️ Refresh failed:', refreshError?.message);
-                // Clear invalid stored data
-                localStorage.removeItem(storageKey);
+                localStorage.removeItem('linkgrid-auth-backup');
+              }
+            } else {
+              // Token not expired, try setSession
+              const { data, error } = await supabaseClient.auth.setSession({
+                access_token: parsed.access_token,
+                refresh_token: parsed.refresh_token
+              });
+              
+              if (!error && data?.session) {
+                session = data.session;
+                console.log('✅ Session restored from backup');
               }
             }
           }
         } catch (parseError) {
-          console.warn('⚠️ Could not parse stored session:', parseError.message);
+          console.warn('⚠️ Could not parse backup session:', parseError.message);
+          localStorage.removeItem('linkgrid-auth-backup');
         }
       }
     }
@@ -12438,10 +12461,18 @@ async function initSupabase() {
     // Process the session if we got one
     if (session) {
       currentUser = session.user;
+      // Update backup
+      localStorage.setItem('linkgrid-auth-backup', JSON.stringify({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+        user: session.user,
+        expires_at: session.expires_at
+      }));
       console.log('✅ Session active:', currentUser.email);
       onUserLoggedIn(true);
     } else {
       console.log('ℹ️ No valid session found');
+      localStorage.removeItem('linkgrid-auth-backup');
       
       // Only show auth modal on first visit
       const hasSeenAuthPrompt = localStorage.getItem('linkgrid-seen-auth');
@@ -12459,23 +12490,42 @@ async function initSupabase() {
       
       if (event === 'SIGNED_IN' && session) {
         currentUser = session.user;
+        // Save backup
+        localStorage.setItem('linkgrid-auth-backup', JSON.stringify({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          user: session.user,
+          expires_at: session.expires_at
+        }));
         if (!cloudSyncEnabled) {
           onUserLoggedIn(true);
         }
       } else if (event === 'SIGNED_OUT') {
         currentUser = null;
         cloudSyncEnabled = false;
+        localStorage.removeItem('linkgrid-auth-backup');
         cleanupRealtimeSubscription();
         console.log('👋 Signed out');
-      } else if (event === 'TOKEN_REFRESHED') {
+      } else if (event === 'TOKEN_REFRESHED' && session) {
         console.log('🔄 Token refreshed successfully');
-        if (session) {
-          currentUser = session.user;
-        }
+        currentUser = session.user;
+        // Update backup with new tokens
+        localStorage.setItem('linkgrid-auth-backup', JSON.stringify({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          user: session.user,
+          expires_at: session.expires_at
+        }));
       } else if (event === 'INITIAL_SESSION') {
         console.log('📋 Initial session event:', session?.user?.email || 'no session');
         if (session && !currentUser) {
           currentUser = session.user;
+          localStorage.setItem('linkgrid-auth-backup', JSON.stringify({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+            user: session.user,
+            expires_at: session.expires_at
+          }));
           onUserLoggedIn(true);
         }
       }
@@ -12484,29 +12534,6 @@ async function initSupabase() {
     return true;
   } catch (e) {
     console.error('❌ Supabase init error:', e);
-    
-    // Even if init fails, try one more manual restore
-    try {
-      const storageKey = `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`;
-      const storedData = localStorage.getItem(storageKey);
-      if (storedData) {
-        const parsed = JSON.parse(storedData);
-        if (parsed.user) {
-          currentUser = parsed.user;
-          console.log('🔧 Emergency session restore from cache:', currentUser.email);
-          // Try to reinitialize cloud sync later
-          setTimeout(() => {
-            if (supabaseClient && currentUser && !cloudSyncEnabled) {
-              initCloudSync();
-            }
-          }, 2000);
-          return true;
-        }
-      }
-    } catch (e2) {
-      console.error('❌ Emergency restore failed:', e2);
-    }
-    
     return false;
   }
 }
