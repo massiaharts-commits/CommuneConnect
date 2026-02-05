@@ -10,7 +10,7 @@
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com;
     img-src 'self' data: https: blob:;
-    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://jsonlink.io https://image.thum.io https://nominatim.openstreetmap.org https://img.youtube.com https://www.google.com blob:;
+    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://jsonlink.io https://image.thum.io https://nominatim.openstreetmap.org https://img.youtube.com https://i.ytimg.com https://www.google.com https://noembed.com https://api.microlink.io https://opengraph.io https://vimeo.com https://*.vimeocdn.com https://soundcloud.com https://i1.sndcdn.com blob:;
     frame-src 'none';
     object-src 'none';
     base-uri 'self';
@@ -569,6 +569,177 @@
     .empty-icon { font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5; }
     .empty-state h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
     .empty-state p { color: var(--text-2); margin-bottom: 1.5rem; }
+    /* ========== COMMAND PALETTE ========== */
+    .cmd-palette {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(12px);
+      z-index: 9999;
+      padding: 1rem;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: min(20vh, 180px);
+      animation: cmdFadeIn 0.15s ease;
+    }
+    .cmd-palette.active {
+      display: flex;
+    }
+    @keyframes cmdFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .cmd-palette-inner {
+      width: 100%;
+      max-width: 620px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05) inset;
+      overflow: hidden;
+      animation: cmdSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes cmdSlideIn {
+      from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .cmd-search-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .cmd-search-icon {
+      color: var(--accent);
+      font-size: 1.1rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .cmd-search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-1);
+      font-size: 1.05rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .cmd-search-input::placeholder { color: var(--text-3); }
+    .cmd-kbd {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.65rem;
+      color: var(--text-3);
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .cmd-results {
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+    .cmd-empty {
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+    .cmd-shortcuts {
+      display: flex;
+      gap: 1.25rem;
+      justify-content: center;
+      margin-top: 1rem;
+      font-size: 0.7rem;
+      color: var(--text-3);
+    }
+    .cmd-shortcuts kbd {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 0.1rem 0.4rem;
+      font-size: 0.65rem;
+      margin-right: 0.25rem;
+    }
+    .cmd-section-label {
+      padding: 0.5rem 0.75rem 0.25rem;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .cmd-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background 0.1s ease;
+    }
+    .cmd-item:hover, .cmd-item.active {
+      background: var(--bg-elevated);
+    }
+    .cmd-item-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .cmd-item-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+    }
+    .cmd-item-text {
+      flex: 1;
+      min-width: 0;
+    }
+    .cmd-item-title {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-1);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cmd-item-title mark {
+      background: rgba(99, 102, 241, 0.3);
+      color: var(--text-1);
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+    .cmd-item-sub {
+      font-size: 0.7rem;
+      color: var(--text-3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cmd-item-badge {
+      font-size: 0.6rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--radius-xl);
+      background: var(--bg-elevated);
+      color: var(--text-3);
+      border: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+    @media (max-width: 768px) {
+      .cmd-palette { padding-top: 0.5rem; }
+      .cmd-palette-inner { max-width: 100%; border-radius: var(--radius-lg); }
+      .cmd-search-input { font-size: 16px !important; }
+      .cmd-results { max-height: 60vh; }
+    }
     .modal {
       display: none;
       position: fixed;
@@ -4123,6 +4294,7 @@
       <button class="btn btn-icon" onclick="openCollections()" title="Collections">📂</button>
       <button class="btn btn-icon" onclick="openCommunity()" title="Community">👥</button>
       <button class="btn btn-icon" onclick="openSettings()" title="Settings">⚙️</button>
+      <button class="btn btn-icon" onclick="openCmdPalette()" title="Search (Ctrl+K)" style="font-size:0.75rem;letter-spacing:-0.5px;">⌘K</button>
       <button class="btn btn-primary btn-add" onclick="openAddModal()" title="Share something new!" id="mainAddBtn">
         <span class="add-btn-icon">+</span>
         <span class="add-btn-pulse"></span>
@@ -4544,6 +4716,27 @@
     <button class="btn btn-ghost" style="width:100%;margin-top:1.5rem" onclick="document.getElementById('authModal').classList.remove('active')">Continue without sync</button>
   </div>
 </div>
+<!-- COMMAND PALETTE -->
+<div class="cmd-palette" id="cmdPalette">
+  <div class="cmd-palette-inner">
+    <div class="cmd-search-row">
+      <span class="cmd-search-icon">⌘</span>
+      <input type="text" class="cmd-search-input" id="cmdSearchInput" placeholder="Search cards, tags, collections, actions..." oninput="handleCmdSearch()" autocomplete="off" spellcheck="false">
+      <kbd class="cmd-kbd">ESC</kbd>
+    </div>
+    <div class="cmd-results" id="cmdResults">
+      <div class="cmd-empty">
+        <div style="opacity:0.4;font-size:1.5rem;margin-bottom:0.5rem">🔍</div>
+        <div style="color:var(--text-3);font-size:0.8rem">Type to search your cards, tags, and collections</div>
+        <div class="cmd-shortcuts">
+          <span><kbd>/</kbd> Grid search</span>
+          <span><kbd>⌘K</kbd> This palette</span>
+          <span><kbd>⌘N</kbd> New card</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- DISCOVER VIEW -->
 <div class="discover-view" id="discoverView">
   <div class="discover-header">
@@ -4785,6 +4978,13 @@ let physicsBodies = {};
 let physicsRunner = null;
 let physicsEnabled = true;
 
+// === INTERVAL/TIMER TRACKING (prevents memory leaks) ===
+let tagAttractionInterval = null;
+let cloudSyncInterval = null;
+let thumbnailRetryIntervalId = null;
+let shootingStarTimeouts = [];
+let discoverInitialized = false;
+
 // Gravity well effect
 let gravityWellActive = false;
 let gravityWellPosition = { x: 0, y: 0 };
@@ -4957,7 +5157,7 @@ function openDiscover() {
   // Set initial zoom based on screen size
   const isMobileView = window.innerWidth < 768;
   if (isMobileView) {
-    bubbleZoom = 0.6;  // Start zoomed out on mobile
+    bubbleZoom = 0.6;
     bubblePanX = 0;
     bubblePanY = 0;
   } else {
@@ -4965,6 +5165,18 @@ function openDiscover() {
     bubblePanX = 0;
     bubblePanY = 0;
   }
+  
+  // Clean up previous session before re-init (prevents stacking)
+  if (ambientFrame) {
+    cancelAnimationFrame(ambientFrame);
+    ambientFrame = null;
+  }
+  if (tagAttractionInterval) {
+    clearInterval(tagAttractionInterval);
+    tagAttractionInterval = null;
+  }
+  shootingStarTimeouts.forEach(t => clearTimeout(t));
+  shootingStarTimeouts = [];
   
   initBubbleView();
 }
@@ -5004,6 +5216,26 @@ function closeDiscover() {
     cancelAnimationFrame(ambientFrame);
     ambientFrame = null;
   }
+  
+  // === CLEAR ALL TRACKED INTERVALS/TIMERS ===
+  if (tagAttractionInterval) {
+    clearInterval(tagAttractionInterval);
+    tagAttractionInterval = null;
+  }
+  
+  // Clear shooting star timeout chain
+  shootingStarTimeouts.forEach(t => clearTimeout(t));
+  shootingStarTimeouts = [];
+  
+  // Clear thumbnail retry
+  if (thumbnailRetryIntervalId) {
+    clearInterval(thumbnailRetryIntervalId);
+    thumbnailRetryIntervalId = null;
+    thumbnailRetryQueue.clear();
+  }
+  
+  // Mark as needing re-init on next open
+  discoverInitialized = false;
   
   // Deactivate gravity well
   deactivateGravityWell();
@@ -5530,25 +5762,26 @@ function startShootingStars(container) {
     }, duration * 1000 + 100);
   }
   
-  // Create shooting stars at random intervals
+// Create shooting stars at random intervals (tracked for cleanup)
   function scheduleNext() {
-    // Random interval: 2-8 seconds on desktop, 4-12 on mobile
     const minInterval = isMobileDevice ? 4000 : 2000;
     const maxInterval = isMobileDevice ? 12000 : 8000;
     const interval = minInterval + Math.random() * (maxInterval - minInterval);
     
-    setTimeout(() => {
-      // Only create if Discover view is active
+    const timeoutId = setTimeout(() => {
+      // Only create if Discover view is still active
       if (document.getElementById('discoverView')?.classList.contains('active')) {
         createShootingStar();
         
-        // Occasionally create a second one for a "meteor shower" effect
         if (Math.random() > 0.7) {
-          setTimeout(createShootingStar, 200 + Math.random() * 400);
+          const burstId = setTimeout(createShootingStar, 200 + Math.random() * 400);
+          shootingStarTimeouts.push(burstId);
         }
+        scheduleNext();
       }
-      scheduleNext();
+      // If Discover closed, chain stops naturally (no scheduleNext call)
     }, interval);
+    shootingStarTimeouts.push(timeoutId);
   }
   
   // Start the cycle
@@ -5775,6 +6008,9 @@ function initializePhysics(canvasWidth, canvasHeight) {
   Matter.Runner.run(physicsRunner, physicsEngine);
   Matter.Events.on(physicsEngine, 'afterUpdate', syncPhysicsToDOM);
   
+  // Start tag attraction forces (was previously a global setInterval — now tracked)
+  startTagAttractionInterval();
+  
   console.log('🔬 Matter.js physics initialized with', bubbles.length, 'bodies');
 }
 
@@ -5866,12 +6102,15 @@ function applyTagAttractionForces() {
   });
 }
 
-// Periodic tag-based forces
-setInterval(() => {
-  if (document.getElementById('discoverView')?.classList.contains('active')) {
-    applyTagAttractionForces();
-  }
-}, 500);
+// Periodic tag-based forces (tracked for cleanup)
+function startTagAttractionInterval() {
+  if (tagAttractionInterval) clearInterval(tagAttractionInterval);
+  tagAttractionInterval = setInterval(() => {
+    if (document.getElementById('discoverView')?.classList.contains('active')) {
+      applyTagAttractionForces();
+    }
+  }, 500);
+}
 
 async function buildBubbleData(loadMore = false) {
   const container = document.getElementById('bubbleContainer');
@@ -5903,13 +6142,18 @@ async function buildBubbleData(loadMore = false) {
       }
     }
     
-    // Filter out promoted guide cards
+    // Filter out promoted guide cards (by both URL match AND promotedFromGuide tracking)
     const promotedGuideUrls = new Set(
       cards.filter(c => c.url?.startsWith('thought://') && c.url?.includes('-guide'))
            .map(c => c.url)
     );
+    const promotedGuideIds = new Set(
+      cards.filter(c => c.promotedFromGuide).map(c => c.promotedFromGuide)
+    );
     
-    const activeGuides = GUIDE_CARDS.filter(g => !promotedGuideUrls.has(g.url));
+    const activeGuides = GUIDE_CARDS.filter(g => 
+      !promotedGuideUrls.has(g.url) && !promotedGuideIds.has(g.id)
+    );
     
     const guidesWithImages = activeGuides.map(g => ({
       ...g,
@@ -6673,6 +6917,101 @@ function formatUrl(url) {
   } catch (e) {
     return url.substring(0, 30);
   }
+}
+
+// ============== CANVAS DRAG / PAN / ZOOM ==============
+function setupCanvasDrag() {
+  const canvas = document.getElementById('discoverCanvas');
+  if (!canvas) return;
+  
+  // --- MOUSE DRAG ---
+  canvas.addEventListener('mousedown', (e) => {
+    // Only drag on the canvas itself, not on cards
+    if (e.target.closest('.bubble-card, .discover-info, .discover-controls, .discover-fab, .edge-indicator')) return;
+    isDraggingCanvas = true;
+    dragStartX = e.clientX - bubblePanX;
+    dragStartY = e.clientY - bubblePanY;
+    canvas.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  
+  window.addEventListener('mousemove', (e) => {
+    if (!isDraggingCanvas) return;
+    bubblePanX = e.clientX - dragStartX;
+    bubblePanY = e.clientY - dragStartY;
+    applyTransform();
+  });
+  
+  window.addEventListener('mouseup', () => {
+    if (isDraggingCanvas) {
+      isDraggingCanvas = false;
+      const canvasEl = document.getElementById('discoverCanvas');
+      if (canvasEl) canvasEl.style.cursor = '';
+    }
+  });
+  
+  // --- TOUCH DRAG + PINCH ZOOM ---
+  let lastTouchDist = 0;
+  let touchDragStartX = 0, touchDragStartY = 0;
+  let isTouchDragging = false;
+  
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.target.closest('.bubble-card, .discover-info, .discover-controls, .discover-fab, .edge-indicator')) return;
+    
+    if (e.touches.length === 2) {
+      // Pinch zoom start
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchDist = Math.sqrt(dx * dx + dy * dy);
+      isTouchDragging = false;
+    } else if (e.touches.length === 1) {
+      // Single finger pan
+      isTouchDragging = true;
+      isDraggingCanvas = true;
+      touchDragStartX = e.touches[0].clientX - bubblePanX;
+      touchDragStartY = e.touches[0].clientY - bubblePanY;
+    }
+  }, { passive: true });
+  
+  canvas.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && lastTouchDist > 0) {
+      // Pinch zoom
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const scale = dist / lastTouchDist;
+      
+      bubbleZoom = Math.max(0.3, Math.min(2.5, bubbleZoom * scale));
+      lastTouchDist = dist;
+      applyTransform();
+    } else if (isTouchDragging && e.touches.length === 1) {
+      // Pan
+      bubblePanX = e.touches[0].clientX - touchDragStartX;
+      bubblePanY = e.touches[0].clientY - touchDragStartY;
+      applyTransform();
+    }
+  }, { passive: true });
+  
+  canvas.addEventListener('touchend', () => {
+    isTouchDragging = false;
+    isDraggingCanvas = false;
+    lastTouchDist = 0;
+  }, { passive: true });
+  
+  // --- MOUSE WHEEL ZOOM ---
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    bubbleZoom = Math.max(0.3, Math.min(2.5, bubbleZoom * delta));
+    applyTransform();
+  }, { passive: false });
+  
+  // --- CLICK ON EMPTY CANVAS TO DESELECT ---
+  canvas.addEventListener('click', (e) => {
+    if (e.target === canvas || e.target.closest('.bubble-container') === e.target) {
+      closeDiscoverInfo();
+    }
+  });
 }
 
 function applyTransform() {
@@ -7575,6 +7914,7 @@ function promoteGuideCard(guideId) {
     comments: [],
     starred: true,
     isPrivate: false,
+    promotedFromGuide: guideId,  // Track original guide ID even if URL is later edited
     createdAt: new Date().toISOString(),
     lastEdited: new Date().toISOString(),
     editedBy: username
@@ -8199,95 +8539,74 @@ function animatePanTo(targetX, targetY, targetZoom) {
 function handleDiscoverSearch() {
   const query = document.getElementById('discoverSearchBar').value.toLowerCase().trim();
   
+  if (!query) {
+    // Reset all cards to visible
+    document.querySelectorAll('.bubble-card').forEach(el => {
+      el.style.opacity = '';
+      el.style.pointerEvents = 'auto';
+      el.style.filter = '';
+    });
+    // Also reset tag filter dropdown
+    document.getElementById('discoverFilter').value = '';
+    return;
+  }
+  
+  // Search across title, URL, notes, tags, and author
+  const matchingBubbles = [];
+  
   document.querySelectorAll('.bubble-card').forEach(el => {
     const bubble = bubbles.find(b => b.bubbleId === el.dataset.id);
     if (!bubble) return;
     
-    const tags = (bubble.tags || []).join(' ').toLowerCase();
-    const title = (bubble.title || '').toLowerCase();
-    const matches = !query || tags.includes(query) || title.includes(query);
+    const haystack = [
+      bubble.title,
+      bubble.url,
+      bubble.notes,
+      bubble.addedBy,
+      ...(bubble.tags || [])
+    ].join(' ').toLowerCase();
+    
+    const matches = haystack.includes(query);
     
     if (matches) {
       el.style.opacity = '';
       el.style.pointerEvents = 'auto';
       el.style.filter = '';
+      matchingBubbles.push(bubble);
     } else {
-      el.style.opacity = '0.15';
+      el.style.opacity = '0.1';
       el.style.pointerEvents = 'none';
       el.style.filter = 'blur(2px)';
     }
   });
-}
-// Canvas drag and zoom
-function setupCanvasDrag() {
-  const canvas = document.getElementById('discoverCanvas');
   
-  // Mouse events
-  canvas.addEventListener('mousedown', e => {
-    if (e.target.closest('.bubble-card') || e.target.closest('.discover-info') || e.target.closest('.discover-controls')) return;
-    isDraggingCanvas = true;
-    dragStartX = e.clientX - bubblePanX;
-    dragStartY = e.clientY - bubblePanY;
-    canvas.style.cursor = 'grabbing';
-  });
-  
-  canvas.addEventListener('mousemove', e => {
-    if (!isDraggingCanvas) return;
-    bubblePanX = e.clientX - dragStartX;
-    bubblePanY = e.clientY - dragStartY;
-    applyTransform();
-  });
-  
-  canvas.addEventListener('mouseup', () => {
-    isDraggingCanvas = false;
-    canvas.style.cursor = 'default';
-  });
-  
-  canvas.addEventListener('mouseleave', () => {
-    isDraggingCanvas = false;
-    canvas.style.cursor = 'default';
-  });
-  
-  // Touch events
-  canvas.addEventListener('touchstart', e => {
-    if (e.target.closest('.bubble-card') || e.target.closest('.discover-info')) return;
-    isDraggingCanvas = true;
-    dragStartX = e.touches[0].clientX - bubblePanX;
-    dragStartY = e.touches[0].clientY - bubblePanY;
-  }, { passive: true });
-  
-  canvas.addEventListener('touchmove', e => {
-    if (!isDraggingCanvas) return;
-    bubblePanX = e.touches[0].clientX - dragStartX;
-    bubblePanY = e.touches[0].clientY - dragStartY;
-    applyTransform();
-  }, { passive: true });
-  
-  canvas.addEventListener('touchend', () => {
-    isDraggingCanvas = false;
-  });
-  
-  // Mouse wheel zoom
-  canvas.addEventListener('wheel', e => {
-    e.preventDefault();
-    const zoomFactor = e.deltaY > 0 ? 0.92 : 1.08;
-    zoomBubbles(zoomFactor);
-  }, { passive: false });
-  
-  // Click on canvas to deselect
-  canvas.addEventListener('click', e => {
-    if (!e.target.closest('.bubble-card') && 
-        !e.target.closest('.discover-info') && 
-        !e.target.closest('.discover-controls')) {
-      closeDiscoverInfo();
-    }
-  });
+  // Auto-focus camera on matching cards if any
+  if (matchingBubbles.length > 0 && matchingBubbles.length <= 20) {
+    let sumX = 0, sumY = 0;
+    matchingBubbles.forEach(b => { sumX += b.x; sumY += b.y; });
+    const cx = sumX / matchingBubbles.length;
+    const cy = sumY / matchingBubbles.length;
+    
+    const canvas = document.getElementById('discoverCanvas');
+    const rect = canvas.getBoundingClientRect();
+    
+    // Zoom level based on how spread out matches are
+    let maxDist = 0;
+    matchingBubbles.forEach(b => {
+      const d = Math.sqrt(Math.pow(b.x - cx, 2) + Math.pow(b.y - cy, 2));
+      if (d > maxDist) maxDist = d;
+    });
+    const targetZoom = maxDist > 600 ? 0.6 : maxDist > 300 ? 0.8 : 1;
+    
+    animatePanTo(rect.width / 2 - cx, rect.height / 2 - cy, targetZoom);
+  }
 }
 
 // ============== CLOUD SYNC ==============
 let cloudSyncEnabled = false;
 let realtimeSubscription = null;
 let syncInProgress = false;
+let syncLockTimestamp = 0; // Timestamp-based lock to prevent race conditions
 let lastSyncTime = null;
 
 // Initialize cloud sync after authentication
@@ -8306,14 +8625,16 @@ async function initCloudSync() {
   // Setup realtime subscriptions
   setupRealtimeSubscriptions();
   
-  // Periodic sync every 30 seconds
-  setInterval(syncToCloud, 30000);
+// Periodic sync every 30 seconds (tracked to prevent stacking)
+  if (cloudSyncInterval) clearInterval(cloudSyncInterval);
+  cloudSyncInterval = setInterval(syncToCloud, 30000);
 }
 
 // Initial sync: merge local cards with cloud
 async function performInitialSync() {
   if (syncInProgress) return;
   syncInProgress = true;
+  syncLockTimestamp = Date.now();
   
   try {
     showToast('☁️ Syncing...', 'default');
@@ -9076,6 +9397,8 @@ async function syncCommentsFromCloud() {
 // Background sync to cloud
 async function syncToCloud() {
   if (!cloudSyncEnabled || !currentUser || syncInProgress) return;
+  // Don't run background sync within 5s of initial sync completing
+  if (Date.now() - syncLockTimestamp < 5000) return;
   
   // Find cards that need syncing
   const needsSync = cards.filter(c => 
@@ -9363,6 +9686,30 @@ function cleanupRealtimeSubscription() {
   if (realtimeSubscription) {
     supabaseClient.removeChannel(realtimeSubscription);
     realtimeSubscription = null;
+  }
+}
+
+
+// === SAFE IMAGE STORAGE: Route large images to IndexedDB, not localStorage ===
+async function storeImageSafely(cardId, imageData, imageType = 'screenshot') {
+  if (!imageData || !imageData.startsWith('data:')) return imageData;
+  
+  // If small enough for localStorage (< 20KB), allow it
+  if (imageData.length < 20000) return imageData;
+  
+  // Store in IndexedDB and return a reference key
+  const key = `img_${cardId}_${imageType}`;
+  try {
+    await storeImage(key, imageData);
+    return key; // Return the key, not the data
+  } catch (e) {
+    console.warn('⚠️ Failed to store image in IndexedDB:', e);
+    // Last resort: compress aggressively
+    try {
+      const tiny = await compressImage(imageData, 400, 0.5);
+      if (tiny.length < 20000) return tiny;
+    } catch (e2) {}
+    return null; // Drop the image rather than bloat localStorage
   }
 }
 
@@ -11874,11 +12221,12 @@ async function handleScreenshotUpload(e) {
       card.customScreenshot = true;
       console.log('✅ Screenshot uploaded to cloud:', imageUrl);
     } else {
-      // Fallback - store locally
-      card.screenshot = compressed;
+      // Fallback - store in IndexedDB (not localStorage) to prevent bloat
+      const safeRef = await storeImageSafely(card.id, compressed, 'screenshot');
+      card.screenshot = safeRef || compressed;
       card.screenshotReal = true;
       card.customScreenshot = true;
-      console.log('⚠️ Screenshot saved locally (not synced)');
+      console.log('⚠️ Screenshot saved to IndexedDB (not synced)');
     }
     
     // Update UI
@@ -12830,13 +13178,315 @@ async function signOut() {
 }
 // ============== KEYBOARD SHORTCUTS ==============
 document.addEventListener('keydown', (e) => {
-  if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) { e.preventDefault(); document.getElementById('searchBar')?.focus(); }
-  if (e.key === 'Escape') { closeAddModal(); closeEditModal(); closeSettings(); closeCommunity(); closeCollections(); closeAddToCollection(); closeQuickActions(); closeDiscover(); document.getElementById('authModal')?.classList.remove('active'); document.getElementById('customConfirmModal')?.classList.remove('active'); }
+  // Ctrl/Cmd+K: Command Palette
+  if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    toggleCmdPalette();
+    return;
+  }
+  // "/" focuses grid search (only when not typing)
+  if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+    e.preventDefault();
+    // If Discover is open, focus Discover search; otherwise grid search
+    if (document.getElementById('discoverView')?.classList.contains('active')) {
+      document.getElementById('discoverSearchBar')?.focus();
+    } else {
+      document.getElementById('searchBar')?.focus();
+    }
+    return;
+  }
+  if (e.key === 'Escape') {
+    // Close command palette first if open
+    if (document.getElementById('cmdPalette')?.classList.contains('active')) {
+      closeCmdPalette();
+      return;
+    }
+    closeAddModal(); closeEditModal(); closeSettings(); closeCommunity(); closeCollections(); closeAddToCollection(); closeQuickActions(); closeDiscover();
+    document.getElementById('authModal')?.classList.remove('active');
+    document.getElementById('customConfirmModal')?.classList.remove('active');
+  }
   if (e.key === 'n' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openAddModal(); }
 });
 
+// ============== COMMAND PALETTE ==============
+let cmdSelectedIndex = 0;
+let cmdResultItems = [];
+
+function toggleCmdPalette() {
+  const el = document.getElementById('cmdPalette');
+  if (el.classList.contains('active')) {
+    closeCmdPalette();
+  } else {
+    openCmdPalette();
+  }
+}
+
+function openCmdPalette() {
+  const el = document.getElementById('cmdPalette');
+  el.classList.add('active');
+  const input = document.getElementById('cmdSearchInput');
+  input.value = '';
+  input.focus();
+  cmdSelectedIndex = 0;
+  cmdResultItems = [];
+  renderCmdResults('');
+}
+
+function closeCmdPalette() {
+  document.getElementById('cmdPalette').classList.remove('active');
+  document.getElementById('cmdSearchInput').value = '';
+}
+
+// Close on backdrop click
+document.getElementById('cmdPalette')?.addEventListener('click', function(e) {
+  if (e.target === this) closeCmdPalette();
+});
+
+// Keyboard navigation within palette
+document.getElementById('cmdSearchInput')?.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    cmdSelectedIndex = Math.min(cmdSelectedIndex + 1, cmdResultItems.length - 1);
+    updateCmdSelection();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    cmdSelectedIndex = Math.max(cmdSelectedIndex - 1, 0);
+    updateCmdSelection();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    executeCmdItem(cmdSelectedIndex);
+  }
+});
+
+function updateCmdSelection() {
+  document.querySelectorAll('.cmd-item').forEach((el, i) => {
+    el.classList.toggle('active', i === cmdSelectedIndex);
+    if (i === cmdSelectedIndex) el.scrollIntoView({ block: 'nearest' });
+  });
+}
+
+function handleCmdSearch() {
+  const query = document.getElementById('cmdSearchInput').value.trim().toLowerCase();
+  cmdSelectedIndex = 0;
+  renderCmdResults(query);
+}
+
+function highlightMatch(text, query) {
+  if (!query || !text) return sanitizeHTML(text || '');
+  const safe = sanitizeHTML(text);
+  const idx = safe.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return safe;
+  return safe.slice(0, idx) + '<mark>' + safe.slice(idx, idx + query.length) + '</mark>' + safe.slice(idx + query.length);
+}
+
+function renderCmdResults(query) {
+  const container = document.getElementById('cmdResults');
+  cmdResultItems = [];
+
+  if (!query) {
+    // Show recent cards + quick actions
+    const recent = [...cards].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+    let html = '';
+
+    // Quick actions
+    html += '<div class="cmd-section-label">Quick Actions</div>';
+    const actions = [
+      { icon: '➕', title: 'Add new link', action: 'add' },
+      { icon: '🧭', title: 'Open Discover', action: 'discover' },
+      { icon: '📂', title: 'Collections', action: 'collections' },
+      { icon: '⚙️', title: 'Settings', action: 'settings' },
+    ];
+    actions.forEach((a, i) => {
+      cmdResultItems.push({ type: 'action', action: a.action });
+      html += `<div class="cmd-item${i === 0 ? ' active' : ''}" onclick="executeCmdItem(${cmdResultItems.length - 1})">
+        <div class="cmd-item-icon">${a.icon}</div>
+        <div class="cmd-item-text"><div class="cmd-item-title">${a.title}</div></div>
+      </div>`;
+    });
+
+    // Recent cards
+    if (recent.length) {
+      html += '<div class="cmd-section-label">Recent Cards</div>';
+      recent.forEach(card => {
+        cmdResultItems.push({ type: 'card', id: card.id });
+        const topicEmojis = {tech:'💻',news:'📰',food:'🍔',travel:'✈️',entertainment:'🎬',other:'📌'};
+        const emoji = topicEmojis[card.topic] || '📌';
+        const thumb = getCardThumbnail(card);
+        const isImg = thumb.startsWith('http') || thumb.startsWith('data:image');
+        html += `<div class="cmd-item" onclick="executeCmdItem(${cmdResultItems.length - 1})">
+          <div class="cmd-item-icon">${isImg ? `<img src="${thumb}" alt="">` : emoji}</div>
+          <div class="cmd-item-text">
+            <div class="cmd-item-title">${sanitizeHTML(card.title)}</div>
+            <div class="cmd-item-sub">${sanitizeHTML(card.url?.replace(/^https?:\/\/(www\.)?/, '').slice(0, 50))}</div>
+          </div>
+          <span class="cmd-item-badge">${emoji}</span>
+        </div>`;
+      });
+    }
+
+    container.innerHTML = html;
+    return;
+  }
+
+  // Search across cards, collections, tags
+  let html = '';
+  const topicEmojis = {tech:'💻',news:'📰',food:'🍔',travel:'✈️',entertainment:'🎬',other:'📌'};
+
+  // 1. Search cards (title, url, notes, tags)
+  const matchedCards = cards.filter(c => {
+    const haystack = [c.title, c.url, c.notes, ...(c.tags || [])].join(' ').toLowerCase();
+    return haystack.includes(query);
+  }).slice(0, 8);
+
+  if (matchedCards.length) {
+    html += '<div class="cmd-section-label">Cards</div>';
+    matchedCards.forEach(card => {
+      cmdResultItems.push({ type: 'card', id: card.id });
+      const emoji = topicEmojis[card.topic] || '📌';
+      const thumb = getCardThumbnail(card);
+      const isImg = thumb.startsWith('http') || thumb.startsWith('data:image');
+      // Determine which field matched for subtitle
+      let matchField = '';
+      if (card.title?.toLowerCase().includes(query)) matchField = '';
+      else if (card.url?.toLowerCase().includes(query)) matchField = card.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 50);
+      else if (card.notes?.toLowerCase().includes(query)) matchField = '📝 ' + card.notes.slice(0, 60);
+      else matchField = '🏷 ' + (card.tags || []).filter(t => t.toLowerCase().includes(query)).join(', ');
+
+      html += `<div class="cmd-item${cmdResultItems.length === 1 ? ' active' : ''}" onclick="executeCmdItem(${cmdResultItems.length - 1})">
+        <div class="cmd-item-icon">${isImg ? `<img src="${thumb}" alt="">` : emoji}</div>
+        <div class="cmd-item-text">
+          <div class="cmd-item-title">${highlightMatch(card.title, query)}</div>
+          <div class="cmd-item-sub">${matchField ? highlightMatch(matchField, query) : sanitizeHTML(card.url?.replace(/^https?:\/\/(www\.)?/, '').slice(0, 50))}</div>
+        </div>
+        <span class="cmd-item-badge">${emoji}</span>
+      </div>`;
+    });
+  }
+
+  // 2. Search collections
+  const matchedCollections = collections.filter(c =>
+    c.name?.toLowerCase().includes(query)
+  ).slice(0, 4);
+
+  if (matchedCollections.length) {
+    html += '<div class="cmd-section-label">Collections</div>';
+    matchedCollections.forEach(col => {
+      cmdResultItems.push({ type: 'collection', id: col.id });
+      html += `<div class="cmd-item${cmdResultItems.length === 1 ? ' active' : ''}" onclick="executeCmdItem(${cmdResultItems.length - 1})">
+        <div class="cmd-item-icon">${col.emoji || '📁'}</div>
+        <div class="cmd-item-text">
+          <div class="cmd-item-title">${highlightMatch(col.name, query)}</div>
+          <div class="cmd-item-sub">${col.cardIds?.length || 0} cards</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  // 3. Search tags (show unique tags that match)
+  const allTags = new Set();
+  cards.forEach(c => (c.tags || []).forEach(t => allTags.add(t)));
+  const matchedTags = [...allTags].filter(t => t.toLowerCase().includes(query)).slice(0, 5);
+
+  if (matchedTags.length) {
+    html += '<div class="cmd-section-label">Tags</div>';
+    matchedTags.forEach(tag => {
+      const count = cards.filter(c => (c.tags || []).includes(tag)).length;
+      cmdResultItems.push({ type: 'tag', tag });
+      html += `<div class="cmd-item${cmdResultItems.length === 1 ? ' active' : ''}" onclick="executeCmdItem(${cmdResultItems.length - 1})">
+        <div class="cmd-item-icon">🏷</div>
+        <div class="cmd-item-text">
+          <div class="cmd-item-title">#${highlightMatch(tag, query)}</div>
+          <div class="cmd-item-sub">${count} card${count !== 1 ? 's' : ''}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  // 4. Fallback actions
+  html += '<div class="cmd-section-label">Actions</div>';
+  const searchActions = [
+    { icon: '🔍', title: `Search grid for "${query}"`, action: 'grid-search', query },
+    { icon: '🧭', title: `Search Discover for "${query}"`, action: 'discover-search', query },
+  ];
+  searchActions.forEach(a => {
+    cmdResultItems.push({ type: 'action', action: a.action, query: a.query });
+    html += `<div class="cmd-item${cmdResultItems.length === 1 ? ' active' : ''}" onclick="executeCmdItem(${cmdResultItems.length - 1})">
+      <div class="cmd-item-icon">${a.icon}</div>
+      <div class="cmd-item-text"><div class="cmd-item-title">${a.title}</div></div>
+    </div>`;
+  });
+
+  if (!matchedCards.length && !matchedCollections.length && !matchedTags.length) {
+    html = '<div class="cmd-empty"><div style="opacity:0.4;font-size:1.5rem;margin-bottom:0.5rem">🔍</div><div style="color:var(--text-3);font-size:0.8rem">No results for "' + sanitizeHTML(query) + '"</div></div>' + html;
+  }
+
+  container.innerHTML = html;
+}
+
+function executeCmdItem(index) {
+  const item = cmdResultItems[index];
+  if (!item) return;
+  closeCmdPalette();
+
+  switch (item.type) {
+    case 'card':
+      // Close discover if open, open the card
+      if (document.getElementById('discoverView')?.classList.contains('active')) {
+        closeDiscover();
+      }
+      setTimeout(() => openEditModal(item.id), 100);
+      break;
+
+    case 'collection':
+      // Filter grid by this collection
+      if (document.getElementById('discoverView')?.classList.contains('active')) {
+        closeDiscover();
+      }
+      currentCollectionFilter = item.id;
+      document.getElementById('collectionFilter').value = item.id;
+      renderGrid();
+      break;
+
+    case 'tag':
+      // If Discover open, filter + focus on tag; otherwise filter grid
+      if (document.getElementById('discoverView')?.classList.contains('active')) {
+        document.getElementById('discoverFilter').value = item.tag;
+        filterDiscoverByTag();
+      } else {
+        searchQuery = item.tag;
+        document.getElementById('searchBar').value = item.tag;
+        renderGrid();
+      }
+      break;
+
+    case 'action':
+      switch (item.action) {
+        case 'add': openAddModal(); break;
+        case 'discover': openDiscover(); break;
+        case 'collections': openCollections(); break;
+        case 'settings': openSettings(); break;
+        case 'grid-search':
+          if (document.getElementById('discoverView')?.classList.contains('active')) closeDiscover();
+          searchQuery = item.query;
+          document.getElementById('searchBar').value = item.query;
+          // Uncollapse header to show search
+          if (headerCollapsed) toggleHeaderCollapse();
+          renderGrid();
+          break;
+        case 'discover-search':
+          if (!document.getElementById('discoverView')?.classList.contains('active')) openDiscover();
+          setTimeout(() => {
+            document.getElementById('discoverSearchBar').value = item.query;
+            handleDiscoverSearch();
+          }, 400);
+          break;
+      }
+      break;
+  }
+}
+
 // Close modals on backdrop click
-['addModal', 'editModal', 'settingsModal', 'communityModal', 'collectionsModal', 'addToCollectionModal', 'quickActionsModal', 'customConfirmModal', 'authModal', 'discoverView'].forEach(id => {
+['addModal', 'editModal', 'settingsModal', 'communityModal', 'collectionsModal', 'addToCollectionModal', 'quickActionsModal', 'customConfirmModal', 'authModal', 'discoverView', 'cmdPalette'].forEach(id => {
   document.getElementById(id)?.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
 });
 function compressImage(base64Data, maxWidth = 800, quality = 0.8) {
