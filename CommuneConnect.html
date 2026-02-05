@@ -5206,9 +5206,20 @@ function updateDiscoverUserInfo() {
 function closeDiscover() {
   document.getElementById('discoverView').classList.remove('active');
   
-  // Stop physics when closing
-  if (physicsRunner && typeof Matter !== 'undefined') {
-    Matter.Runner.stop(physicsRunner);
+  // === FULLY DISPOSE Matter.js physics (prevents stacking on reopen) ===
+  if (typeof Matter !== 'undefined') {
+    if (physicsRunner) {
+      Matter.Runner.stop(physicsRunner);
+      physicsRunner = null;
+    }
+    if (physicsEngine) {
+      Matter.Events.off(physicsEngine, 'afterUpdate', syncPhysicsToDOM);
+      Matter.World.clear(physicsWorld, false);
+      Matter.Engine.clear(physicsEngine);
+      physicsEngine = null;
+      physicsWorld = null;
+    }
+    physicsBodies = {};
   }
   
   // Cancel ambient animation
@@ -5234,6 +5245,9 @@ function closeDiscover() {
     thumbnailRetryQueue.clear();
   }
   
+  // Clear edge indicator timeout
+  clearTimeout(window.edgeIndicatorTimeout);
+  
   // Mark as needing re-init on next open
   discoverInitialized = false;
   
@@ -5247,6 +5261,8 @@ function closeDiscover() {
   selectedBubbleId = null;
   hoveredBubbleId = null;
 }
+
+
 // ============== USER PROFILE VIEW ==============
 let viewingUsername = null;
 
@@ -6104,9 +6120,12 @@ function applyTagAttractionForces() {
 
 // Periodic tag-based forces (tracked for cleanup)
 function startTagAttractionInterval() {
+  // Don't start on mobile - physics is disabled, this wastes CPU cycles
+  if (isMobileDevice || window.innerWidth < 768) return;
+  
   if (tagAttractionInterval) clearInterval(tagAttractionInterval);
   tagAttractionInterval = setInterval(() => {
-    if (document.getElementById('discoverView')?.classList.contains('active')) {
+    if (document.getElementById('discoverView')?.classList.contains('active') && physicsEnabled) {
       applyTagAttractionForces();
     }
   }, 500);
@@ -9397,8 +9416,13 @@ async function syncCommentsFromCloud() {
 // Background sync to cloud
 async function syncToCloud() {
   if (!cloudSyncEnabled || !currentUser || syncInProgress) return;
-  // Don't run background sync within 5s of initial sync completing
-  if (Date.now() - syncLockTimestamp < 5000) return;
+  // Don't run background sync within 10s of initial sync completing (prevents overlap)
+  if (Date.now() - syncLockTimestamp < 10000) return;
+  
+  syncInProgress = true;
+  syncLockTimestamp = Date.now();
+  
+  try {
   
   // Find cards that need syncing
   const needsSync = cards.filter(c => 
@@ -9409,11 +9433,16 @@ async function syncToCloud() {
   );
   
   for (const card of needsSync) {
-    await uploadCardToCloud(card);
-  }
-  
-  if (needsSync.length > 0) {
-    saveCards();
+      await uploadCardToCloud(card);
+    }
+    
+    if (needsSync.length > 0) {
+      saveCards();
+    }
+  } catch (error) {
+    console.error('Background sync error:', error);
+  } finally {
+    syncInProgress = false;
   }
 }
 
@@ -9882,12 +9911,40 @@ async function saveCards() {
     }
     return copy;
   }));
-  localStorage.setItem('linkgrid-cards', JSON.stringify(toSave));
+  const serialized = JSON.stringify(toSave);
+  
+  // Guard against localStorage bloat (limit ~4MB to leave headroom)
+  if (serialized.length > 4 * 1024 * 1024) {
+    console.warn(`⚠️ Card data too large (${(serialized.length / 1024 / 1024).toFixed(1)}MB). Stripping base64 images...`);
+    // Strip any remaining base64 data that slipped through IndexedDB routing
+    const stripped = toSave.map(c => {
+      const copy = { ...c };
+      if (copy.screenshot?.startsWith('data:') && copy.screenshot.length > 20000) {
+        copy.screenshot = null; // Will regenerate placeholder on next load
+        copy.screenshotReal = false;
+      }
+      if (copy.photos?.length) {
+        copy.photos = copy.photos.filter(p => !p.startsWith('data:') || p.length < 20000);
+      }
+      return copy;
+    });
+    const strippedJson = JSON.stringify(stripped);
+    if (strippedJson.length > 4.5 * 1024 * 1024) {
+      showToast('⚠️ Too much data! Export a backup and clear old cards.', 'error');
+      console.error('localStorage still too large after stripping images:', (strippedJson.length / 1024 / 1024).toFixed(1) + 'MB');
+    } else {
+      localStorage.setItem('linkgrid-cards', strippedJson);
+    }
+  } else {
+    localStorage.setItem('linkgrid-cards', serialized);
+  }
+  
   document.getElementById('link-count').textContent = cards.length;
   
-  // Trigger background cloud sync for new/updated cards
+  // Trigger background cloud sync (debounced to prevent rapid re-entry)
   if (cloudSyncEnabled && !syncInProgress) {
-    syncToCloud();
+    clearTimeout(window._syncDebounce);
+    window._syncDebounce = setTimeout(syncToCloud, 2000);
   }
 }
 function saveCollections() {
@@ -12071,19 +12128,130 @@ function importCollection(e) {
   e.target.value = '';
 }
 
-function shareCollectionURL(btn, excludePhotos = false) {
+async function shareCollectionURL(btn, excludePhotos = false) {
   try {
-    const data = { cards: excludePhotos ? cards.map(c => ({...c, photos: [], screenshot: c.screenshotReal ? c.screenshot : null})) : cards, sharedBy: username, sharedAt: new Date().toISOString() };
-    const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
-    const url = window.location.href.split('?')[0] + '?import=' + encoded;
-    if (url.length > 8000) { showToast('Too large! Use Export instead.', 'error'); return; }
-    navigator.clipboard?.writeText(url);
-    showToast('Share link copied!', 'success');
-  } catch(err) { showToast('Error creating link', 'error'); }
+    const shareCards = excludePhotos 
+      ? cards.map(c => ({...c, photos: [], screenshot: c.screenshotReal ? c.screenshot : null})) 
+      : cards;
+    
+    const data = { 
+      cards: shareCards.map(c => ({
+        url: c.url, title: c.title, notes: c.notes || '', tags: c.tags || [],
+        topic: c.topic || 'other', location: c.location || '',
+        screenshot: (c.screenshot?.startsWith('http') ? c.screenshot : null),
+        votes: c.votes || 0, addedBy: c.addedBy || username
+      })),
+      sharedBy: username, 
+      sharedAt: new Date().toISOString() 
+    };
+    
+    const serialized = JSON.stringify(data);
+    
+    // If small enough, use URL encoding (legacy method)
+    if (serialized.length < 6000) {
+      const encoded = btoa(encodeURIComponent(serialized));
+      const url = window.location.href.split('?')[0] + '?import=' + encoded;
+      navigator.clipboard?.writeText(url);
+      showToast('Share link copied!', 'success');
+      return;
+    }
+    
+    // For larger collections, try Supabase persistent share
+    if (supabaseClient && currentUser) {
+      const shareCode = Math.random().toString(36).substring(2, 10);
+      const { error } = await supabaseClient
+        .from('shared_collections')
+        .insert({
+          code: shareCode,
+          user_id: currentUser.id,
+          data: data,
+          created_at: new Date().toISOString()
+        });
+      
+      if (!error) {
+        const url = window.location.href.split('?')[0] + '?share=' + shareCode;
+        navigator.clipboard?.writeText(url);
+        showToast('Share link copied! (cloud-backed)', 'success');
+        return;
+      }
+      console.warn('Cloud share failed, falling back:', error.message);
+    }
+    
+    // Fallback: strip to essentials and try URL encoding
+    const minimal = {
+      cards: data.cards.map(c => ({ url: c.url, title: c.title, tags: c.tags, topic: c.topic })),
+      sharedBy: username
+    };
+    const minEncoded = btoa(encodeURIComponent(JSON.stringify(minimal)));
+    const minUrl = window.location.href.split('?')[0] + '?import=' + minEncoded;
+    
+    if (minUrl.length > 8000) {
+      showToast('Too large! Use Export File instead.', 'error');
+      return;
+    }
+    
+    navigator.clipboard?.writeText(minUrl);
+    showToast('Share link copied! (stripped to basics)', 'success');
+    
+  } catch(err) { 
+    console.error('Share error:', err);
+    showToast('Error creating link', 'error'); 
+  }
+}
+
+// Load a cloud-backed shared collection
+async function loadSharedCollection(code) {
+  try {
+    showToast('Loading shared collection...', 'default');
+    
+    const { data, error } = await supabaseClient
+      .from('shared_collections')
+      .select('data')
+      .eq('code', code)
+      .single();
+    
+    if (error || !data) {
+      showToast('Shared collection not found or expired', 'error');
+      return;
+    }
+    
+    const shared = data.data;
+    if (!shared?.cards?.length) {
+      showToast('Empty collection', 'error');
+      return;
+    }
+    
+    if (confirm(`Import ${shared.cards.length} links from ${sanitizeHTML(shared.sharedBy) || 'someone'}?`)) {
+      const existing = new Set(cards.map(c => c.url));
+      const newCards = shared.cards
+        .map(c => ({
+          ...sanitizeCardData({ ...c, id: Date.now() + Math.random() }),
+          addedBy: c.addedBy || shared.sharedBy || 'Unknown'
+        }))
+        .filter(c => c.url && !existing.has(c.url));
+      
+      cards = [...cards, ...newCards];
+      saveCards();
+      renderGrid();
+      showToast(`Imported ${newCards.length} links`, 'success');
+    }
+  } catch (e) {
+    console.error('Load shared collection error:', e);
+    showToast('Failed to load shared collection', 'error');
+  }
 }
 
 function checkForSharedCard() {
   const params = new URLSearchParams(window.location.search);
+  
+  // Check for cloud-backed share code
+  const shareCode = params.get('share');
+  if (shareCode && supabaseClient) {
+    loadSharedCollection(shareCode);
+    window.history.replaceState({}, '', window.location.pathname);
+    return;
+  }
+  
   const importData = params.get('import');
   if (importData) {
     try {
@@ -13163,11 +13331,15 @@ async function verifyUsernameOwnership() {
 }
 
 async function signOut() {
-  if (!supabaseClient) return;
-  
   if (confirm('Sign out? Your local data will be kept.')) {
     cleanupRealtimeSubscription();
     cloudSyncEnabled = false;
+    
+    // Clear cloud sync interval to prevent orphaned timers
+    if (cloudSyncInterval) {
+      clearInterval(cloudSyncInterval);
+      cloudSyncInterval = null;
+    }
     
     await supabaseClient.auth.signOut();
     currentUser = null;
