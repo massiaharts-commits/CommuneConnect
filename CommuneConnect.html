@@ -10454,12 +10454,18 @@ function navigateCard(direction) {
     }
   }
   
-  updateNavArrows();
+  // Rebuild navigation list with new card as reference point
+  buildCardNavigationList(currentCardId);
 }
 
 function refreshEditModal(card) {
   // Quick refresh without closing/reopening
   const isGuideCard = card.isGuide || (card.url?.startsWith('thought://') && card.url?.includes('-guide'));
+  
+  
+  // Clear comment input from previous card
+  const commentInput = document.getElementById('newCommentInput');
+  if (commentInput) commentInput.value = '';
   
   // Update media/thumbnail
   setupMediaPlayer(card);
@@ -10556,6 +10562,11 @@ function refreshEditModal(card) {
   renderEditTags();
   renderEditPhotos();
   renderEditComments();
+  
+  
+  // Update votes, tags, photos, comments
+  updateVoteDisplay(id);
+  
   updateSyncButtonVisibility(card);
 }
 
@@ -11403,10 +11414,8 @@ function updateVoteDisplay(cardId) {
   const c = cards.find(x => x.id === cardId);
   if (!c) return;
   
-  const score = document.getElementById('voteScore');
-  const up = document.getElementById('upvoteBtn');
-  const down = document.getElementById('downvoteBtn');
-  
+  // Update edit modal score (editVoteScore is the actual ID)
+  const score = document.getElementById('editVoteScore');
   if (score) {
     score.textContent = c.votes || 0;
     score.className = 'edit-vote-score';
@@ -11414,21 +11423,58 @@ function updateVoteDisplay(cardId) {
     else if (c.votes < 0) score.classList.add('negative');
   }
   
+  // Update vote button states
   const uv = userVotes[cardId] || 0;
-  if (up) {
-    up.className = 'edit-vote-btn';
-    if (uv === 1) up.classList.add('upvoted');
+  const upBtn = document.querySelector('.edit-vote-btn.upvote');
+  const downBtn = document.querySelector('.edit-vote-btn.downvote');
+  
+  if (upBtn) {
+    upBtn.classList.remove('upvoted');
+    if (uv === 1) upBtn.classList.add('upvoted');
   }
-  if (down) {
-    down.className = 'edit-vote-btn';
-    if (uv === -1) down.classList.add('downvoted');
+  if (downBtn) {
+    downBtn.classList.remove('downvoted');
+    if (uv === -1) downBtn.classList.add('downvoted');
+  }
+}
+
+// Vote from edit modal (wrapper for vote function)
+function voteCard(value) {
+  // Check if user is logged in
+  if (!currentUser) {
+    showToast('🔐 Sign in to vote', 'default');
+    // Optionally open auth modal
+    document.getElementById('authModal')?.classList.add('active');
+    return;
+  }
+  
+  if (!currentCardId) return;
+  vote(currentCardId, value);
+  
+  // Update the modal's vote display
+  const scoreEl = document.getElementById('editVoteScore');
+  const card = cards.find(c => c.id === currentCardId);
+  if (scoreEl && card) {
+    scoreEl.textContent = card.votes || 0;
   }
 }
 
 // ============== STARS & FILTERS ==============
 function toggleStar(id) {
-  const c = cards.find(x => x.id === id);
-  if (c) { c.starred = !c.starred; saveCards(); renderGrid(); }
+  const cardId = id || currentCardId;
+  if (!cardId) return;
+  
+  const c = cards.find(x => x.id === cardId);
+  if (c) { 
+    c.starred = !c.starred; 
+    saveCards(); 
+    renderGrid();
+    
+    const starBtn = document.getElementById('editStarBtn');
+    if (starBtn) {
+      starBtn.textContent = c.starred ? '⭐' : '☆';
+    }
+  }
 }
 
 function toggleStarred() {
